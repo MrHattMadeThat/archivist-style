@@ -16,6 +16,17 @@ Read `README.md` first. This file is for agents working in the repo.
 - The Archivist is a pinned paper rig: legs, coat, arms, head, hat, scarf and suitcase. Side and back body drawings plus side, front and back heads are swapped at the edge-on frame of a flip.
 - The ink toolkit (`path`, `ink`, `hatch`, `shade`, `mottle`...) is copied in both pages. If a third page appears, pull it into a shared script.
 
+## Character style (both figures; keep new characters to it)
+
+- `cel()` shading: flat base colour, a hard-edged shadow crescent on the side away from the light (light from upper right) with hatching inside, and a thin warm gaslight rim on the lit edge.
+- Heavy outer outline, thin inner lines, dashed `stitch()` seams, `flecks()` for wool texture.
+- Period dress drawn as cut cloth. The Archivist wears a Chesterfield overcoat with a velvet collar, pinstripe trousers with turn-ups, and spats over boots. The attendant wears a striped 1910 shirtwaist with a high boned lace collar, a cameo and a ruffled jabot, and a Gibson-style pompadour with a pencil tucked in.
+- Signatures: round spectacles, the striped scarf, the quill in the hat, index cards in the pocket.
+- The Archivist has side, back and **front** drawings for coat, legs and head. Walking toward the camera shows the front, and standing still for a few seconds or opening a card turns them to face the viewer.
+- Arms are two pinned pieces (`makeArm`): upper arm at the shoulder and forearm at the elbow. The case hand uses the gripping forearm. The case hand is the Archivist's left: screen right from the front, screen left from behind.
+- The attendant is a small rig: body, head, eyes and writing arm. She writes until the Archivist comes within about 4.5 units, then looks up, follows them with her eyes and blinks.
+- `arrival.html` still uses the older, simpler Archivist drawings.
+
 ## Interior (`index.html`, the main page)
 
 - World: x from -20 to 20 (four 10-unit rooms), z from -5 (back wall) to +5 (open front), floor at y = 0. Partitions at x = -10, 0 and 10 have a doorway at z between -2 and 1.

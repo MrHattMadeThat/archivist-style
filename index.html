@@ -139,81 +139,177 @@ function compose(e){const{c,fn,border,seed}=e,W=c.width,H=c.height;const a=cv(W,
   ctx.drawImage(a,0,0);
   if(e.grain){const m=cv(W,H);m.getContext('2d').drawImage(c,0,0);ctx.globalCompositeOperation='multiply';ctx.globalAlpha=Math.min(1,P.grain*1.6);ctx.fillStyle=ctx.createPattern(GRAIN,'repeat');ctx.fillRect(0,0,W,H);ctx.globalAlpha=1;ctx.globalCompositeOperation='destination-in';ctx.drawImage(m,0,0);ctx.globalCompositeOperation='source-over';}}
 
-/* ================= THE ARCHIVIST (same drawings, upright) ================= */
-function drawLeg(back){return ctx=>{
-  const tr=path([[40,6],[64,6],[63,80],[60,150],[59,198],[41,198],[39,150],[37,80]],{smooth:false,jit:1.2});fill(ctx,tr,P.trouser);
-  ctx.save();ctx.clip(tr);ctx.strokeStyle=hexA(P.paper,0.22);ctx.lineWidth=1.6;for(let x=34;x<70;x+=7){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x+rr(-2,2),200);ctx.stroke();}ctx.restore();
-  shade(ctx,tr,64,0,36,0,0.5);ink(ctx,tr,4);
-  if(!back){const kp=path([[45,96],[60,94],[61,116],[46,118]],{smooth:false,jit:1.5});fill(ctx,kp,P.coat2);ink(ctx,kp,2.5);}
-  const sk=box(41,190,19,16,1);fill(ctx,sk,P.scarfB);ctx.save();ctx.clip(sk);ctx.fillStyle=P.scarfA;ctx.fillRect(38,196,26,5);ctx.restore();ink(ctx,sk,2.5);
-  const bt=back?path([[36,202],[36,202],[64,202],[64,202],[68,226],[62,238],[38,238],[32,226]],{jit:1}):path([[34,202],[34,202],[62,202],[64,212],[88,214],[106,206],[112,194],[112,194],[120,200],[114,222],[96,234],[60,238],[34,238],[34,238],[30,220]],{jit:1});
-  fill(ctx,bt,P.boot);line(ctx,back?[[40,212],[58,212]]:[[68,218],[100,211]],2.5,P.paper,0.35);ink(ctx,bt,4);};}
-function drawCoat(back){return ctx=>{
-  if(!back){
-    const c=path([[124,42],[100,54],[88,100],[88,190],[92,252],[94,300],[84,360],[62,418],[36,452],[36,452],[98,446],[160,452],[228,446],[228,446],[216,380],[210,320],[218,250],[224,170],[222,100],[210,56],[182,40]],{jit:1.5});
-    fill(ctx,c,P.coat);shade(ctx,c,232,0,60,0,0.5);hatch(ctx,c,{ang:-1.0,gap:8,a:0.32,clip2:box(0,0,118,470,0)});mottle(ctx,c,P.paper,0.07,22,16,[40,40,200,420]);
-    line(ctx,[[90,330],[78,400],[60,446]],3,P.ink,0.8);line(ctx,[[204,62],[196,120],[188,176]],3.5,P.ink,0.9);
-    const pt=box(100,190,34,30,2);fill(ctx,pt,P.coat2);ink(ctx,pt,2.5);
-    for(let i=0;i<3;i++){ctx.save();ctx.translate(150+i*13,318);ctx.rotate(-0.28+i*0.2);const cd=box(-14,-36,30,40,1);fill(ctx,cd,P.paper);line(ctx,[[-10,-26],[12,-26]],1.2,P.ink,0.5);line(ctx,[[-10,-30],[12,-30]],1.4,P.scarfA,0.6);ink(ctx,cd,2);ctx.restore();}
-    const pk=path([[132,316],[204,312],[206,346],[134,350]],{smooth:false,jit:1.5});fill(ctx,pk,mix(P.coat,P.ink,0.25));ink(ctx,pk,3);
-    for(const y of [140,190,240,290]){const b=path(ell(214,y,7,7,8,0.05));fill(ctx,b,P.brass);ink(ctx,b,2);}
-    ink(ctx,c,5);
-    ctx.save();ctx.strokeStyle=P.brass;ctx.lineWidth=3;ctx.beginPath();ctx.arc(108,330,10,0,TAU);ctx.stroke();ctx.restore();
-    for(let i=0;i<3;i++){ctx.save();ctx.translate(108,338);ctx.rotate(-0.5+i*0.45);const k=path([[-3,0],[3,0],[3,30],[9,30],[9,36],[3,36],[3,40],[-3,40]],{smooth:false,jit:0.5});fill(ctx,k,P.brass);ink(ctx,k,1.8);ctx.restore();}
-    const col=path([[146,52],[152,10],[170,6],[200,16],[216,58],[200,92],[184,64]],{jit:1.5});fill(ctx,col,mix(P.coat,P.paper,0.08));shade(ctx,col,216,0,146,0,0.4);ink(ctx,col,4);
+/* ================= CHARACTERS =================
+   Character style rules (both figures):
+   - Flat base colour, then a hard-edged shadow crescent on the side away from the light (cel()),
+     hatched inside, and a thin warm gaslight rim on the lit edge. Light comes from upper right.
+   - Heavy outer outline (5px double pass), thin inner detail (2px), dashed stitching on seams.
+   - Period clothes, drawn as cut cloth: the Archivist wears a Chesterfield overcoat with a velvet
+     collar, pinstripe trousers with turn-ups, and spats over boots; the attendant wears a 1910
+     shirtwaist with a high lace collar, a cameo, and a Gibson-girl pompadour.
+   - Signatures: round spectacles, the striped scarf, a quill in the hat, index cards in the pocket. */
+const LX=0.86,LY=-0.5;
+function moved(p,dx,dy){const q=new Path2D();q.addPath(p);q.addPath(p,new DOMMatrix([1,0,0,1,dx,dy]));return q;}
+function cel(ctx,p,base,o={}){const s=o.s??9,r=o.r??3.5;fill(ctx,p,base);ctx.save();ctx.clip(p);
+  const sh=moved(p,LX*s,LY*s);ctx.fillStyle=mix(base,o.to||P.ink,o.dark??0.42);ctx.fill(sh,'evenodd');
+  if(o.hatch!==false){ctx.save();ctx.clip(sh,'evenodd');const W=ctx.canvas.width,H=ctx.canvas.height;ctx.strokeStyle=hexA(P.ink,o.ha??0.35);ctx.lineWidth=1.3;ctx.beginPath();for(let k=-H;k<W;k+=6){ctx.moveTo(k,0);ctx.lineTo(k+H*0.55,H);}ctx.stroke();ctx.restore();}
+  if(o.rim!==false){ctx.fillStyle=hexA(P.glow,o.ra??0.5);ctx.fill(moved(p,-LX*r,-LY*r),'evenodd');}
+  ctx.restore();}
+function stitch(ctx,pts,c,a=0.55){ctx.save();ctx.setLineDash([5,4]);line(ctx,pts,1.6,c||P.paper,a);ctx.restore();}
+function flecks(ctx,p,bb,n=120){ctx.save();ctx.clip(p);const[x0,y0,w,h]=bb;for(let i=0;i<n;i++){ctx.fillStyle=R()<0.5?hexA(P.paper,0.09):hexA(P.ink,0.18);ctx.fillRect(x0+rr(0,w),y0+rr(0,h),rr(1,2.5),rr(1,2.5));}ctx.restore();}
+const SPAT=()=>mix(P.paper,P.stone,0.28),COLLAR=()=>mix(P.coat,P.ink,0.38),HAIR=()=>mix(P.paper,P.stone,0.25);
+
+/* ---- the Archivist ---- */
+function trousers(ctx,front){
+  const tr=path(front?[[38,6],[66,6],[65,90],[63,176],[37,176],[36,90]]:[[40,6],[66,6],[64,90],[61,176],[39,176],[38,90]],{smooth:false,jit:1});
+  cel(ctx,tr,P.trouser,{s:7});ctx.save();ctx.clip(tr);ctx.strokeStyle=hexA(P.paper,0.2);ctx.lineWidth=1.4;for(let x=34;x<72;x+=7){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x+rr(-1.5,1.5),180);ctx.stroke();}ctx.restore();
+  line(ctx,[[52,100],[51,170]],1.6,P.ink,0.45);ink(ctx,tr,4);
+  const cf=box(36,170,29,14,0.8);cel(ctx,cf,P.trouser,{s:4,hatch:false});line(ctx,[[38,176],[63,176]],1.4,P.ink,0.6);ink(ctx,cf,2.5);}
+function drawLeg(view){return ctx=>{
+  trousers(ctx,view==='front');
+  const bc=P.boot,sp=SPAT();
+  if(view==='side'){
+    const bt=path([[36,206],[92,208],[108,212],[116,204],[119,210],[112,224],[92,232],[40,234],[33,222]],{jit:0.8});cel(ctx,bt,bc,{s:5,ra:0.7});line(ctx,[[70,222],[104,214]],2.5,P.paper,0.35);ink(ctx,bt,4);
+    const s=path([[37,182],[64,182],[68,200],[90,208],[92,216],[38,218],[34,200]],{smooth:false,jit:0.8});cel(ctx,s,sp,{s:5,hatch:false});
+    for(const y of [190,199,208])dot(ctx,42,y,2.3,P.ink);line(ctx,[[40,216],[90,214]],1.4,P.ink,0.5);ink(ctx,s,3);
+  }else if(view==='back'){
+    const bt=path([[35,208],[67,208],[70,226],[64,234],[38,234],[32,226]],{jit:0.8});cel(ctx,bt,bc,{s:4,ra:0.7});ink(ctx,bt,3.5);
+    const s=path([[37,182],[64,182],[68,214],[34,214]],{smooth:false,jit:0.8});cel(ctx,s,sp,{s:4,hatch:false});line(ctx,[[51,184],[51,212]],1.4,P.ink,0.5);ink(ctx,s,3);
   }else{
-    const c=path([[104,46],[70,60],[60,110],[66,200],[74,300],[62,380],[40,450],[40,450],[150,446],[260,450],[260,450],[238,380],[226,300],[234,200],[240,110],[230,60],[196,46]],{jit:1.5});
-    fill(ctx,c,P.coat);shade(ctx,c,60,0,240,0,0.38);hatch(ctx,c,{ang:-1.0,gap:8,a:0.3,clip2:box(186,0,134,470,0)});mottle(ctx,c,P.paper,0.07,22,16,[60,40,180,420]);
-    line(ctx,[[150,70],[151,290]],2.5,P.ink,0.6);line(ctx,[[150,370],[150,446]],3,P.ink,0.85);
-    const bt=box(102,290,96,22,1.5);fill(ctx,bt,mix(P.coat,P.ink,0.25));ink(ctx,bt,3);for(const x of [112,188]){const b=path(ell(x,301,6,6,8,0.05));fill(ctx,b,P.brass);ink(ctx,b,2);}
-    const pt=box(176,150,34,30,2);fill(ctx,pt,P.coat2);ink(ctx,pt,2.5);ink(ctx,c,5);
-    const col=path([[106,52],[110,14],[150,6],[190,14],[194,52],[150,64]],{jit:1.5});fill(ctx,col,mix(P.coat,P.paper,0.08));shade(ctx,col,194,0,106,0,0.35);ink(ctx,col,4);
+    const bt=path([[32,206],[70,206],[78,222],[72,236],[34,236],[28,224]],{jit:0.8});cel(ctx,bt,bc,{s:4,ra:0.7});dot(ctx,62,226,3,hexA(P.paper,0.5));ink(ctx,bt,3.5);
+    const s=path([[37,182],[64,182],[70,212],[32,212]],{smooth:false,jit:0.8});cel(ctx,s,sp,{s:4,hatch:false});for(const y of [190,198,206])dot(ctx,62,y,2.2,P.ink);ink(ctx,s,3);
   }};}
-function drawHead(mode){return ctx=>{
-  const neck=path(mode==='side'?[[98,252],[100,200],[118,190],[124,252]]:[[98,252],[100,196],[122,196],[124,252]],{jit:1});fill(ctx,neck,P.skin);shade(ctx,neck,124,0,96,0,0.5);ink(ctx,neck,3);
-  const hairC=mix(P.paper,P.stone,0.35);
-  if(mode==='side'){
-    const hair=path(ell(80,130,26,48,12,0.25));fill(ctx,hair,hairC);hatch(ctx,hair,{ang:1.2,gap:5,a:0.35});ink(ctx,hair,3);
-    const head=path(ell(122,124,58,70,20,0.03,-0.05));fill(ctx,head,P.skin);shade(ctx,head,190,0,64,0,0.45);hatch(ctx,head,{ang:-0.9,gap:6,a:0.25,clip2:box(0,0,96,260,0)});ink(ctx,head,4.5);
-    const ear=path(ell(98,134,12,18,10,0.05));fill(ctx,ear,P.skin);ink(ctx,ear,2.5);
-    for(let i=0;i<7;i++)curl(ctx,64+rr(-4,4),88+i*13,Math.PI+rr(-0.4,0.4),rr(5,9),2.2);
-    const nose=path([[166,110],[196,122],[228,146],[242,164],[230,167],[200,160],[170,150]],{jit:0.8});fill(ctx,nose,P.skin);shade(ctx,nose,200,120,200,168,0.4);ink(ctx,nose,3.5);
-    fill(ctx,path(ell(160,110,24,20,12,0.06)),hexA(P.ink,0.32));ctx.save();ctx.globalAlpha=0.45;dot(ctx,162,112,25,P.paper);ctx.restore();dot(ctx,166,114,5,P.ink);dot(ctx,168,112,1.6,P.paper);
-    ctx.save();ctx.strokeStyle=P.ink;ctx.lineWidth=4.5;ctx.beginPath();ctx.arc(162,112,25,0,TAU);ctx.stroke();ctx.restore();
-    line(ctx,[[137,108],[104,118]],3);line(ctx,[[138,80],[160,74],[190,84]],4.5);line(ctx,[[162,184],[178,188],[194,181]],3);line(ctx,[[148,150],[156,172]],2,P.ink,0.55);
-  }else if(mode==='front'){
-    for(const sx of [-1,1]){const hair=path(ell(110+sx*58,128,20,42,12,0.25));fill(ctx,hair,hairC);hatch(ctx,hair,{ang:1.2,gap:5,a:0.35});ink(ctx,hair,3);}
-    for(const sx of [-1,1]){const ear=path(ell(110+sx*62,136,11,17,10,0.05));fill(ctx,ear,P.skin);ink(ctx,ear,2.5);}
-    const head=path(ell(110,126,58,72,20,0.03));fill(ctx,head,P.skin);shade(ctx,head,40,0,180,0,0.4);ink(ctx,head,4.5);
-    for(const sx of [-1,1]){fill(ctx,path(ell(110+sx*26,116,22,19,12,0.06)),hexA(P.ink,0.3));ctx.save();ctx.globalAlpha=0.45;dot(ctx,110+sx*26,118,23,P.paper);ctx.restore();dot(ctx,110+sx*24,120,5,P.ink);
-      ctx.save();ctx.strokeStyle=P.ink;ctx.lineWidth=4.5;ctx.beginPath();ctx.arc(110+sx*26,118,23,0,TAU);ctx.stroke();ctx.restore();line(ctx,[[110+sx*14,86],[110+sx*28,80],[110+sx*44,88]],4.5);}
-    const nose=path([[103,124],[117,124],[124,176],[112,188],[98,178]],{jit:0.6});fill(ctx,nose,P.skin);shade(ctx,nose,98,0,124,0,0.45);ink(ctx,nose,3);line(ctx,[[90,204],[110,200],[130,206]],3);
+function indexCards(ctx,x,y,n=3){for(let i=0;i<n;i++){ctx.save();ctx.translate(x+i*12,y);ctx.rotate(-0.3+i*0.22);const cd=box(-13,-36,28,40,1);fill(ctx,cd,P.paper);line(ctx,[[-9,-30],[11,-30]],1.6,P.scarfA,0.8);line(ctx,[[-9,-24],[11,-24]],1.1,P.ink,0.4);line(ctx,[[-9,-18],[8,-18]],1.1,P.ink,0.4);ink(ctx,cd,2);ctx.restore();}}
+function keyRing(ctx,x,y){ctx.save();ctx.strokeStyle=P.brass;ctx.lineWidth=3;ctx.beginPath();ctx.arc(x,y,9,0,TAU);ctx.stroke();ctx.restore();
+  for(let i=0;i<3;i++){ctx.save();ctx.translate(x,y+7);ctx.rotate(-0.45+i*0.42);const k=path([[-2.5,0],[2.5,0],[2.5,26],[8,26],[8,31],[2.5,31],[2.5,35],[-2.5,35]],{smooth:false,jit:0.4});fill(ctx,k,P.brass);ink(ctx,k,1.6);ctx.restore();}}
+function drawCoat(view){return ctx=>{
+  const cc=P.coat;
+  if(view==='side'){
+    const c=path([[124,40],[104,52],[92,96],[90,190],[94,250],[96,300],[88,360],[70,420],[46,452],[46,452],[104,446],[160,452],[226,446],[226,446],[216,380],[210,320],[218,250],[226,170],[224,100],[210,56],[180,38]],{jit:1.2});
+    cel(ctx,c,cc,{s:16,dark:0.5});flecks(ctx,c,[80,40,160,420],260);
+    stitch(ctx,[[216,90],[212,200],[206,320],[214,440]]);stitch(ctx,[[96,300],[208,302]]);stitch(ctx,[[52,444],[104,440],[160,446],[220,440]]);
+    line(ctx,[[98,330],[84,400],[68,446]],2.5,P.ink,0.8);line(ctx,[[204,64],[196,120],[190,168]],2.5,P.ink,0.8);
+    const bp=path([[160,150],[196,148],[197,160],[161,162]],{smooth:false});fill(ctx,bp,mix(cc,P.ink,0.3));line(ctx,[[170,150],[168,124]],3,P.scarfB);line(ctx,[[180,150],[183,128]],3,P.brass);ink(ctx,bp,1.8);
+    indexCards(ctx,148,318);const pk=path([[130,314],[206,310],[208,340],[132,344]],{smooth:false,jit:1});cel(ctx,pk,cc,{s:5,hatch:false});stitch(ctx,[[136,320],[202,316]]);ink(ctx,pk,2.5);
+    for(const y of [120,180,240])dot(ctx,219,y,4,mix(cc,P.paper,0.3));
+    const pt=box(102,200,30,28,1.5);fill(ctx,pt,P.coat2);stitch(ctx,[[106,204],[128,204],[128,224],[106,224],[106,204]],P.ink,0.5);ink(ctx,pt,2);
+    ink(ctx,c,5);keyRing(ctx,108,330);
+    const col=path([[146,50],[152,10],[172,4],[202,14],[218,58],[200,90],[184,64]],{jit:1});cel(ctx,col,COLLAR(),{s:6,hatch:false,ra:0.35});ink(ctx,col,3.5);
+    
   }else{
-    for(const sx of [-1,1]){const ear=path(ell(110+sx*60,136,11,17,10,0.05));fill(ctx,ear,P.skin);ink(ctx,ear,2.5);}
-    const head=path(ell(110,126,58,72,20,0.03));fill(ctx,head,P.skin);ink(ctx,head,4.5);
-    const hair=path([[54,110],[60,170],[84,196],[136,196],[160,170],[166,110],[150,96],[110,104],[70,96]],{jit:2});fill(ctx,hair,hairC);hatch(ctx,hair,{ang:1.3,gap:5,a:0.35});ink(ctx,hair,3);
-    line(ctx,[[52,120],[40,118]],3);line(ctx,[[168,120],[180,118]],3);shade(ctx,head,110,40,110,200,0.25);
+    const c=path([[104,46],[74,60],[66,110],[70,200],[76,300],[66,380],[46,450],[46,450],[150,446],[254,450],[254,450],[234,380],[224,300],[230,200],[234,110],[226,60],[196,46]],{jit:1.2});
+    cel(ctx,c,cc,{s:16,dark:0.5});flecks(ctx,c,[60,40,200,420],260);stitch(ctx,[[56,444],[150,440],[244,444]]);
+    if(view==='back'){
+      line(ctx,[[150,70],[151,292]],2,P.ink,0.6);line(ctx,[[150,370],[150,446]],2.5,P.ink,0.85);
+      const bt=box(102,290,96,20,1.2);cel(ctx,bt,cc,{s:4,hatch:false});ink(ctx,bt,2.5);for(const x of [112,188])dot(ctx,x,300,5,mix(cc,P.paper,0.3));
+      const pt=box(176,150,32,28,1.5);fill(ctx,pt,P.coat2);ink(ctx,pt,2);ink(ctx,c,5);
+      const col=path([[104,60],[110,10],[150,4],[190,10],[196,60],[150,72]],{jit:1});cel(ctx,col,COLLAR(),{s:5,hatch:false,ra:0.35});ink(ctx,col,3.5);
+    }else{
+      // front: open below the waist to show trousers, lapels with a velvet collar, shirt and tie, the scarf ends
+      const sc0=path([[110,70],[116,14],[134,30],[150,36],[166,30],[184,14],[190,70]],{smooth:false,jit:0.8});cel(ctx,sc0,COLLAR(),{s:5,hatch:false,ra:0.3});ink(ctx,sc0,3);
+      const gap=path([[136,330],[164,330],[176,452],[124,452]],{smooth:false});fill(ctx,gap,mix(P.trouser,P.ink,0.35));
+      line(ctx,[[150,120],[150,330]],2.2,P.ink,0.7);for(const y of [200,250,300])dot(ctx,158,y,5,mix(cc,P.paper,0.3));
+      for(const sx of [-1,1]){const lp=path([[150+sx*4,64],[150+sx*40,58],[150+sx*46,82],[150+sx*30,96],[150+sx*8,170]],{smooth:false,jit:0.8});cel(ctx,lp,COLLAR(),{s:5,hatch:false,ra:0.3});ink(ctx,lp,2.5);}
+      const sh=path([[140,58],[160,58],[156,110],[144,110]],{smooth:false});fill(ctx,sh,P.paper);const tie=path([[146,66],[154,66],[156,104],[150,112],[144,104]]);fill(ctx,tie,P.case);ink(ctx,tie,1.6);
+      for(const sx of [-1,1]){const pk=path([[150+sx*32,318],[150+sx*84,314],[150+sx*86,340],[150+sx*34,344]],{smooth:false,jit:1});cel(ctx,pk,cc,{s:4,hatch:false});ink(ctx,pk,2.4);}
+      indexCards(ctx,198,322);const bp=path([[96,150],[128,148],[128,160],[96,162]],{smooth:false});fill(ctx,bp,mix(cc,P.ink,0.3));line(ctx,[[104,150],[102,126]],3,P.scarfB);ink(ctx,bp,1.8);
+      ink(ctx,c,5);keyRing(ctx,222,336);
+      // scarf: around the neck, one long end down the chest
+      const sc=path([[112,54],[188,54],[190,74],[170,80],[176,190],[160,196],[150,82],[112,74]],{jit:0.8});fill(ctx,sc,P.scarfA);ctx.save();ctx.clip(sc);ctx.fillStyle=P.scarfB;for(let y=60;y<200;y+=22)ctx.fillRect(100,y,100,9);ctx.restore();shade(ctx,sc,112,0,190,0,0.35);ink(ctx,sc,3);
+      for(let i=0;i<5;i++)line(ctx,[[162+i*3,194],[160+i*4,208]],1.8,P.ink,0.9);
+    }
+  }};}
+function spectacles(ctx,cx,cy,r){fill(ctx,path(ell(cx,cy,r-1,r-1,14,0)),hexA(P.paper,0.42));ctx.save();ctx.strokeStyle=hexA('#ffffff',0.75);ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(cx-r*0.5,cy-r*0.2);ctx.lineTo(cx-r*0.1,cy-r*0.6);ctx.moveTo(cx-r*0.45,cy+r*0.15);ctx.lineTo(cx-r*0.3,cy);ctx.stroke();ctx.strokeStyle=P.ink;ctx.lineWidth=4.5;ctx.beginPath();ctx.arc(cx,cy,r,0,TAU);ctx.stroke();ctx.strokeStyle=P.brass;ctx.lineWidth=1.4;ctx.beginPath();ctx.arc(cx,cy,r-2.5,-2.4,-0.6);ctx.stroke();ctx.restore();}
+function drawHead(view){return ctx=>{
+  const sk=P.skin,hc=HAIR();
+  const neck=path(view==='side'?[[100,254],[100,200],[120,192],[126,254]]:[[96,254],[98,196],[122,196],[124,254]],{jit:0.8});cel(ctx,neck,sk,{s:6,hatch:false});ink(ctx,neck,3);
+  if(view==='side'){
+    const hair=path([[64,96],[58,124],[66,160],[86,176],[96,150],[92,108]],{jit:2});cel(ctx,hair,hc,{s:5,hatch:false,ra:0.3});for(let i=0;i<6;i++)curl(ctx,60+rr(-3,3),102+i*12,Math.PI+rr(-0.4,0.4),rr(4,8),2);ink(ctx,hair,2.6);
+    const hd=path([[96,58],[130,50],[160,62],[178,92],[184,128],[176,160],[164,184],[138,196],[110,190],[92,170],[84,130],[86,90]],{jit:0.6});cel(ctx,hd,sk,{s:9});ink(ctx,hd,4.5);
+    const ear=path(ell(104,134,11,17,10,0.05));cel(ctx,ear,sk,{s:3,hatch:false});ink(ctx,ear,2.4);curl(ctx,106,128,1.6,5,1.6,P.ink);
+    const nose=path([[172,104],[198,120],[226,148],[234,160],[222,164],[196,158],[176,148]],{jit:0.5});cel(ctx,nose,sk,{s:4,hatch:false});ink(ctx,nose,3.4);dot(ctx,200,152,2,P.ink);
+    fill(ctx,path(ell(160,110,22,18,12,0.05)),hexA(P.ink,0.25));dot(ctx,165,113,4.5,P.ink);dot(ctx,166.5,111.5,1.4,P.paper);
+    line(ctx,[[138,80],[158,72],[180,76],[190,86]],5,hc);line(ctx,[[138,80],[158,72],[180,76],[190,86]],1.6,P.ink,0.7);
+    spectacles(ctx,162,112,24);line(ctx,[[139,108],[108,120]],2.6);
+    line(ctx,[[160,180],[176,184],[190,178]],2.6);line(ctx,[[150,150],[158,170]],1.6,P.ink,0.45);line(ctx,[[136,190],[152,196]],1.6,P.ink,0.4);
+    for(let i=0;i<4;i++)line(ctx,[[104+i*14,64-i*3],[108+i*14,50-i*4]],1.6,hc,0.9);
+  }else if(view==='front'){
+    for(const sx of [-1,1]){const hair=path([[110+sx*44,92],[110+sx*64,110],[110+sx*66,150],[110+sx*52,170],[110+sx*44,140]],{jit:1.5});cel(ctx,hair,hc,{s:4,hatch:false,ra:0.3});ink(ctx,hair,2.6);}
+    for(const sx of [-1,1]){const ear=path(ell(110+sx*58,136,10,16,10,0.05));cel(ctx,ear,sk,{s:3,hatch:false});ink(ctx,ear,2.4);}
+    const hd=path([[110,52],[146,60],[166,94],[168,140],[156,176],[134,196],[110,200],[86,196],[64,176],[52,140],[54,94],[74,60]],{jit:0.6});cel(ctx,hd,sk,{s:9});ink(ctx,hd,4.5);
+    for(const sx of [-1,1]){line(ctx,[[110+sx*12,86],[110+sx*28,80],[110+sx*44,86]],5,hc);line(ctx,[[110+sx*12,86],[110+sx*28,80],[110+sx*44,86]],1.5,P.ink,0.7);
+      dot(ctx,110+sx*26,114,4.5,P.ink);dot(ctx,110+sx*26+1.5,112.5,1.4,P.paper);spectacles(ctx,110+sx*27,114,22);line(ctx,[[110+sx*49,112],[110+sx*58,124]],2.4);}
+    line(ctx,[[104,112],[110,107],[116,112]],2.6);
+    const nose=path([[106,116],[114,116],[121,158],[118,168],[110,171],[102,168],[99,158]],{smooth:false,jit:0.3});cel(ctx,nose,sk,{s:4,hatch:false});ink(ctx,nose,2.6);dot(ctx,106,166,1.8,P.ink);dot(ctx,114,166,1.8,P.ink);
+    line(ctx,[[94,186],[110,190],[126,186]],2.6);line(ctx,[[84,150],[90,170]],1.5,P.ink,0.4);line(ctx,[[136,150],[130,170]],1.5,P.ink,0.4);
+    for(let i=0;i<5;i++)line(ctx,[[90+i*10,60-Math.abs(i-2)*2],[92+i*10,46-Math.abs(i-2)*3]],1.6,hc,0.9);
+  }else{
+    for(const sx of [-1,1]){const ear=path(ell(110+sx*58,136,10,16,10,0.05));cel(ctx,ear,sk,{s:3,hatch:false});ink(ctx,ear,2.4);}
+    const hd=path([[110,52],[146,60],[166,94],[168,140],[156,176],[134,196],[110,200],[86,196],[64,176],[52,140],[54,94],[74,60]],{jit:0.6});cel(ctx,hd,sk,{s:9});ink(ctx,hd,4.5);
+    const hair=path([[54,112],[60,168],[84,194],[136,194],[160,168],[166,112],[150,128],[110,134],[70,128]],{jit:1.5});cel(ctx,hair,hc,{s:5,hatch:false,ra:0.3});for(let i=0;i<7;i++)curl(ctx,70+i*12,186+rr(-4,6),Math.PI/2+rr(-0.4,0.4),rr(4,7),1.8);ink(ctx,hair,2.6);
+    line(ctx,[[52,120],[38,118]],2.6);line(ctx,[[168,120],[182,118]],2.6);
   }};}
 function drawHat(ctx){
-  const crown=path([[48,196],[56,130],[52,62],[44,30],[44,30],[76,12],[118,16],[136,28],[136,28],[128,62],[130,130],[138,196]],{jit:1.5});fill(ctx,crown,P.hat);shade(ctx,crown,140,0,40,0,0.5);hatch(ctx,crown,{ang:-1.1,gap:7,a:0.28,c:P.paper});
-  const pt=box(92,86,22,20,1.5);fill(ctx,pt,P.coat2);ink(ctx,pt,2);ink(ctx,crown,4.5);
-  const band=path([[52,160],[134,160],[136,184],[50,184]],{smooth:false,jit:1});fill(ctx,band,P.scarfA);ink(ctx,band,3);
-  const q=path([[124,176],[134,130],[150,80],[166,40],[178,36],[174,62],[160,106],[142,150],[132,178]],{jit:0.5});fill(ctx,q,P.paper);line(ctx,[[130,178],[152,110],[172,40]],2,P.ink,0.8);ink(ctx,q,2.5);
-  const brim=path([[6,198],[40,190],[90,188],[150,190],[176,196],[174,208],[90,204],[8,210]],{jit:1});fill(ctx,brim,mix(P.hat,P.ink,0.2));ink(ctx,brim,4);}
-function drawArm(ctx){
-  const sl=path([[36,6],[36,6],[76,6],[76,6],[74,90],[68,170],[66,196],[42,198],[40,170],[36,90]],{jit:1.2});fill(ctx,sl,P.coat);shade(ctx,sl,76,0,34,0,0.5);hatch(ctx,sl,{ang:-1.0,gap:7,a:0.28,clip2:box(0,0,52,250,0)});
-  const ep=box(44,96,26,30,1.5);fill(ctx,ep,P.coat2);ink(ctx,ep,2);ink(ctx,sl,4);
-  const cuff=path([[40,188],[68,188],[69,204],[63,199],[58,206],[52,199],[46,206],[40,201]],{smooth:false,jit:0.6});fill(ctx,cuff,P.paper);ink(ctx,cuff,2);
-  const hand=path([[44,202],[64,202],[70,216],[69,238],[64,242],[61,226],[57,244],[51,242],[49,226],[44,236],[38,230],[41,214]],{smooth:false,jit:0.6});fill(ctx,hand,P.skin);ink(ctx,hand,2.5);}
+  const crown=path([[48,196],[56,130],[52,62],[46,30],[46,30],[78,14],[118,18],[134,30],[134,30],[128,62],[130,130],[138,196]],{jit:1.2});cel(ctx,crown,P.hat,{s:12,to:P.ink,dark:0.5,ra:0.45});
+  line(ctx,[[60,70],[90,80],[122,66]],2,P.ink,0.8);line(ctx,[[64,118],[100,112]],1.6,P.paper,0.2);const pt=box(92,86,22,20,1.5);fill(ctx,pt,P.coat2);stitch(ctx,[[94,88],[112,88],[112,104],[94,104],[94,88]],P.ink,0.5);ink(ctx,crown,4.5);
+  const band=path([[52,160],[134,160],[136,184],[50,184]],{smooth:false,jit:0.8});cel(ctx,band,P.scarfA,{s:4,hatch:false});ink(ctx,band,2.6);
+  const q=path([[124,176],[134,130],[150,80],[166,40],[178,34],[174,62],[160,106],[142,150],[132,178]],{jit:0.4});fill(ctx,q,P.paper);for(let i=0;i<8;i++){const k=i/8,x=lerp(136,170,k),y=lerp(160,46,k);line(ctx,[[x,y],[x+9,y+5]],1.2,P.ink,0.45);}line(ctx,[[130,178],[152,110],[172,40]],1.8,P.ink,0.8);ink(ctx,q,2.4);
+  const brim=path([[6,198],[40,190],[90,188],[150,190],[176,196],[174,208],[90,204],[8,210]],{jit:0.8});cel(ctx,brim,mix(P.hat,P.ink,0.2),{s:4,hatch:false,ra:0.4});ink(ctx,brim,4);}
+// arms in two pieces: upper arm (shoulder to elbow) and forearm with hand
+function drawUpperArm(patch){return ctx=>{const sl=path([[24,26],[28,12],[38,4],[52,4],[62,12],[66,26],[64,60],[62,116],[62,116],[28,118],[28,118],[26,60]],{jit:0.8});cel(ctx,sl,P.coat,{s:9,dark:0.5});flecks(ctx,sl,[20,0,50,120],40);
+  if(patch){const ep=path(ell(44,104,14,14,10,0.08));fill(ctx,ep,P.coat2);stitch(ctx,[[34,98],[44,92],[54,98]],P.ink,0.5);ink(ctx,ep,1.8);}stitch(ctx,[[60,10],[58,110]]);ink(ctx,sl,4);}}
+function drawForearm(grip){return ctx=>{const sl=path([[28,2],[66,2],[62,76],[34,78]],{smooth:false,jit:0.8});cel(ctx,sl,P.coat,{s:8,dark:0.5});flecks(ctx,sl,[26,0,44,80],30);ink(ctx,sl,4);
+  const cf=path([[33,72],[63,72],[64,88],[32,88]],{smooth:false,jit:0.6});cel(ctx,cf,P.paper,{s:4,hatch:false,ra:0.3});dot(ctx,58,80,2.6,P.brass);ink(ctx,cf,2);
+  const hand=grip?path([[34,86],[62,86],[68,98],[66,114],[58,120],[40,120],[32,110],[32,96]],{jit:0.5}):path([[36,86],[60,86],[68,100],[67,124],[61,128],[58,112],[54,132],[48,132],[46,112],[41,124],[34,118],[35,100]],{smooth:false,jit:0.5});
+  cel(ctx,hand,P.skin,{s:4,hatch:false});if(grip){for(let k=0;k<3;k++)line(ctx,[[40+k*8,104],[42+k*8,116]],1.4,P.ink,0.6);}ink(ctx,hand,2.6);}}
 function drawScarf(ctx){
-  const s=path([[212,10],[170,16],[130,26],[90,22],[50,34],[20,44],[16,64],[50,56],[90,46],[130,52],[170,40],[212,34]],{jit:1});fill(ctx,s,P.scarfA);
+  const s=path([[212,10],[170,16],[130,26],[90,22],[50,34],[20,44],[16,64],[50,56],[90,46],[130,52],[170,40],[212,34]],{jit:0.8});fill(ctx,s,P.scarfA);
   ctx.save();ctx.clip(s);ctx.fillStyle=P.scarfB;for(let x=4;x<220;x+=30){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x+12,0);ctx.lineTo(x+6,100);ctx.lineTo(x-6,100);ctx.closePath();ctx.fill();}ctx.restore();
-  shade(ctx,s,0,10,0,64,0.4);ink(ctx,s,3.5);for(let i=0;i<6;i++)line(ctx,[[19,46+i*3.4],[4,48+i*5]],2,P.ink,0.9);}
+  shade(ctx,s,0,10,0,64,0.4);ink(ctx,s,3.2);for(let i=0;i<6;i++)line(ctx,[[19,46+i*3.4],[4,48+i*5]],1.8,P.ink,0.9);}
 function drawCase(ctx){
-  const hd=path([[70,44],[72,14],[80,8],[120,8],[128,14],[130,44],[118,44],[116,22],[84,22],[82,44]],{smooth:false,jit:0.8});fill(ctx,hd,mix(P.case,P.ink,0.4));ink(ctx,hd,3);
-  const b=path([[12,40],[12,40],[188,40],[188,40],[192,160],[192,160],[8,162],[8,162]],{jit:2});fill(ctx,b,P.case);shade(ctx,b,0,40,0,162,0.45);hatch(ctx,b,{ang:-0.7,gap:8,a:0.18});
-  for(const x of [46,136]){const st=box(x,38,18,126,1);fill(ctx,st,mix(P.case,P.ink,0.4));ink(ctx,st,2);const bk=box(x-3,90,24,18,1);fill(ctx,bk,P.brass);ink(ctx,bk,2);}
-  ctx.save();ctx.translate(100,98);ctx.rotate(-0.1);const sk=box(-28,-18,56,34,1.5);fill(ctx,sk,P.scarfB);txt(ctx,'LOST',0,8,20,{font:FT});ink(ctx,sk,2);ctx.restore();ink(ctx,b,4);}
+  const hd=path([[70,44],[72,14],[80,8],[120,8],[128,14],[130,44],[118,44],[116,22],[84,22],[82,44]],{smooth:false,jit:0.6});fill(ctx,hd,mix(P.case,P.ink,0.4));ink(ctx,hd,2.6);
+  const b=path([[12,40],[12,40],[188,40],[188,40],[192,160],[192,160],[8,162],[8,162]],{jit:1.5});cel(ctx,b,P.case,{s:10});stitch(ctx,[[18,50],[182,50],[184,152],[16,152],[18,50]],P.paper,0.4);
+  for(const x of [46,136]){const st=box(x,38,18,126,1);fill(ctx,st,mix(P.case,P.ink,0.4));ink(ctx,st,1.8);const bk=box(x-3,90,24,18,1);cel(ctx,bk,P.brass,{s:3,hatch:false});ink(ctx,bk,1.8);}
+  ctx.save();ctx.translate(100,98);ctx.rotate(-0.1);const sk=box(-28,-18,56,34,1.2);fill(ctx,sk,P.scarfB);txt(ctx,'LOST',0,8,20,{font:FT,maxW:48});ink(ctx,sk,1.8);ctx.restore();ink(ctx,b,4);}
+
+/* ---- the attendant: a 1910 shirtwaist behind the counter ---- */
+function drawAttBody(ctx,W,H){
+  const bl=mix(mix(P.paper,P.scarfA,0.16),P.glowDim,0.08),sk=mix(P.scarfA,P.ink,0.55);
+  const skirt=path([[70,226],[190,226],[198,H],[62,H]],{smooth:false,jit:0.8});cel(ctx,skirt,sk,{s:6});const belt=box(72,220,116,16,0.8);fill(ctx,belt,mix(sk,P.ink,0.3));const bk=box(118,220,24,16,0.6);cel(ctx,bk,P.brass,{s:3,hatch:false});ink(ctx,belt,2.2);ink(ctx,skirt,3.5);
+  // long fitted sleeves (1910), shoulder to elbow; the elbows come forward onto the counter
+  for(const sx of [-1,1]){const ua=path([[130+sx*44,66],[130+sx*64,72],[130+sx*76,96],[130+sx*76,132],[130+sx*62,140],[130+sx*54,112],[130+sx*44,86]],{jit:0.6});cel(ctx,ua,bl,{s:6,ha:0.16});ctx.save();ctx.clip(ua);for(let k=0;k<6;k++){ctx.strokeStyle=hexA(P.scarfA,0.28);ctx.lineWidth=2.2;ctx.beginPath();ctx.moveTo(130+sx*(48+k*6),70);ctx.lineTo(130+sx*(52+k*5),142);ctx.stroke();}ctx.restore();ink(ctx,ua,3);}
+  const t=path([[82,78],[104,64],[156,64],[178,78],[182,150],[178,224],[82,224],[78,150]],{jit:0.6});cel(ctx,t,bl,{s:10,ha:0.16,dark:0.22});
+  ctx.save();ctx.clip(t);for(let x=80;x<184;x+=7){ctx.fillStyle=hexA(P.scarfA,0.28);ctx.fillRect(x,60,2.2,170);}ctx.restore();
+  {const pts=[[124,64],[136,64]];for(let k=0;k<6;k++)pts.push([140+(k%2?5:0)+k*1.2,72+k*9]);pts.push([130,126]);for(let k=5;k>=0;k--)pts.push([120-(k%2?5:0)-k*1.2,72+k*9]);const jab=path(pts,{jit:0.4});fill(ctx,jab,P.paper);for(let k=0;k<5;k++)line(ctx,[[122-k,78+k*9],[130,82+k*9],[138+k,78+k*9]],1.2,P.ink,0.35);ink(ctx,jab,2);}
+  ink(ctx,t,3.5);
+  const watch=path(ell(100,104,7,7,10,0.02));cel(ctx,watch,P.brass,{s:2,hatch:false});dot(ctx,100,104,3.5,P.paper);line(ctx,[[100,90],[100,97]],1.6,P.brass);ink(ctx,watch,1.5);
+  // her left forearm lies across the ledger
+  const fa=path([[60,128],[74,122],[112,136],[120,146],[104,150],[62,142]],{jit:0.6});cel(ctx,fa,bl,{s:5,ha:0.16});ink(ctx,fa,3);
+  const cf=path([[104,136],[114,138],[110,150],[100,148]],{smooth:false});fill(ctx,cf,P.paper);ink(ctx,cf,1.4);
+  const hd=path(ell(120,146,11,8,10,0.05));cel(ctx,hd,P.skin,{s:3,hatch:false});ink(ctx,hd,2.2);
+  // a high boned collar that hugs the neck, lace at the top edge, a cameo at the throat
+  const col=path([[116,34],[144,34],[147,64],[113,64]],{smooth:false,jit:0.5});cel(ctx,col,P.paper,{s:4,hatch:false,ra:0.3});for(const x of [122,130,138])line(ctx,[[x,38],[x,62]],1,P.ink,0.3);
+  {const sc=[];for(let x=117;x<=143;x+=4)sc.push([x,x%8<4?38:41]);line(ctx,sc,1.2,P.ink,0.55);}ink(ctx,col,2.4);
+  const cam=path(ell(130,58,7,9,10,0.02));fill(ctx,cam,P.brass);fill(ctx,path(ell(130,58,4.5,6.5,10,0.02)),mix(P.case,P.scarfB,0.45));dot(ctx,131,56,2,P.paper);ink(ctx,cam,1.5);}
+function drawAttArm(ctx){const fa=path([[98,4],[116,14],[106,30],[52,48],[40,36]],{jit:0.6});cel(ctx,fa,mix(mix(P.paper,P.scarfA,0.16),P.glowDim,0.08),{s:5,ha:0.16});ctx.save();ctx.clip(fa);for(let k=0;k<8;k++){ctx.strokeStyle=hexA(P.scarfA,0.28);ctx.lineWidth=2.2;ctx.beginPath();ctx.moveTo(40+k*10,10);ctx.lineTo(56+k*10,54);ctx.stroke();}ctx.restore();ink(ctx,fa,3);
+  const cf=path([[44,30],[56,28],[60,46],[48,50]],{smooth:false});fill(ctx,cf,P.paper);ink(ctx,cf,1.8);
+  const hd=path(ell(32,44,12,9,10,0.05,-0.3));cel(ctx,hd,P.skin,{s:3,hatch:false});ink(ctx,hd,2.2);
+  line(ctx,[[30,48],[12,22]],3.2,P.ink);line(ctx,[[30,48],[34,56]],1.6,P.brass);}
+function drawAttHead(ctx,W,H){
+  const sk=P.skin,hc=mix(P.case,P.leaf,0.45),hd=mix(hc,P.ink,0.35);
+  const nk=path([[88,206],[90,166],[110,166],[112,206]],{smooth:false,jit:0.6});cel(ctx,nk,sk,{s:4,hatch:false});ink(ctx,nk,2.6);
+  // the Gibson pompadour: a soft wide cloud swept up and back off the face, a knot on top
+  const cloud=path([[56,132],[44,108],[42,78],[56,50],[80,32],[100,28],[120,32],[144,50],[158,78],[156,108],[144,132],[136,104],[100,90],[64,104]],{jit:1});
+  cel(ctx,cloud,hc,{s:8,ra:0.4,ha:0.22});ctx.save();ctx.clip(cloud);for(let i=0;i<11;i++){const a=Math.PI*(0.08+i*0.084);const x0=100+Math.cos(a+Math.PI)*42,y0=120-Math.sin(a)*24;line(ctx,[[x0,y0],[100+Math.cos(a+Math.PI)*30,74-Math.sin(a)*20],[100+Math.cos(a+Math.PI)*12,40]],1.4,hd,0.6);}ctx.restore();ink(ctx,cloud,3);
+  const knot=path(ell(100,26,20,12,12,0.06));cel(ctx,knot,hc,{s:4,hatch:false,ra:0.4});spiral(ctx,100,26,9,1.4,hd,0.7);ink(ctx,knot,2.6);
+  line(ctx,[[146,64],[172,36]],3.2,P.scarfB);line(ctx,[[146,64],[144,68]],2.2,P.ink);line(ctx,[[172,36],[175,32]],2,P.ink);
+  const f=path([[100,88],[124,94],[138,114],[136,144],[122,166],[100,174],[78,166],[64,144],[62,114],[76,94]],{jit:0.4});cel(ctx,f,sk,{s:7,ha:0.18});
+  // the hair's front edge swept up from the forehead
+  ctx.save();ctx.clip(f);const fr=path([[60,112],[70,92],[100,84],[130,92],[140,112],[124,100],[100,96],[76,100]],{jit:0.6});fill(ctx,fr,hc);ctx.restore();
+  ink(ctx,f,3.4);
+  for(const sx of [-1,1]){line(ctx,[[100+sx*10,108],[100+sx*19,104],[100+sx*28,107]],2.2);line(ctx,[[100+sx*11,122],[100+sx*25,122]],1.2,P.ink,0.5);fill(ctx,path(ell(100+sx*24,140,8,5,8,0.1)),hexA('#c0605a',0.18));}
+  line(ctx,[[100,124],[102,142],[97,146]],1.6,P.ink,0.6);const lip=path([[91,154],[100,151],[109,154],[100,159]]);fill(ctx,lip,mix(P.skin,P.scarfA,0.2));ink(ctx,lip,1.3);}
+function drawAttEyes(ctx){for(const x of [22,58]){fill(ctx,path(ell(x,12,5,6,10,0.02)),P.ink);dot(ctx,x+1.5,10,1.4,P.paper);}}
 
 /* ================= THE ROOMS ================= */
 function drawFloor(ctx,W,H){
@@ -362,23 +458,12 @@ function drawDesk(ctx,W,H){
   const top=box(0,64,W,22,1.5);const front=box(14,84,W-28,H-90,1.5);fill(ctx,front,P.wood);shade(ctx,front,0,84,0,H,0.4);ink(ctx,front,3);
   for(let i=0;i<3;i++)panel(ctx,34+i*((W-68)/3),110,(W-68)/3-14,H-140,P.wood);
   fill(ctx,top,P.woodLight);ink(ctx,top,3);
-  ctx.save();ctx.translate(120,62);const bk=path([[-56,0],[-50,-16],[0,-10],[50,-16],[56,0]],{smooth:false,jit:0.8});fill(ctx,bk,P.paper);line(ctx,[[0,-10],[0,0]],2);for(let k=0;k<3;k++){line(ctx,[[-44,-10+k*3.5],[-8,-6+k*3.5]],1,P.ink,0.5);line(ctx,[[8,-6+k*3.5],[44,-10+k*3.5]],1,P.ink,0.5);}ink(ctx,bk,2);ctx.restore();
+  ctx.save();ctx.translate(196,62);const bk=path([[-56,0],[-50,-16],[0,-10],[50,-16],[56,0]],{smooth:false,jit:0.8});fill(ctx,bk,P.paper);line(ctx,[[0,-10],[0,0]],2);for(let k=0;k<3;k++){line(ctx,[[-44,-10+k*3.5],[-8,-6+k*3.5]],1,P.ink,0.5);line(ctx,[[8,-6+k*3.5],[44,-10+k*3.5]],1,P.ink,0.5);}ink(ctx,bk,2);ctx.restore();
   const iw=box(238,46,20,18,1);fill(ctx,iw,P.ink);ink(ctx,iw,1.5);line(ctx,[[252,48],[270,18]],2.5,P.paper);
   const bell=new Path2D();bell.arc(320,62,16,Math.PI,0);bell.closePath();fill(ctx,bell,P.brass);ink(ctx,bell,2);dot(ctx,320,44,4,P.brass);
   ctx.save();ctx.translate(374,48);ctx.rotate(-0.06);const sg=box(-38,-15,76,30,1);fill(ctx,sg,P.paper);txt(ctx,'INQUIRIES',0,5,13,{font:FT,maxW:66});ink(ctx,sg,1.8);ctx.restore();
 }
-function drawAttendant(ctx,W,H){
-  const sk=box(52,H-34,136,34,1);fill(ctx,sk,P.coat);ink(ctx,sk,3);
-  const bl=path([[56,H-34],[46,220],[40,176],[64,148],[96,138],[144,138],[176,148],[200,176],[194,220],[184,H-34]],{jit:1.2});fill(ctx,bl,mix(P.paper,P.glowDim,0.08));shade(ctx,bl,200,0,40,0,0.35);
-  for(let k=0;k<5;k++)line(ctx,[[100+k*10,150],[98+k*11,H-40]],1.4,P.ink,0.35);ink(ctx,bl,3.5);
-  for(const sx of [-1,1]){const sl=path(ell(120+sx*62,180,24,34,12,0.06));fill(ctx,sl,mix(P.paper,P.glowDim,0.12));shade(ctx,sl,120+sx*80,0,120+sx*40,0,0.3);ink(ctx,sl,3);}
-  const nk=path([[104,140],[106,118],[134,118],[136,140]]);fill(ctx,nk,P.skin);const col=box(100,108,40,30,1);fill(ctx,col,mix(P.paper,P.glowDim,0.1));for(let k=0;k<3;k++)line(ctx,[[102,114+k*8],[138,114+k*8]],1.2,P.ink,0.5);ink(ctx,col,2.5);
-  const bro=path(ell(120,142,8,7,8,0.05));fill(ctx,bro,P.brass);ink(ctx,bro,1.6);
-  const hair=path([[64,92],[60,56],[78,26],[120,12],[162,26],[180,56],[176,92],[160,70],[120,58],[80,70]],{jit:1.5});
-  const face=path(ell(120,78,32,36,16,0.03));fill(ctx,face,P.skin);shade(ctx,face,152,0,88,0,0.3);ink(ctx,face,3);
-  fill(ctx,hair,mix(P.case,P.ink,0.35));hatch(ctx,hair,{ang:1.1,gap:5,a:0.35,c:P.paper});ink(ctx,hair,3);const bun=path(ell(120,14,20,12,10,0.08));fill(ctx,bun,mix(P.case,P.ink,0.35));ink(ctx,bun,2.5);
-  dot(ctx,108,80,3,P.ink);dot(ctx,132,80,3,P.ink);line(ctx,[[100,70],[112,68]],2.2);line(ctx,[[128,68],[140,70]],2.2);line(ctx,[[120,84],[122,94]],1.6,P.ink,0.6);line(ctx,[[112,102],[120,104],[128,102]],2);
-}
+
 function drawNotice(ctx,W,H){
   const fr=box(6,6,W-12,H-12,1.5);fill(ctx,fr,P.wood);ink(ctx,fr,3);const ck=box(22,22,W-44,H-44,1);fill(ctx,ck,mix(P.coat2,P.case,0.4));mottle(ctx,ck,P.ink,0.2,40,4);ink(ctx,ck,2);
   ctx.save();ctx.translate(W/2,104);ctx.rotate(-0.02);const n=box(-86,-74,172,150,1.5);fill(ctx,n,P.paper);
@@ -517,8 +602,10 @@ function put(tex,ppu,ax,ay,x,y,z,ex){const s=S(tex,ppu,ax,ay);s.position.set(x,y
 function solid(x,z,hx,hz){BOXES.push({x,z,hx,hz});}
 
 function build(){
-  TX.leg=T(120,260,drawLeg(false),{border:5});TX.legB=T(120,260,drawLeg(true),{border:5});TX.coat=T(320,470,drawCoat(false));TX.coatB=T(320,470,drawCoat(true));
-  TX.headS=T(260,260,drawHead('side'));TX.headF=T(260,260,drawHead('front'));TX.headB=T(260,260,drawHead('back'));TX.hat=T(190,220,drawHat);TX.arm=T(110,250,drawArm,{border:5});TX.scarf=T(230,100,drawScarf,{border:5});TX.case=T(200,170,drawCase,{border:5});
+  for(const v of ['side','back','front']){const k=v[0].toUpperCase()+v.slice(1);TX['leg'+k]=T(126,250,drawLeg(v),{border:5});TX['coat'+k]=T(320,470,drawCoat(v));}
+  TX.headS=T(260,260,drawHead('side'));TX.headF=T(260,260,drawHead('front'));TX.headB=T(260,260,drawHead('back'));TX.hat=T(190,220,drawHat);
+  TX.upperArm=T(90,126,drawUpperArm(true),{border:5});TX.upperArmPlain=T(90,126,drawUpperArm(false),{border:5});TX.forearm=T(100,140,drawForearm(false),{border:5});TX.forearmGrip=T(100,140,drawForearm(true),{border:5});TX.scarf=T(230,100,drawScarf,{border:5});TX.case=T(200,170,drawCase,{border:5});
+  TX.attBody=T(260,260,drawAttBody);TX.attHead=T(200,214,drawAttHead);TX.attEyes=T(80,24,drawAttEyes,{border:0});TX.attArm=T(124,70,drawAttArm,{border:4});
   TX.floor=T(1024,512,drawFloor,{border:0,repeat:[8,2]});TX.cut=T(512,90,drawCut,{border:0,repeat:[10,1]});
   TX.walls=ROOMS.map((r,i)=>T(1000,650,drawBackWall(r),{border:0,seed:500+i}));
   TX.partD=T(1000,650,drawPartition(true),{border:4,seed:700});TX.partE=T(1000,650,drawPartition(false),{border:4,seed:701});
@@ -526,7 +613,7 @@ function build(){
   TX.vMin=T(300,260,drawVitrine('minerals'));TX.vIns=T(300,260,drawVitrine('insects'));TX.vTri=T(300,260,drawVitrine('trilobites'));
   TX.cabRocks=T(300,560,drawCabinet('rocks'));TX.cabBirds=T(300,560,drawCabinet('birds'));
   TX.portrait=T(220,300,drawPortrait);TX.fern=T(400,300,drawFernSlab);TX.lamp=T(140,320,drawLampPed,{border:5});
-  TX.desk=T(420,300,drawDesk);TX.att=T(240,330,drawAttendant);TX.notice=T(260,320,drawNotice);TX.lectern=T(140,260,drawLectern,{border:5});
+  TX.desk=T(420,300,drawDesk);TX.notice=T(260,320,drawNotice);TX.lectern=T(140,260,drawLectern,{border:5});
   TX.caribou=T(520,460,drawCaribou,{border:7});TX.moose=T(240,220,drawMoose);TX.mothTable=T(180,250,drawMothTable,{border:5});
   TX.bench=T(300,120,drawBench,{border:5});TX.stand=T(90,180,drawStand,{border:4});TX.rug=T(640,400,drawRug,{border:0});TX.clock=T(120,300,drawClock,{border:5});TX.pend=T(40,110,drawPendulum,{border:3});
   TX.sconce=T(140,210,drawSconce,{border:4});TX.glow=T(256,256,drawGlow,{border:0,grain:false});TX.moth=T(120,90,drawMoth,{border:4});TX.blob=T(128,64,drawBlob,{border:0,grain:false});
@@ -552,7 +639,12 @@ function build(){
   put(TX.lamp,100,70,320,-18.2,0,1.6,ex('lamp'));solid(-18.2,1.5,0.4,0.35);W.lampGlow=S(TX.glow,256/1.4,128,128,{add:true,fog:false,opacity:0.8});W.lampGlow.position.set(-18.2,2.62,1.65);scene.add(W.lampGlow);
   /* Entrance hall */
   const rug=plane(TX.rug,6.4,4,{order:-9});rug.rotation.x=-Math.PI/2;rug.position.set(-5,0.012,1.6);scene.add(rug);
-  put(TX.att,165,120,330,-5,1.12,-3.75,ex('attendant'));put(TX.desk,130,210,300,-5,0,-3.1,ex('attendant'));solid(-5,-3.3,1.7,0.6);
+  put(TX.desk,160,210,300,-5,0,-3.1,ex('attendant'));solid(-5,-3.3,1.6,0.6);
+  // the attendant is a small rig too: she writes in the ledger, and looks up when the Archivist comes near
+  W.att=new THREE.Group();W.att.position.set(-5,0.85,-3.75);scene.add(W.att);const ab=S(TX.attBody,190,130,260);W.att.add(ab);ab.art.userData.ex=ex('attendant');PICK.push(ab.art);
+  W.attHead=new THREE.Group();W.attHead.position.set(0,(260-62)/190,-0.004);W.att.add(W.attHead);const ah=S(TX.attHead,190,100,205);W.attHead.add(ah);ah.art.userData.ex=ex('attendant');PICK.push(ah.art);
+  W.attEyes=S(TX.attEyes,190,40,12);W.attEyes.position.set(0,(205-116)/190,0.004);W.attHead.add(W.attEyes);
+  W.attArm=S(TX.attArm,190,104,14);W.attArm.position.set((200-130)/190,(260-134)/190,0.01);W.att.add(W.attArm);
   put(TX.notice,110,130,160,-8.2,3.4,-4.94,ex('notice'));put(TX.bench,110,150,120,-8.2,0,-4.55);solid(-8.2,-4.6,1.4,0.35);
   put(TX.lectern,100,70,260,-2.2,0,-0.9,ex('book'));solid(-2.2,-0.9,0.45,0.35);
   put(TX.clock,100,60,150,-3.6,4.0,-4.93);W.pend=S(TX.pend,100,20,0);W.pend.position.set(-3.6,4.15,-4.92);scene.add(W.pend);
@@ -579,25 +671,32 @@ function build(){
 
 /* ---------- rig ---------- */
 const RIG={};
+// an arm is two paper pieces pinned together: the upper arm swings at the shoulder, the forearm at the elbow
+function makeArm(grip){const g=new THREE.Group();g.up=S(TX.upperArm,220,45,8);g.add(g.up);g.el=new THREE.Group();g.el.position.y=-(112-8)/220;g.add(g.el);
+  g.fa=S(grip?TX.forearmGrip:TX.forearm,220,48,6);g.el.add(g.fa);return g;}
 function buildRig(){const ppu=220;
   RIG.root=new THREE.Group();scene.add(RIG.root);RIG.body=new THREE.Group();RIG.root.add(RIG.body);RIG.hip=new THREE.Group();RIG.hip.position.y=0.99;RIG.body.add(RIG.hip);
-  RIG.legF=S(TX.leg,ppu,52,12);RIG.legN=S(TX.leg,ppu,52,12);RIG.hip.add(RIG.legF);RIG.hip.add(RIG.legN);RIG.torso=new THREE.Group();RIG.hip.add(RIG.torso);
-  RIG.coat=S(TX.coat,ppu,150,300);RIG.torso.add(RIG.coat);RIG.neck=new THREE.Group();RIG.torso.add(RIG.neck);RIG.head=S(TX.headS,ppu,110,250);RIG.neck.add(RIG.head);
+  RIG.legF=S(TX.legSide,ppu,52,12);RIG.legN=S(TX.legSide,ppu,52,12);RIG.hip.add(RIG.legF);RIG.hip.add(RIG.legN);RIG.torso=new THREE.Group();RIG.hip.add(RIG.torso);
+  RIG.coat=S(TX.coatSide,ppu,150,300);RIG.torso.add(RIG.coat);RIG.neck=new THREE.Group();RIG.torso.add(RIG.neck);RIG.head=S(TX.headS,ppu,110,250);RIG.neck.add(RIG.head);
   RIG.hat=new THREE.Group();RIG.neck.add(RIG.hat);RIG.hatS=S(TX.hat,ppu,90,204);RIG.hat.add(RIG.hatS);RIG.scarf=S(TX.scarf,ppu,206,18);RIG.torso.add(RIG.scarf);
-  RIG.armF=S(TX.arm,ppu,55,20);RIG.armN=S(TX.arm,ppu,55,20);RIG.torso.add(RIG.armF);RIG.torso.add(RIG.armN);
-  RIG.caseH=S(TX.case,ppu,100,16);RIG.caseH.position.set(0,-(232-20)/ppu,0.02);RIG.armN.add(RIG.caseH);
+  RIG.armF=makeArm(false);RIG.armN=makeArm(true);RIG.torso.add(RIG.armF);RIG.torso.add(RIG.armN);
+  RIG.caseH=S(TX.case,ppu,100,16);RIG.caseH.position.set(0,-(108-6)/ppu,0.02);RIG.armN.el.add(RIG.caseH);
   RIG.shadow=plane(TX.blob,1.3,0.45,{alpha:true,order:-4});RIG.shadow.rotation.x=-Math.PI/2;scene.add(RIG.shadow);
-  RIG.parts=[RIG.legF,RIG.legN,RIG.coat,RIG.head,RIG.hatS,RIG.scarf,RIG.armF,RIG.armN,RIG.caseH];setBodyMode('side');setHeadMode('side');}
-function setBodyMode(m){RIG.mode=m;const side=m==='side';RIG.legN.mat.map=side?TX.leg:TX.legB;RIG.legF.mat.map=side?TX.leg:TX.legB;RIG.coat.mat.map=side?TX.coat:TX.coatB;
-  if(side){RIG.legN.position.set(0.02,0,-0.012);RIG.legF.position.set(-0.03,0,-0.035);RIG.armN.position.set(0.11,1.05,0.035);RIG.armF.position.set(-0.09,1.05,-0.05);RIG.neck.position.set(0.05,1.17,-0.006);RIG.scarf.position.set(-0.045,1.127,0.008);RIG.scarfBase=0;}
-  else{RIG.legN.position.set(0.11,0,-0.012);RIG.legF.position.set(-0.11,0,-0.014);RIG.armN.position.set(0.37,1.0,0.02);RIG.armF.position.set(-0.37,1.0,0.02);RIG.neck.position.set(0,1.16,-0.006);RIG.scarf.position.set(0.04,1.12,0.008);RIG.scarfBase=Math.PI/2-0.05;}
-  RIG.farTint=side?0.68:0.92;}
-function setHeadMode(m){RIG.headMode=m;RIG.head.mat.map=m==='side'?TX.headS:m==='front'?TX.headF:TX.headB;RIG.hatBaseX=m==='side'?0.045:0;}
-function walkSide(s,ph,amp){s.legN=Math.sin(ph)*0.45*amp;s.legF=-s.legN;s.y+=0.06*amp*(1-Math.abs(Math.sin(ph)));s.armN=0.04-Math.sin(ph)*0.12*amp;s.armF=Math.sin(ph)*0.38*amp-0.04*(1-amp);s.lean=0.04*amp+Math.sin(ph*2)*0.02*amp;s.scarf+=Math.sin(ph)*0.12*amp-0.18*amp;}
-function walkBack(s,ph,amp){s.liftN=Math.max(0,Math.sin(ph))*0.12*amp;s.liftF=Math.max(0,-Math.sin(ph))*0.12*amp;s.waddle=Math.sin(ph)*0.035*amp;s.y+=0.04*amp*Math.abs(Math.cos(ph));s.armN=0.06+Math.sin(ph)*0.07*amp;s.armF=-0.06-Math.sin(ph)*0.07*amp;}
+  RIG.parts=[RIG.legF,RIG.legN,RIG.coat,RIG.head,RIG.hatS,RIG.scarf,RIG.armF.up,RIG.armF.fa,RIG.armN.up,RIG.armN.fa,RIG.caseH];
+  RIG.far=[RIG.legF,RIG.armF.up,RIG.armF.fa];setBodyMode('side');}
+function setBodyMode(m){RIG.mode=m;
+  const L={side:TX.legSide,back:TX.legBack,front:TX.legFront}[m];RIG.legN.mat.map=L;RIG.legF.mat.map=L;
+  RIG.coat.mat.map={side:TX.coatSide,back:TX.coatBack,front:TX.coatFront}[m];RIG.head.mat.map={side:TX.headS,back:TX.headB,front:TX.headF}[m];
+  RIG.hatBaseX=m==='side'?0.045:0;RIG.scarf.visible=m!=='front';for(const a of [RIG.armN,RIG.armF])a.up.mat.map=m==='front'?TX.upperArmPlain:TX.upperArm;
+  if(m==='side'){RIG.legN.position.set(0.02,0,-0.012);RIG.legF.position.set(-0.03,0,-0.035);RIG.legN.scale.x=RIG.legF.scale.x=1;
+    RIG.armN.position.set(0.11,1.05,0.035);RIG.armF.position.set(-0.09,1.05,-0.05);RIG.neck.position.set(0.05,1.17,-0.006);RIG.scarf.position.set(-0.045,1.127,0.008);RIG.scarfBase=0;RIG.out={N:1,F:1};}
+  else{const s=m==='front'?1:-1;// the case hand is the Archivist's left: screen right from the front, screen left from behind
+    RIG.legN.position.set(s*0.11,0,-0.012);RIG.legF.position.set(-s*0.11,0,-0.014);RIG.legN.scale.x=s;RIG.legF.scale.x=-s;
+    RIG.armN.position.set(s*0.33,1.04,0.02);RIG.armF.position.set(-s*0.33,1.04,0.02);RIG.neck.position.set(0,1.08,-0.006);RIG.scarf.position.set(0.04,1.12,0.008);RIG.scarfBase=Math.PI/2-0.05;RIG.out={N:s,F:-s};}
+  RIG.farTint=m==='side'?0.68:0.95;}
 
 /* ---------- player ---------- */
-const ME={x:-6.8,z:2.6,view:{mode:'side',facing:1},flip:null,dist:0,amp:0,target:[],pending:null,stuck:0,headFlip:null,headFront:false};
+const ME={x:-6.8,z:2.6,view:{mode:'side',facing:1},flip:null,dist:0,amp:0,target:[],pending:null,stuck:0,idle:0};
 const RAD=0.42;
 function blocked(x,z){if(x<-20+RAD||x>20-RAD||z<-5+RAD+0.1||z>4.6)return true;
   for(const wx of [-10,0,10])if(Math.abs(x-wx)<RAD+0.12&&!(z>-2+RAD*0.85&&z<1-RAD*0.85))return true;
@@ -621,8 +720,9 @@ function routeTo(x,z){if(!GRID)buildGrid();ME.stuck=0;const s=freeNear(...cellOf
   const raw=astar(s,g);if(!raw){ME.target=[];return;}if(!blocked(x,z))raw.push([x,z]);
   const pts=[];let cx=ME.x,cz=ME.z,i=0;while(i<raw.length){let far=i;for(let k=raw.length-1;k>i;k--)if(lineFree(cx,cz,raw[k][0],raw[k][1])){far=k;break;}pts.push(raw[far]);[cx,cz]=raw[far];i=far+1;}
   ME.target=pts;}
-const base=v=>v.mode==='back'?0:(v.facing<0?Math.PI:0);
-function wantView(vx,vz){const sp=Math.hypot(vx,vz);if(sp<1e-4)return ME.view;if(Math.abs(vx)>0.38*sp)return{mode:'side',facing:Math.sign(vx)};if(vz<0)return{mode:'back',facing:ME.view.facing};return{mode:'side',facing:ME.view.facing};}
+const base=v=>v.mode!=='side'?0:(v.facing<0?Math.PI:0);
+function wantView(vx,vz){const sp=Math.hypot(vx,vz);if(sp<1e-4)return ME.view;if(Math.abs(vx)>0.38*sp)return{mode:'side',facing:Math.sign(vx)};return{mode:vz<0?'back':'front',facing:ME.view.facing};}
+function faceFront(){if(ME.view.mode!=='front'&&!ME.flip)ME.flip={from:ME.view,to:{mode:'front',facing:ME.view.facing},u:0};}
 const keys={};
 window.addEventListener('keydown',e=>{const k=e.key.toLowerCase();if(cardOpen){if(k==='escape'||k==='e'||k==='enter'||k===' '){e.preventDefault();closeCard();}return;}
   if(['arrowup','arrowdown','arrowleft','arrowright','w','a','s','d'].includes(k)){keys[k]=true;ME.target=[];ME.pending=null;e.preventDefault();}
@@ -639,9 +739,8 @@ function openCard(ex){cardOpen=ex;ME.target=[];ME.pending=null;for(const k in ke
   ui.label.firstElementChild.textContent=ex.talk?'Says the attendant':'The museum’s label, 1910';ui.labelText.textContent=ex.label;
   ui.body.innerHTML=ex.body.map(p=>`<p>${esc(p)}</p>`).join('')+(ex.now?`<p class="now"><b>What we know now</b>${esc(ex.now)}</p>`:'');
   ui.wrap.hidden=false;ui.close.focus();seen.add(ex.id);renderCat();
-  const dx=ex.at[0]-ME.x;if(Math.abs(dx)>0.2&&ME.view.mode==='side'&&Math.sign(dx)!==ME.view.facing)ME.flip={from:ME.view,to:{mode:'side',facing:Math.sign(dx)},u:0};
-  ME.headFront=true;}
-function closeCard(){cardOpen=null;ui.wrap.hidden=true;ME.headFront=false;vp.focus({preventScroll:true});}
+  faceFront();}
+function closeCard(){cardOpen=null;ui.wrap.hidden=true;vp.focus({preventScroll:true});}
 ui.close.onclick=closeCard;ui.wrap.addEventListener('click',e=>{if(e.target===ui.wrap)closeCard();});
 function renderCat(){ui.count.textContent=`${seen.size}/${EXHIBITS.length} examined`;}
 
@@ -671,29 +770,44 @@ function step(dt){
     if(ME.target.length){if(moved<sp*0.25){ME.stuck+=dt;if(ME.stuck>0.35){const p=ME.pending;ME.target=[];ME.pending=null;if(p&&Math.hypot(p.at[0]-ME.x,p.at[1]-ME.z)<2.4)openCard(p);}}else ME.stuck=0;}
     if(!ME.flip){const want=wantView(ix,iz);if(want.mode!==ME.view.mode||want.facing!==ME.view.facing)ME.flip={from:ME.view,to:want,u:0};}}
   ME.amp=lerp(ME.amp,moved>0.0005?1:0,1-Math.exp(-12*dt));
+  ME.idle=moved>0.0005?0:(ME.idle||0)+dt;if(ME.idle>2.6&&!cardOpen)faceFront();
   if(ME.flip){ME.flip.u+=dt/0.18;if(ME.flip.u>=1){ME.view=ME.flip.to;ME.flip=null;}}
   // nearest exhibit
   near=null;let best=2.0;for(const e of EXHIBITS){const d=Math.hypot(e.at[0]-ME.x,e.at[1]-ME.z);if(d<best){best=d;near=e;}}
 }
 function pose(){
-  const s={y:0,sy:1+0.012*Math.sin(TM*2.4),lean:0,legN:0,legF:0,liftN:0,liftF:0,armN:0.04,armF:-0.04,head:0,scarf:Math.sin(TM*3.1)*0.06,waddle:0};
+  const a=ME.amp,ph=ME.dist/0.55*Math.PI,sw=Math.sin(ph)*a;
+  const s={y:0,sy:1+0.012*Math.sin(TM*2.4),lean:0,legN:0,legF:0,liftN:0,liftF:0,n1:0.05,n2:0.06,f1:-0.06,f2:0.32,head:Math.sin(TM*0.7)*0.025*(1-a),scarf:Math.sin(TM*3.1)*0.06,waddle:0,fsN:1,fsF:1};
   let mode=ME.view.mode,rot=base(ME.view);
   if(ME.flip){const u=ME.flip.u;mode=u<0.5?ME.flip.from.mode:ME.flip.to.mode;rot=u<0.5?base(ME.flip.from)+u*Math.PI:base(ME.flip.to)+(u-1)*Math.PI;}
   if(mode!==RIG.mode)setBodyMode(mode);
-  const ph=ME.dist/0.55*Math.PI;if(mode==='side')walkSide(s,ph,ME.amp);else walkBack(s,ph,ME.amp);
-  // look at the visitor when a card is open: the head alone flips to face front
-  const hm=ME.headFront?'front':mode;let hr=0;
-  if(ME.headFlipTo!==hm){ME.headFlipTo=hm;ME.headU=0;ME.headFrom=RIG.headMode;}
-  if(ME.headU<1){ME.headU=Math.min(1,ME.headU+1/0.16/60);const u=ME.headU;const m=u<0.5?ME.headFrom:hm;if(m!==RIG.headMode)setHeadMode(m);hr=u<0.5?u*Math.PI:(u-1)*Math.PI;}
+  if(mode==='side'){
+    s.legN=0.45*sw;s.legF=-s.legN;s.y+=0.06*a*(1-Math.abs(Math.sin(ph)));s.lean=0.04*a+Math.sin(ph*2)*0.02*a;s.scarf+=0.12*sw-0.18*a;
+    // the case arm stays long and heavy; the free arm swings from the shoulder and bends more on the forward swing
+    s.n1=0.05-0.07*sw;s.n2=0.05+0.03*a;s.f1=lerp(-0.06,0,a)+0.45*sw;s.f2=lerp(0.32,0.16,a)+0.42*Math.max(0,Math.sin(ph))*a;
+  }else{
+    s.liftN=Math.max(0,Math.sin(ph))*0.12*a;s.liftF=Math.max(0,-Math.sin(ph))*0.12*a;s.waddle=Math.sin(ph)*0.035*a;s.y+=0.04*a*Math.abs(Math.cos(ph));
+    // seen from the front or back, a swinging arm shows as a slight sway and a shortening as it comes toward us
+    s.n1=0.06+0.03*sw;s.f1=0.08-0.04*sw;s.n2=0.04;s.f2=0.14+0.08*Math.abs(sw);s.fsN=1-0.06*Math.max(0,-sw);s.fsF=1-0.12*Math.max(0,sw);
+  }
   RIG.root.position.set(ME.x,s.y,ME.z);RIG.root.rotation.y=rot;RIG.root.rotation.z=s.waddle;
   RIG.body.scale.set(0.82/Math.sqrt(s.sy),0.82*s.sy,0.82);RIG.torso.rotation.z=-s.lean;
   if(RIG.mode==='side'){RIG.legN.rotation.z=s.legN;RIG.legF.rotation.z=s.legF;RIG.legN.position.y=0;RIG.legF.position.y=0;}else{RIG.legN.rotation.z=0;RIG.legF.rotation.z=0;RIG.legN.position.y=s.liftN;RIG.legF.position.y=s.liftF;}
-  RIG.armN.rotation.z=s.armN;RIG.armF.rotation.z=s.armF;RIG.neck.rotation.z=s.head+s.lean*0.6;RIG.neck.rotation.y=hr-(RIG.headMode==='front'?rot:0);
-  RIG.hat.position.set(RIG.hatBaseX,0.855,0.004);RIG.scarf.rotation.z=RIG.scarfBase+s.scarf;RIG.caseH.rotation.z=s.lean-s.armN+Math.sin(TM*2.1)*0.03;
-  for(const p of RIG.parts){const far=(p===RIG.legF||p===RIG.armF)?RIG.farTint:1;p.mat.color.setScalar(far);}
+  const o=RIG.out,side=RIG.mode==='side';
+  RIG.armN.rotation.z=side?s.n1:o.N*s.n1;RIG.armN.el.rotation.z=side?s.n2:-o.N*s.n2;RIG.armN.scale.y=s.fsN;
+  RIG.armF.rotation.z=side?s.f1:o.F*s.f1;RIG.armF.el.rotation.z=side?s.f2:-o.F*s.f2;RIG.armF.scale.y=s.fsF;
+  RIG.neck.rotation.z=s.head+s.lean*0.6;RIG.neck.rotation.y=0;
+  RIG.hat.position.set(RIG.hatBaseX,0.855,0.004);RIG.scarf.rotation.z=RIG.scarfBase+s.scarf;
+  RIG.caseH.rotation.z=s.lean-RIG.armN.rotation.z-RIG.armN.el.rotation.z+Math.sin(TM*2.1)*0.03;
+  for(const p of RIG.parts)p.mat.color.setScalar(RIG.far.includes(p)?RIG.farTint:1);
   RIG.shadow.position.set(ME.x+0.05,0.015,ME.z+0.05);
 }
 function world(){
+  // the attendant writes until the Archivist comes close, then looks up and follows them with her eyes
+  const ax=ME.x+5,dP=Math.hypot(ax,ME.z+2.2),lk=W.attLook=lerp(W.attLook||0,dP<4.5?1:0,0.06),wr=1-lk;
+  W.attArm.rotation.z=wr*(Math.sin(TM*9)*0.06+Math.sin(TM*23)*0.025)+lk*0.08;W.attArm.position.x=(200-130)/190+wr*Math.sin(TM*1.3)*0.012;
+  W.attHead.rotation.z=wr*0.07-lk*clamp(ax*0.025,-0.07,0.07);W.attHead.position.y=(260-62)/190+lk*0.018;
+  W.attEyes.position.x=lk*clamp(ax*0.012,-0.03,0.03);W.attEyes.position.y=(205-116)/190-wr*0.014;W.attEyes.scale.y=(TM%3.7)<0.13?0.15:1;
   for(const g of W.gas)g.mat.opacity=0.55+0.06*Math.sin(TM*9+g.position.x)*Math.sin(TM*3.7);
   W.lampGlow.mat.opacity=0.7+0.1*Math.sin(TM*11)*Math.sin(TM*4.1);W.pend.rotation.z=Math.sin(TM*Math.PI)*0.12;
   W.moths.forEach((m,i)=>{m.quaternion.copy(camera.quaternion);const flap=0.25+0.75*Math.abs(Math.sin(TM*26+i*1.7));
@@ -725,7 +839,7 @@ async function boot(){
   build();for(const e of TEXS){compose(e);e.t.needsUpdate=true;}renderCat();resize();
   document.getElementById('loading').hidden=true;vp.focus({preventScroll:true});
   window.museum={tick:(n=60,dt=1/60)=>{for(let i=0;i<n;i++){step(dt);pose();}return[ME.x,ME.z];},keys,go:(x,z)=>{ME.x=x;ME.z=z;camPos.set(clamp(x,-16.2,16.2),4.8,z+10.6);camLook.set(clamp(x,-16.2,16.2),2.3,z-1.9);},open:id=>openCard(EXHIBITS.find(e=>e.id===id)),close:closeCard,walk:routeTo,me:ME,
-    frame:(w=960,h=540)=>{renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();pose();world();placeCamera(1);renderer.render(scene,camera);const d=canvas.toDataURL('image/jpeg',0.85);resize();return d;}};
+    frame:(w=960,h=540,cam)=>{renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();pose();world();placeCamera(1);if(cam){camera.position.set(cam[0],cam[1],cam[2]);camera.lookAt(cam[3],cam[4],cam[5]);}renderer.render(scene,camera);const d=canvas.toDataURL('image/jpeg',0.85);resize();return d;}};
   requestAnimationFrame(frame);
 }
 boot();
