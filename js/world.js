@@ -1050,7 +1050,8 @@ function hud(){
 }
 function frame(now){const dt=Math.min(0.05,(now-last)/1000);last=now;if(paused()){requestAnimationFrame(frame);return;}step(dt);pose();world();placeCamera(dt);if(document.body.dataset.overlay!=='desk')renderer.render(scene,camera);hud();
   if(ME.dist>3&&!hintT){hintT=1;document.getElementById('keyhint').style.opacity='0';}requestAnimationFrame(frame);}
-function resize(){const w=vp.clientWidth,h=vp.clientHeight;if(!w||!h)return;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();}
+function resize(){const w=vp.clientWidth,h=vp.clientHeight;if(!w||!h)return;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();
+  if(paused())renderer.render(scene,camera);} /* setSize clears the canvas, and frame() draws nothing while a menu is up */
 new ResizeObserver(resize).observe(vp);
 /* ---------- start menu and pause menu ----------
    New game on the start menu is the only way to begin again; the pause menu never erases anything.
