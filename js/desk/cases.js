@@ -45,10 +45,39 @@ const RQ_1860S = {
   secondary: 'Written at another time, about those historians.',
 };
 
+const RQ_FIRE = {
+  short: 'the fire question',
+  text: 'What happened in St. John during the Great Fire of June 20, 1877?',
+  marks: [{ tag: 'WHEN', words: 'June 20, 1877' }, { tag: 'WHERE', words: 'St. John' }],
+  primary: 'Made by someone who was there: in St. John, at the time of the fire.',
+  secondary: 'Made later, by someone who was not there. They learned it from other sources.',
+};
+
 const LABEL_BY = 'The label at the top of the paper, the line MADE BY.';
 const LABEL_WHEN = 'The label at the top of the paper, the line WHEN.';
 
 export const CASES = [
+  // ------------------------------------------------------------------ 0: the guided sample (Mr. Harrow coaches)
+  {
+    id: 'c0', title: 'A practice paper', from: 'Mr. Harrow, the Curator', coach: true,
+    rq: RQ_FIRE,
+    intro: ['A practice paper about a different subject: the Great Fire of 1877 in St. John.'],
+    tasks: [
+      { type: 'readq' },
+      {
+        type: 'stamp', doc: 'stewart-fire', answer: 'primary', guide: 'show',
+        look: 'The label at the top of the paper, the line WHEN.',
+        shows: 'That it was made in St. John, at the time of the fire.',
+        proof: ['stewart-fire@when', 'stewart-fire@by'],
+        near: { 'stewart-fire#first fire we know of': 'That is about 1784. Your question is about 1877. Try the label.' },
+        right: 'Primary. Stewart lived in St. John and wrote his book the same year as the fire.',
+        wrong: 'This one is primary. Stewart lived in St. John and wrote in 1877.',
+        mail: 'The fire book was filed as “written in 1784”. Stewart would have laughed.',
+      },
+    ],
+    remember: 'The question first, then the label, then the stamp, then the proof. And the same book can be primary for one question and secondary for another.',
+  },
+
   // ------------------------------------------------------------------ 1: the first stack (onboarding)
   {
     id: 'c1', title: 'The first stack', from: 'Mr. Harrow, the Curator',

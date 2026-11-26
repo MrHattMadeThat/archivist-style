@@ -12,6 +12,7 @@ The look: paper-cutout puppets on a 3D cardboard stage (Paper Mario structure), 
 | `index.html` | The game: the walkable museum (four galleries, 13 exhibits), the offices upstairs, and the stacks in the basement. |
 | `js/world.js` | The 3D world, the Archivist, Mr. Harrow, and the story engine (doors, dialogue, objectives, save). |
 | `js/story.js` | Every objective and every line of dialogue: the new archivist's first evening. |
+| `js/hand.js` | The pointing hand (a printer's manicule): the quest marker, the desk's "what next" nudge, and Mr. Harrow's pointing. |
 | `js/desk/` | The paper activities that open over the world: the **source desk** (primary and secondary, with proof) and **the stacks** (fetch boxes, file papers). Adapted from `../archive-desk`. |
 | `css/desk.css` | Gaslight styling for the desk, the stacks, the dialogue box and the To do note. |
 | `docs/` | `WRITING_TASKS.md` (how every desk question is worded), `ONBOARDING.md` (the first evening), `SOURCES.md`. |
@@ -30,7 +31,7 @@ Then open http://localhost:5544/ (the museum) or http://localhost:5544/arrival.h
 
 ## The game so far
 
-You arrive as the new archivist. The attendant sends you upstairs to Mr. Harrow, the Curator, who explains the job in four parts (read the letter and its research question, fetch papers from the stacks, sort them with proof at your desk, file them back) and the rule of the office: **primary or secondary depends on the research question.** Then three cases about St. Croix Island, 1604–1605: a first stack to sort, a schoolteacher's letter, and the same papers under new questions. The sources are Champlain (1613), Parkman (1865) and Ganong (1902): all real, all on the shelves by 1910.
+You arrive as the new archivist. The attendant sends you upstairs to Mr. Harrow, the Curator, who explains the job in four parts (read the letter and its research question, fetch papers from the stacks, sort them with proof at your desk, file them back) and the rule of the office: **primary or secondary depends on the research question.** Then he sits with you for a practice paper on a different subject (George Stewart's 1877 book on the Great Fire of St. John), pointing as he talks, and walks you down to the stacks to file it. Then three cases about St. Croix Island, 1604–1605: a first stack to sort, a schoolteacher's letter, and the same papers under new questions. The sources are Champlain (1613), Parkman (1865) and Ganong (1902): all real, all on the shelves by 1910.
 
 The source desk is one activity. Other social studies activities can open from other things in the building (see `js/desk/main.js`).
 

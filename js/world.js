@@ -60,11 +60,13 @@ function tint(src,color){const c=cv(src.width,src.height),x=c.getContext('2d');x
 
 const TEXS=[];let renderer;
 function T(w,h,fn,o={}){const c=cv(w,h),t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;if(o.repeat){t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(o.repeat[0],o.repeat[1]);}
-  t.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());const e={c,t,fn,border:o.border??6,grain:o.grain!==false,seed:o.seed??(TEXS.length*7919+101)};TEXS.push(e);t.userData={w,h};return t;}
+  t.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());const e={c,t,fn,border:o.border??6,grain:o.grain!==false,seed:o.seed??(TEXS.length*7919+101),cut:o.cut};TEXS.push(e);t.userData={w,h};return t;}
 function compose(e){const{c,fn,border,seed}=e,W=c.width,H=c.height;const a=cv(W,H),ac=a.getContext('2d');R=mulberry(seed);ac.save();fn(ac,W,H);ac.restore();
   const ctx=c.getContext('2d');ctx.clearRect(0,0,W,H);
   if(border>0){const s=tint(a,P.paper),n=border>4?16:10;for(let i=0;i<n;i++){const an=i/n*TAU;ctx.drawImage(s,Math.cos(an)*border,Math.sin(an)*border);}
-    const s2=tint(a,mix(P.paper,P.ink,0.35));ctx.globalCompositeOperation='destination-over';for(let i=0;i<8;i++){const an=i/8*TAU;ctx.drawImage(s2,Math.cos(an)*(border+1.5),Math.sin(an)*(border+1.5));}ctx.globalCompositeOperation='source-over';}
+    const s2=tint(a,mix(P.paper,P.ink,0.35));ctx.globalCompositeOperation='destination-over';for(let i=0;i<8;i++){const an=i/8*TAU;ctx.drawImage(s2,Math.cos(an)*(border+1.5),Math.sin(an)*(border+1.5));}ctx.globalCompositeOperation='source-over';
+    // where two pieces join (a neck into a collar, an elbow) the paper margin would show as a white seam: cut it away
+    if(e.cut){if(e.cut.t)ctx.clearRect(0,0,W,e.cut.t);if(e.cut.b!=null)ctx.clearRect(0,e.cut.b,W,H-e.cut.b);}}
   ctx.drawImage(a,0,0);
   if(e.grain){const m=cv(W,H);m.getContext('2d').drawImage(c,0,0);ctx.globalCompositeOperation='multiply';ctx.globalAlpha=Math.min(1,P.grain*1.6);ctx.fillStyle=ctx.createPattern(GRAIN,'repeat');ctx.fillRect(0,0,W,H);ctx.globalAlpha=1;ctx.globalCompositeOperation='destination-in';ctx.drawImage(m,0,0);ctx.globalCompositeOperation='source-over';}}
 
@@ -185,9 +187,9 @@ function drawHat(ctx){
   const q=path([[124,176],[134,130],[150,80],[166,40],[178,34],[174,62],[160,106],[142,150],[132,178]],{jit:0.4});fill(ctx,q,P.paper);for(let i=0;i<8;i++){const k=i/8,x=lerp(136,170,k),y=lerp(160,46,k);line(ctx,[[x,y],[x+9,y+5]],1.2,P.ink,0.45);}line(ctx,[[130,178],[152,110],[172,40]],1.8,P.ink,0.8);ink(ctx,q,2.4);
   const brim=path([[6,198],[40,190],[90,188],[150,190],[176,196],[174,208],[90,204],[8,210]],{jit:0.8});cel(ctx,brim,mix(P.hat,P.ink,0.2),{s:4,hatch:false,ra:0.4});ink(ctx,brim,4);}
 // arms in two pieces: upper arm (shoulder to elbow) and forearm with hand
-function drawUpperArm(patch){return ctx=>{const sl=path([[24,26],[28,12],[38,4],[52,4],[62,12],[66,26],[64,60],[62,116],[62,116],[28,118],[28,118],[26,60]],{jit:0.8});cel(ctx,sl,P.coat,{s:9,dark:0.5});flecks(ctx,sl,[20,0,50,120],40);
+function drawUpperArm(patch){return ctx=>{const sl=path([[24,26],[28,12],[38,4],[52,4],[62,12],[66,26],[64,60],[63,123],[63,123],[27,124],[27,124],[26,60]],{jit:0.8});cel(ctx,sl,P.coat,{s:9,dark:0.5});flecks(ctx,sl,[20,0,50,120],40);
   if(patch){const ep=path(ell(44,104,14,14,10,0.08));fill(ctx,ep,P.coat2);stitch(ctx,[[34,98],[44,92],[54,98]],P.ink,0.5);ink(ctx,ep,1.8);}stitch(ctx,[[60,10],[58,110]]);ink(ctx,sl,4);}}
-function drawForearm(grip){return ctx=>{const sl=path([[28,2],[66,2],[62,76],[34,78]],{smooth:false,jit:0.8});cel(ctx,sl,P.coat,{s:8,dark:0.5});flecks(ctx,sl,[26,0,44,80],30);ink(ctx,sl,4);
+function drawForearm(grip){return ctx=>{const sl=path([[31,0],[64,0],[62,76],[34,78]],{smooth:false,jit:0.8});cel(ctx,sl,P.coat,{s:8,dark:0.5});flecks(ctx,sl,[26,0,44,80],30);ink(ctx,sl,4);
   const cf=path([[33,72],[63,72],[64,88],[32,88]],{smooth:false,jit:0.6});cel(ctx,cf,P.paper,{s:4,hatch:false,ra:0.3});dot(ctx,58,80,2.6,P.brass);ink(ctx,cf,2);
   const hand=grip?path([[34,86],[62,86],[68,98],[66,114],[58,120],[40,120],[32,110],[32,96]],{jit:0.5}):path([[36,86],[60,86],[68,100],[67,124],[61,128],[58,112],[54,132],[48,132],[46,112],[41,124],[34,118],[35,100]],{smooth:false,jit:0.5});
   cel(ctx,hand,P.skin,{s:4,hatch:false});if(grip){for(let k=0;k<3;k++)line(ctx,[[40+k*8,104],[42+k*8,116]],1.4,P.ink,0.6);}ink(ctx,hand,2.6);}}
@@ -491,7 +493,7 @@ function drawHarArm(ctx){const sl=path([[24,4],[58,4],[62,60],[58,178],[26,180],
   const hd=path(ell(42,198,12,12,10,0.06));cel(ctx,hd,P.skin,{s:3,hatch:false});ink(ctx,hd,2.2);}
 function drawHarHead(ctx){
   const sk=P.skin,hc=HAR.hair();
-  const nk=path([[86,214],[88,168],[112,168],[114,214]],{smooth:false,jit:0.6});cel(ctx,nk,sk,{s:4,hatch:false});ink(ctx,nk,2.6);
+  const nk=path([[80,214],[82,166],[118,166],[120,214]],{smooth:false,jit:0.6});cel(ctx,nk,sk,{s:4,hatch:false});ink(ctx,nk,2.6);
   const f=path([[100,56],[132,64],[148,96],[148,140],[136,170],[100,186],[64,170],[52,140],[52,96],[68,64]],{jit:0.5});cel(ctx,f,sk,{s:8,ha:0.2});ink(ctx,f,3.6);
   line(ctx,[[82,72],[100,68],[118,72]],1.4,P.ink,0.3);
   for(const sx of [0,1]){const t=(pts)=>sx?flipX(pts,200):pts;
@@ -653,23 +655,39 @@ const col=h=>new THREE.Color(h).convertSRGBToLinear();
 const TX={},W={},BOXES=[],PICK=[];
 function put(tex,ppu,ax,ay,x,y,z,ex){const s=S(tex,ppu,ax,ay);s.position.set(x,y,z);scene.add(s);if(ex){s.art.userData.ex=ex;PICK.push(s.art);}return s;}
 function solid(x,z,hx,hz){BOXES.push({x,z,hx,hz});}
+/* a partition with thickness: the wall's outline (low at the front, so we can see in; a doorway in the middle) extruded
+   0.22 units. The faces carry the partition drawing; the cut edges are hatched plaster, like a section drawing. */
+const WALL_T=0.22;
+function thickWall(x,door){
+  const P=[[-5,0],[-5,1.4],[-1.5,6.5],[5,6.5],[5,0]];if(door)P.push([2,0],[2,4.4],[-1,4.4],[-1,0]);
+  const sh=new THREE.Shape();sh.moveTo(P[0][0],P[0][1]);for(const q of P.slice(1))sh.lineTo(q[0],q[1]);sh.closePath();
+  const g=new THREE.ExtrudeGeometry(sh,{depth:WALL_T,bevelEnabled:false});g.translate(0,0,-WALL_T/2);
+  const pos=g.attributes.position,uv=g.attributes.uv;
+  for(const gr of g.groups)for(let i=gr.start;i<gr.start+gr.count;i++){
+    if(gr.materialIndex===0)uv.setXY(i,(pos.getX(i)+5)/10,pos.getY(i)/6.5);
+    else uv.setXY(i,(pos.getX(i)+pos.getZ(i))*1.6,pos.getY(i)*1.6);}
+  uv.needsUpdate=true;
+  const face=new THREE.MeshBasicMaterial({map:door?TX.partD:TX.partE,transparent:true,alphaTest:0.05,side:THREE.DoubleSide});
+  const cut=new THREE.MeshBasicMaterial({map:TX.poche,side:THREE.DoubleSide});
+  const m=new THREE.Mesh(g,[face,cut]);m.rotation.y=Math.PI/2;m.position.set(x,0,0);return m;}
+function drawPoche(ctx,W,H){ctx.fillStyle=mix(P.plaster,P.paper,0.35);ctx.fillRect(0,0,W,H);ctx.save();ctx.strokeStyle=hexA(P.ink,0.55);ctx.lineWidth=2;for(let k=-H;k<W;k+=12){ctx.beginPath();ctx.moveTo(k,H);ctx.lineTo(k+H,0);ctx.stroke();}ctx.restore();}
 
 function build(){
   for(const v of ['side','back','front']){const k=v[0].toUpperCase()+v.slice(1);TX['leg'+k]=T(126,250,drawLeg(v),{border:5});TX['coat'+k]=T(320,470,drawCoat(v));}
-  TX.headS=T(260,260,drawHead('side'));TX.headF=T(260,260,drawHead('front'));TX.headB=T(260,260,drawHead('back'));TX.hat=T(190,220,drawHat);
-  TX.upperArm=T(90,126,drawUpperArm(true),{border:5});TX.upperArmPlain=T(90,126,drawUpperArm(false),{border:5});TX.forearm=T(100,140,drawForearm(false),{border:5});TX.forearmGrip=T(100,140,drawForearm(true),{border:5});TX.scarf=T(230,100,drawScarf,{border:5});TX.case=T(200,170,drawCase,{border:5});
-  TX.attBody=T(260,260,drawAttBody);TX.attHead=T(200,214,drawAttHead);TX.attEyes=T(80,24,drawAttEyes,{border:0});TX.attArm=T(124,70,drawAttArm,{border:4});
+  TX.headS=T(260,260,drawHead('side'),{cut:{b:214}});TX.headF=T(260,260,drawHead('front'),{cut:{b:214}});TX.headB=T(260,260,drawHead('back'),{cut:{b:214}});TX.hat=T(190,220,drawHat);
+  TX.upperArm=T(90,126,drawUpperArm(true),{border:5,cut:{b:112}});TX.upperArmPlain=T(90,126,drawUpperArm(false),{border:5,cut:{b:112}});TX.forearm=T(100,140,drawForearm(false),{border:5,cut:{t:18}});TX.forearmGrip=T(100,140,drawForearm(true),{border:5,cut:{t:18}});TX.scarf=T(230,100,drawScarf,{border:5});TX.case=T(200,170,drawCase,{border:5});
+  TX.attBody=T(260,260,drawAttBody);TX.attHead=T(200,214,drawAttHead,{cut:{b:186}});TX.attEyes=T(80,24,drawAttEyes,{border:0});TX.attArm=T(124,70,drawAttArm,{border:4});
   TX.floor=T(1024,512,drawFloor,{border:0,repeat:[8,2]});TX.cut=T(512,90,drawCut,{border:0,repeat:[10,1]});
   Object.values(AREAS).forEach((a,ai)=>a.rooms.forEach((r,i)=>{r.wallTex=T(1000,650,drawBackWall(r),{border:0,seed:500+ai*10+i});r.signTex=T(1000,110,drawSign(r.sign,54),{border:4,seed:800+ai*10+i});}));
   TX.stoneFloor=T(1024,512,drawStoneFloor,{border:0,repeat:[6,2]});
-  TX.partD=T(1000,650,drawPartition(true),{border:4,seed:700});TX.partE=T(1000,650,drawPartition(false),{border:4,seed:701});
+  TX.partD=T(1000,650,drawPartition(true),{border:4,seed:700});TX.poche=T(128,128,drawPoche,{border:0,grain:false,repeat:[1,1]});TX.partE=T(1000,650,drawPartition(false),{border:4,seed:701});
   TX.vMin=T(300,260,drawVitrine('minerals'));TX.vIns=T(300,260,drawVitrine('insects'));TX.vTri=T(300,260,drawVitrine('trilobites'));
   TX.cabRocks=T(300,560,drawCabinet('rocks'));TX.cabBirds=T(300,560,drawCabinet('birds'));
   TX.portrait=T(220,300,drawPortrait);TX.fern=T(400,300,drawFernSlab);TX.lamp=T(140,320,drawLampPed,{border:5});
   TX.desk=T(420,300,drawDesk);TX.notice=T(260,320,drawNotice);TX.lectern=T(140,260,drawLectern,{border:5});
   TX.caribou=T(520,460,drawCaribou,{border:7});TX.moose=T(240,220,drawMoose);TX.mothTable=T(180,250,drawMothTable,{border:5});
   TX.bench=T(300,120,drawBench,{border:5});TX.stand=T(90,180,drawStand,{border:4});TX.rug=T(640,400,drawRug,{border:0});TX.clock=T(120,300,drawClock,{border:5});TX.pend=T(40,110,drawPendulum,{border:3});
-  TX.harBody=T(240,480,drawHarBody);TX.harHead=T(200,220,drawHarHead);TX.harEyes=T(80,24,drawHarEyes,{border:0});TX.harArm=T(96,220,drawHarArm,{border:4});
+  TX.harBody=T(240,480,drawHarBody);TX.harHead=T(200,220,drawHarHead,{cut:{b:192}});TX.harEyes=T(80,24,drawHarEyes,{border:0});TX.harArm=T(96,220,drawHarArm,{border:4});
   TX.bigDesk=T(440,300,drawBigDesk);TX.myDesk=T(420,320,drawMyDesk);TX.bookcase=T(260,520,drawBookcase);TX.filing=T(180,300,drawFiling);TX.letters=T(220,200,drawLetterRack);TX.sortTable=T(360,200,drawSortTable,{border:5});
   TX.shelves={};for(const[id,n] of [['a-f','A – F'],['g-o','G – O'],['p-z','P – Z']])TX.shelves[id]=T(300,560,drawShelfUnit(n),{seed:900+id.charCodeAt(0)});
   TX.sconce=T(140,210,drawSconce,{border:4});TX.glow=T(256,256,drawGlow,{border:0,grain:false});TX.moth=T(120,90,drawMoth,{border:4});TX.blob=T(128,64,drawBlob,{border:0,grain:false});
@@ -683,7 +701,7 @@ function build(){
       const sg=S(r.signTex,150,500,55);sg.position.set((r.x0+r.x1)/2,5.85,-4.97);scene.add(sg);
       const pool=plane(TX.glow,9,7,{add:true,opacity:a.id==='basement'?0.14:0.2,order:-5});pool.rotation.x=-Math.PI/2;pool.position.set((r.x0+r.x1)/2,0.01,-1.0);scene.add(pool);
       const wash=plane(TX.glow,12,7,{add:true,opacity:0.12,order:-6});wash.position.set((r.x0+r.x1)/2,3.6,-4.96);scene.add(wash);}
-    for(const x of [a.x0,...a.parts,a.x1]){const p=S(x===a.x0||x===a.x1?TX.partE:TX.partD,100,500,325);p.rotation.y=Math.PI/2;p.position.set(x,3.25,0);scene.add(p);}
+    for(const x of [a.x0,...a.parts,a.x1])scene.add(thickWall(x,!(x===a.x0||x===a.x1)));
     for(const x of a.gas){const sc=S(TX.sconce,120,70,176);sc.position.set(x,3.5,-4.93);scene.add(sc);
       const gl=S(TX.glow,256/1.5,128,128,{add:true,fog:false,opacity:0.6});gl.position.set(x,3.5+(176-60)/120,-4.9);scene.add(gl);W.gas.push(gl);
       const ww=plane(TX.glow,3.4,3.4,{add:true,opacity:0.22,order:-6});ww.position.set(x,4.3,-4.95);scene.add(ww);}}
@@ -725,7 +743,7 @@ function build(){
   put(TX.lamp,100,70,320,88.9,0,1.8);solid(88.9,1.7,0.4,0.35);
   // Mr. Harrow: a standing rig (body, head, eyes, the arm that holds the letter). He gestures while he talks.
   W.har=new THREE.Group();W.har.scale.setScalar(0.95);scene.add(W.har);const hb=S(TX.harBody,215,120,470);W.har.add(hb);hb.art.userData.ex=thing('harrow');PICK.push(hb.art);
-  W.harHead=new THREE.Group();W.harHead.position.set(0,(470-40)/215,-0.004);W.harHead.scale.setScalar(1.18);W.har.add(W.harHead);const hh=S(TX.harHead,215,100,212);W.harHead.add(hh);hh.art.userData.ex=thing('harrow');PICK.push(hh.art);
+  W.harHead=new THREE.Group();W.harHead.position.set(0,(470-96)/215,-0.004);W.harHead.scale.setScalar(1.18);W.har.add(W.harHead);const hh=S(TX.harHead,215,100,212);W.harHead.add(hh);hh.art.userData.ex=thing('harrow');PICK.push(hh.art);
   W.harEyes=S(TX.harEyes,215,40,12);W.harEyes.position.set(0,(212-114)/215,0.004);W.harHead.add(W.harEyes);
   W.harArm=S(TX.harArm,215,40,10);W.harArm.position.set((178-120)/215,(470-90)/215,0.01);W.har.add(W.harArm);
   W.harSolid={x:0,z:0,hx:0.32,hz:0.28};BOXES.push(W.harSolid);
@@ -747,7 +765,7 @@ function build(){
 const RIG={};
 // an arm is two paper pieces pinned together: the upper arm swings at the shoulder, the forearm at the elbow
 function makeArm(grip){const g=new THREE.Group();g.up=S(TX.upperArm,220,45,8);g.add(g.up);g.el=new THREE.Group();g.el.position.y=-(112-8)/220;g.add(g.el);
-  g.fa=S(grip?TX.forearmGrip:TX.forearm,220,48,6);g.el.add(g.fa);return g;}
+  g.fa=S(grip?TX.forearmGrip:TX.forearm,220,48,6);g.el.add(g.fa);g.up.position.z=0.002;return g;}
 function buildRig(){const ppu=220;
   RIG.root=new THREE.Group();scene.add(RIG.root);RIG.body=new THREE.Group();RIG.root.add(RIG.body);RIG.hip=new THREE.Group();RIG.hip.position.y=0.99;RIG.body.add(RIG.hip);
   RIG.legF=S(TX.legSide,ppu,52,12);RIG.legN=S(TX.legSide,ppu,52,12);RIG.hip.add(RIG.legF);RIG.hip.add(RIG.legN);RIG.torso=new THREE.Group();RIG.hip.add(RIG.torso);
@@ -799,7 +817,8 @@ function wantView(vx,vz){const sp=Math.hypot(vx,vz);if(sp<1e-4)return ME.view;if
 function faceFront(){if(ME.view.mode!=='front'&&!ME.flip)ME.flip={from:ME.view,to:{mode:'front',facing:ME.view.facing},u:0};}
 const keys={};
 window.addEventListener('keydown',e=>{const k=e.key.toLowerCase();if(document.body.dataset.overlay||FADE.on)return;
-  if(DLG.open){if((k==='e'||k==='enter'||k===' ')&&!(document.activeElement&&document.activeElement.closest('.dlg-choices'))){e.preventDefault();dlgNext();}return;}
+  if(DLG.open){if(k==='arrowleft'){e.preventDefault();dlgBack();return;}if(k==='arrowright'){e.preventDefault();dlgNext();return;}
+    if((k==='e'||k==='enter'||k===' ')&&!(document.activeElement&&document.activeElement.closest('.dlg-choices,.dlg-nav'))){e.preventDefault();dlgNext();}return;}
   if(cardOpen){if(k==='escape'||k==='e'||k==='enter'||k===' '){e.preventDefault();closeCard();}return;}
   if(['arrowup','arrowdown','arrowleft','arrowright','w','a','s','d'].includes(k)){keys[k]=true;ME.target=[];ME.pending=null;e.preventDefault();}
   if((k==='e'||k==='enter'||k===' ')&&near&&document.activeElement&&!/INPUT|TEXTAREA/.test(document.activeElement.tagName)){if(document.activeElement.tagName==='BUTTON'&&document.activeElement.closest('.cat'))return;e.preventDefault();interact(near);}});
@@ -808,7 +827,7 @@ window.addEventListener('blur',()=>{for(const k in keys)keys[k]=false;});
 
 /* ---------- catalogue card ---------- */
 const ui={room:document.getElementById('room'),prompt:document.getElementById('prompt'),wrap:document.getElementById('cardwrap'),no:document.getElementById('cno'),croom:document.getElementById('croom'),title:document.getElementById('ctitle'),label:document.getElementById('clabel'),labelText:document.getElementById('clabeltext'),body:document.getElementById('cbody'),close:document.getElementById('close'),cat:document.getElementById('cat'),count:document.getElementById('count'),intro:document.getElementById('intro'),obj:document.getElementById('obj'),fade:document.getElementById('fade'),
-  dlg:document.getElementById('dlg'),dlgFace:document.getElementById('dlgface'),dlgWho:document.getElementById('dlgwho'),dlgText:document.getElementById('dlgtext'),dlgCard:document.getElementById('dlgcard'),dlgChoices:document.getElementById('dlgchoices'),dlgMore:document.getElementById('dlgmore')};
+  dlg:document.getElementById('dlg'),dlgFace:document.getElementById('dlgface'),dlgWho:document.getElementById('dlgwho'),dlgText:document.getElementById('dlgtext'),dlgCard:document.getElementById('dlgcard'),dlgChoices:document.getElementById('dlgchoices'),dlgMore:document.getElementById('dlgmore'),dlgBack:document.getElementById('dlgback'),dlgNextBtn:document.getElementById('dlgnext')};
 let cardOpen=null,near=null;const seen=new Set();
 function esc(s){return s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
 function openCard(ex){cardOpen=ex;ME.target=[];ME.pending=null;for(const k in keys)keys[k]=false;
@@ -850,8 +869,10 @@ function useDoor(d){stopWalking();fade(()=>{enterArea(d.to[0]);ME.x=d.to[1];ME.z
 function stopWalking(){ME.target=[];ME.pending=null;for(const k in keys)keys[k]=false;}
 
 /* Mr. Harrow stands in his office, or beside your desk while you work through your first stack */
-const HARROW_AT={home:[67.6,-2.7],desk:[86.6,-2.3]};
-function placeHarrow(){if(!W.har)return;const[x,z]=HARROW_AT[STAGE().harrow||'home'];W.har.position.set(x,0,z);thing('harrow').at=[x,z+1.25];Object.assign(W.harSolid,{x,z});if(AREA.id==='office')GRID=null;}
+const HARROW_AT={home:[67.6,-2.7],desk:[86.6,-2.3],stacks:[129.3,-2.5]};
+function placeHarrow(){if(!W.har)return;const where=STAGE().harrow||'home',[x,z]=HARROW_AT[where];W.har.position.set(x,0,z);const h=thing('harrow');h.at=[x,z+1.25];h.area=where==='stacks'?'basement':'office';Object.assign(W.harSolid,{x,z});GRID=null;}
+// a speaker's face as an image, for the coaching bubbles inside the desk and the stacks
+const FACES={};function faceURL(who){if(FACES[who])return FACES[who];const sp=SPEAKERS[who],src=TX[sp.face]?.image;if(!src)return'';const c=document.createElement('canvas');c.width=c.height=96;const x=c.getContext('2d');x.fillStyle='#2a2c33';x.fillRect(0,0,96,96);const[a,b,w,h]=sp.crop;x.drawImage(src,a,b,w,h,0,0,96,96);return FACES[who]=c.toDataURL();}
 
 /* dialogue */
 const SPEAKERS={harrow:{name:'Mr. Harrow · the Curator',face:'harHead',crop:[22,40,156,156]},attendant:{name:'The attendant',face:'attHead',crop:[34,22,132,132]},you:{name:'You',face:'headF',crop:[40,36,170,170]}};
@@ -871,11 +892,15 @@ function renderLine(L){const sp=SPEAKERS[L.who]||SPEAKERS.you;DLG.who=L.who;
   ui.dlgCard.innerHTML=DLG.reply?'':card(L);ui.dlgCard.hidden=!ui.dlgCard.innerHTML;
   ui.dlgChoices.replaceChildren();const ch=!DLG.reply&&L.choices;
   if(ch)for(const c of L.choices){const b=document.createElement('button');b.type='button';b.textContent=c.label;b.onclick=e=>{e.stopPropagation();DLG.reply={text:c.reply,again:!c.ok};renderLine(L);};ui.dlgChoices.append(b);}
-  ui.dlgMore.textContent=ch?'Choose an answer.':(matchMedia('(pointer: coarse)').matches?'Tap to continue ▸':'E, Space or click to continue ▸');
+  ui.dlgMore.textContent=ch?'Choose an answer.':(matchMedia('(pointer: coarse)').matches?'':'E or → next · ← back');
+  ui.dlgBack.disabled=!(DLG.reply||prevLine()>=0);ui.dlgNextBtn.hidden=!!ch;
   ui.dlg.hidden=false;(ch?ui.dlgChoices.querySelector('button'):ui.dlg).focus({preventScroll:true});}
 function dlgNext(){if(!DLG.open||ui.dlg.hidden)return;const L=DLG.lines[DLG.i];
   if(DLG.reply){const again=DLG.reply.again;DLG.reply=null;if(again)return renderLine(L);DLG.i++;return showLine();}
   if(L&&L.choices)return;DLG.i++;showLine();}
+// Back goes to the line before, but never back across something that happened (a walk, a fade, a new stage)
+function prevLine(){for(let j=DLG.i-1;j>=0;j--){if(DLG.lines[j].do)return-1;return j;}return-1;}
+function dlgBack(){if(!DLG.open||ui.dlg.hidden)return;const L=DLG.lines[DLG.i];if(DLG.reply){DLG.reply=null;return renderLine(L);}const j=prevLine();if(j<0)return;DLG.i=j;renderLine(DLG.lines[j]);}
 function endDlg(){DLG.open=false;DLG.who=null;ui.dlg.hidden=true;vp.focus({preventScroll:true});const e=DLG.end;DLG.end=null;e&&e();}
 // things a line of dialogue can make happen
 const DO={
@@ -883,6 +908,13 @@ const DO={
   // the Curator walks you to your office: a fade, and you are both there
   toOffice:(L,next)=>fade(()=>{setStage(L.stage);enterArea('office');ME.x=84.6;ME.z=0.2;ME.view={mode:'front',facing:1};ME.flip=null;snapCamera();},next),
   harrowHome:(L,next)=>fade(()=>setStage(L.stage),next),
+  // the Curator takes you down to the stacks
+  toStacks:(L,next)=>fade(()=>{setStage(L.stage);enterArea('basement');ME.x=126.4;ME.z=-1.1;ME.view={mode:'front',facing:1};ME.flip=null;snapCamera();},next),
+  // he shows you how to file the paper, at shelf P – Z (the dialogue goes on when the shelf closes)
+  tutorShelf:(L,next)=>{if(!ACT())return next();ACT().shelf({shelfId:'p-z',mode:'file',carrying:G.carrying.slice(),have:[],tutor:true,face:faceURL('harrow'),
+    onFile:d=>{G.carrying=G.carrying.filter(x=>x!==d);persist();renderObj();},onClose:()=>{vp.focus({preventScroll:true});next();}});},
+  // and sends you back up to your own stack
+  toDesk:(L,next)=>fade(()=>{setStage(L.stage);enterArea('office');ME.x=84.6;ME.z=0.2;ME.view={mode:'front',facing:1};ME.flip=null;snapCamera();},next),
 };
 function talk(who){const lines=window.STORY.talk[who]?.(G.stage);say(lines);}
 
@@ -890,7 +922,7 @@ function talk(who){const lines=window.STORY.talk[who]?.(G.stage);say(lines);}
 function useDesk(){const st=STAGE();
   if(!st.case||!ACT())return say([{who:'you',text:window.STORY.deskIdle(G.stage)}]);
   stopWalking();const cid=st.case,save=G.desk[cid]||(G.desk[cid]={});
-  ACT().desk({caseId:cid,save,persist,onLeave:()=>vp.focus({preventScroll:true}),
+  ACT().desk({caseId:cid,save,persist,face:faceURL('harrow'),onLeave:()=>vp.focus({preventScroll:true}),
     onComplete:()=>{G.carrying=ACT().docsOf(ACT().caseById(cid));G.have=[];persist();vp.focus({preventScroll:true});say(window.STORY.afterCase(cid),()=>{if(STAGE().case===cid)setStage(st.next);});}});}
 function useShelf(id){const st=STAGE();if(!ACT())return;stopWalking();
   const mode=st.fetch?'fetch':st.file?'file':'browse';
@@ -902,6 +934,16 @@ function progress(){const st=STAGE();
   if(st.fetch&&ACT().caseById(st.fetch).fetch.every(b=>G.have.includes(b))){setStage(st.next);say(window.STORY.afterFetch(st.fetch));}
   else if(st.file&&!G.carrying.length){setStage(st.next);say(window.STORY.afterFile(st.file));}}
 
+/* the quest marker: the pointing hand over the next thing to use (STORY.stages[...].goal), or over the door that
+   leads toward it. Off the side of the screen, it points along the edge. */
+const DOOR_TOWARD={museum:{office:'to-offices',basement:'to-offices'},office:{museum:'to-galleries',basement:'to-stacks'},basement:{office:'to-upstairs',museum:'to-upstairs'}};
+function questGoal(){const st=STAGE(),A=ACT();let id=st.goal;if(!id)return null;
+  if(id==='shelf'){if(!A)return null;let box=null;if(st.fetch)box=A.caseById(st.fetch).fetch.find(b=>!G.have.includes(b));else if(st.file&&G.carrying.length)box=A.SOURCES[G.carrying[0]].box;if(!box)return null;id='shelf-'+A.shelfOf(box).id;}
+  const t=EXHIBITS.concat(THINGS).find(e=>e.id===id);if(!t)return null;return t.area===AREA.id?t:thing(DOOR_TOWARD[AREA.id][t.area]);}
+function questMarker(){const m=ui.marker;if(!m)return;const q=busy()?null:questGoal();if(!q||near===q)return m.hide();
+  v3.set(q.at[0],q.labelY+0.25,q.at[1]-0.8);v3.project(camera);const W_=vp.clientWidth,H_=vp.clientHeight;let x=(v3.x*0.5+0.5)*W_,y=(-v3.y*0.5+0.5)*H_;
+  if(v3.z>1||x<24||x>W_-24){const right=v3.z>1?q.at[0]>ME.x:x>W_/2;return m.at(right?W_-18:18,clamp(y,120,H_-120),right?'right':'left');}
+  m.at(x,clamp(y,110,H_-20),'down');}
 function interact(x){if(!x||busy())return;
   if(x.kind==='door')return useDoor(x.door);
   if(x.kind==='desk')return useDesk();
@@ -934,7 +976,7 @@ function step(dt){
   if(len>0){ix/=len;iz/=len;const sp=3.1*dt;const ox=ME.x,oz=ME.z;
     if(!blocked(ME.x+ix*sp,ME.z))ME.x+=ix*sp;if(!blocked(ME.x,ME.z+iz*sp))ME.z+=iz*sp;moved=Math.hypot(ME.x-ox,ME.z-oz);ME.dist+=moved;
     if(ME.target.length){if(moved<sp*0.25){ME.stuck+=dt;if(ME.stuck>0.35){const p=ME.pending;ME.target=[];ME.pending=null;if(p&&Math.hypot(p.at[0]-ME.x,p.at[1]-ME.z)<2.4)interact(p);}}else ME.stuck=0;}
-    if(!ME.flip){const want=wantView(ix,iz);if(want.mode!==ME.view.mode||want.facing!==ME.view.facing)ME.flip={from:ME.view,to:want,u:0};}}
+    if(!ME.flip&&moved>sp*0.35){const want=wantView(ME.x-ox,ME.z-oz);if(want.mode!==ME.view.mode||want.facing!==ME.view.facing)ME.flip={from:ME.view,to:want,u:0};}}
   ME.amp=lerp(ME.amp,moved>0.0005?1:0,1-Math.exp(-12*dt));
   ME.idle=moved>0.0005?0:(ME.idle||0)+dt;if(ME.idle>2.6&&!cardOpen)faceFront();
   if(ME.flip){ME.flip.u+=dt/0.18;if(ME.flip.u>=1){ME.view=ME.flip.to;ME.flip=null;}}
@@ -995,6 +1037,7 @@ function placeCamera(dt){
 }
 function hud(){
   ui.room.textContent=roomAt(ME.x).name;ui.obj.hidden=DLG.open||!!document.body.dataset.overlay;
+  questMarker();
   if(near&&!busy()){const e=near;v3.set(e.at[0],e.labelY,Math.min(e.at[1],-0.5)+ (e.at[1]>-0.5?e.at[1]+0.5:0));v3.set(e.at[0],e.labelY,e.at[1]-0.8);v3.project(camera);
     const x=(v3.x*0.5+0.5)*vp.clientWidth,y=(-v3.y*0.5+0.5)*vp.clientHeight;ui.prompt.hidden=false;ui.prompt.style.left=clamp(x,90,vp.clientWidth-90)+'px';ui.prompt.style.top=clamp(y,40,vp.clientHeight-10)+'px';
     const touch=matchMedia('(pointer: coarse)').matches;const html=(touch?'Tap: ':'<kbd>E</kbd>')+(e.verb?esc(e.verb):e.talk?'Talk to the attendant':esc(e.name));if(ui.prompt.dataset.h!==html){ui.prompt.innerHTML=html;ui.prompt.dataset.h=html;}}
@@ -1008,7 +1051,8 @@ async function boot(){
   try{await Promise.race([Promise.all(['40px "IM Fell English SC"','40px "IM Fell English"','20px "Special Elite"'].map(f=>document.fonts.load(f))),new Promise(r=>setTimeout(r,2500))]);}catch(e){}
   build();for(const e of TEXS){compose(e);e.t.needsUpdate=true;}renderCat();resize();placeHarrow();renderObj();
   window.addEventListener('activities-ready',renderObj);
-  ui.prompt.addEventListener('click',()=>interact(near));ui.dlg.addEventListener('click',e=>{if(!e.target.closest('.dlg-choices,.dlg-cardslot'))dlgNext();});
+  ui.prompt.addEventListener('click',()=>interact(near));ui.dlg.addEventListener('click',e=>{if(!e.target.closest('button,.dlg-cardslot'))dlgNext();});ui.dlgBack.onclick=e=>{e.stopPropagation();dlgBack();};ui.dlgNextBtn.onclick=e=>{e.stopPropagation();dlgNext();};
+  ui.marker=window.HAND.make(vp,'quest',130);
   document.getElementById('menubtn').onclick=()=>{if(confirm('Start the game again from the very beginning? Everything done so far will be forgotten.')){localStorage.removeItem(SAVE_KEY);location.reload();}};
   document.getElementById('loading').hidden=true;vp.focus({preventScroll:true});
   window.museum={tick:(n=60,dt=1/60)=>{for(let i=0;i<n;i++){step(dt);pose();}return[ME.x,ME.z];},keys,go:(x,z,area)=>{if(area)enterArea(area);ME.x=x;ME.z=z;snapCamera();},area:()=>AREA.id,say:l=>say(l),stage:st=>{if(st)setStage(st);return G.stage;},game:()=>G,open:id=>interact(EXHIBITS.concat(THINGS).find(e=>e.id===id)),close:closeCard,walk:routeTo,me:ME,

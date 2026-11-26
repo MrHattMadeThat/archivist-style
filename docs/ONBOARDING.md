@@ -18,13 +18,24 @@ words are in `js/story.js`; the stages are run by the story code in `js/world.js
 |---|---|---|
 | `arrive` | Entrance Hall | The attendant: "You must be the new archivist… the door marked CURATOR." |
 | `upstairs` / `meet` | The offices | Mr. Harrow: the Society keeps papers; your job in four parts (card); PRIMARY / SECONDARY (card); "it depends on the QUESTION"; the diary quiz (two questions, same diary, two answers; a wrong pick explains and asks again); no answer without proof; your first research question (card). He walks you to your office. |
-| `case1` | Your office | The desk, case 1: read the question (click WHEN and WHERE), then five papers to stamp with proof. The first two print where to look; the rest hide it behind a hint. Mr. Harrow stands by. |
-| `file1` | The stacks | Mr. Harrow: "We do NOT file papers as primary or secondary… We file by WHO MADE IT and WHEN." Put five papers back in their boxes on shelves A–F, G–O, P–Z. |
+| `sample` | Your office | **The guided sample.** Mr. Harrow stands by the desk and coaches a practice paper on another subject: George Stewart's *Story of the Great Fire in St. John* (1877). His words appear in a bubble with Back and Next, and a pointing hand moves to what he is talking about: the pinned question, the WHEN and WHERE words, the label's MADE BY and WHEN lines, the stamps, the proof box, Check. "Your turn" steps wait for the student. Before the end he shows the twist: Stewart's last paragraph is about a fire in 1784, so for a question about 1784 the same book would be secondary. |
+| `sampleFile` | The stacks | He walks you down. "Every box holds the papers of ONE maker… We never file by primary or secondary." A coached filing at shelf P – Z: read the paper's label, find S between P and Z, click the STEWART 1877 box. Then he sends you back up. |
+| `case1` | Your office | The desk, case 1, on your own: read the question (click WHEN and WHERE), then five papers to stamp with proof. The first two print where to look; the rest hide it behind a hint. |
+| `file1` | The stacks | Put five papers back in their boxes on shelves A–F, G–O, P–Z. |
 | `report1` → `fetch2` | Curator's office → the stacks | A letter from Miss Lyle, a schoolteacher. The request slip: fetch three boxes. |
 | `case2` | Your office | Same research question, read again. Three questions with proof (why no firewood; where Parkman got his facts; Ganong's fact or opinion). |
 | `file2` → `report2` → `fetch3` | | Mr. Harrow's puzzle: what if the question changes? Fetch Ganong and Parkman again. |
 | `case3` | Your office | Two NEW questions ("What was St. Croix Island like around 1900?", "How did historians in the 1860s tell the story?"). Ganong and Parkman are now PRIMARY. Last question: "What changed?" The question. |
 | `file3` → `report3` → `free` | | "You cannot sort a paper until you know the question." The galleries are yours. |
+
+## Knowing where to go
+
+- The **To do** note (bottom left) always says the next step.
+- A **pointing hand** floats over the next thing to use (the attendant, a door, Mr. Harrow, your desk, the right
+  shelf), or over the door that leads toward it, or at the edge of the screen when it is off to the side.
+- On the desk, if nothing is clicked for six seconds, the hand points at what to do next.
+- Dialogue has **Back** and **Next** (and the ← → keys), so a line read too fast can be read again.
+- On the desk, **◂ Back** (or a coloured pip) shows earlier answers with their proof.
 
 ## How the big idea keeps coming back
 

@@ -13,22 +13,25 @@
   const A = (text, more) => ({ who: 'attendant', text, ...more });
   const Y = (text) => ({ who: 'you', text });
 
-  // stage: { obj (the To do note), case/fetch/file (which case), harrow ('home' | 'desk'), next }
+  // stage: { obj (the To do note), goal (what the pointing hand marks: a thing's id, or 'shelf' for the right
+  // shelf), case/fetch/file (which case), harrow ('home' | 'desk' | 'stacks'), next }
   const stages = {
-    arrive: { obj: 'Talk to the attendant at the front desk.' },
-    upstairs: { obj: 'Go through the door marked CURATOR, behind the visitors’ book.' },
-    meet: { obj: (area) => (area === 'office' ? 'Talk to Mr. Harrow. His office is on the left.' : 'Go up to the offices: the door marked CURATOR.') },
-    case1: { obj: 'Sit at your desk and sort the stack of papers.', case: 'c1', harrow: 'desk', next: 'file1' },
-    file1: { obj: 'File the papers in the stacks, in the basement. Take the STACKS door on the landing.', file: 'c1', next: 'report1' },
-    report1: { obj: 'Go back up to Mr. Harrow’s office.' },
-    fetch2: { obj: 'Fetch three boxes from the stacks, in the basement.', fetch: 'c2', next: 'case2' },
-    case2: { obj: 'Take the boxes up to your desk. Answer Miss Lyle’s letter.', case: 'c2', next: 'file2' },
-    file2: { obj: 'File the papers back in the stacks.', file: 'c2', next: 'report2' },
-    report2: { obj: 'Tell Mr. Harrow that Miss Lyle’s letter is answered.' },
-    fetch3: { obj: 'Fetch two boxes from the stacks again.', fetch: 'c3', next: 'case3' },
-    case3: { obj: 'At your desk: stamp the papers for the NEW questions.', case: 'c3', next: 'file3' },
-    file3: { obj: 'File the papers back in the stacks.', file: 'c3', next: 'report3' },
-    report3: { obj: 'Tell Mr. Harrow what you found.' },
+    arrive: { obj: 'Talk to the attendant at the front desk.', goal: 'attendant' },
+    upstairs: { obj: 'Go through the door marked CURATOR, behind the visitors’ book.', goal: 'harrow' },
+    meet: { obj: (area) => (area === 'office' ? 'Talk to Mr. Harrow. His office is on the left.' : 'Go up to the offices: the door marked CURATOR.'), goal: 'harrow' },
+    sample: { obj: 'Sit at your desk. Mr. Harrow will show you how the job is done.', goal: 'mydesk', case: 'c0', harrow: 'desk', next: 'sampleFile' },
+    sampleFile: { obj: 'Put the fire book away in the stacks, on shelf P – Z.', goal: 'shelf', file: 'c0', harrow: 'stacks', next: 'case1' },
+    case1: { obj: 'Sit at your desk and sort the stack of papers. On your own this time!', goal: 'mydesk', case: 'c1', next: 'file1' },
+    file1: { obj: 'File the papers in the stacks, in the basement. Take the STACKS door on the landing.', goal: 'shelf', file: 'c1', next: 'report1' },
+    report1: { obj: 'Go back up to Mr. Harrow’s office.', goal: 'harrow' },
+    fetch2: { obj: 'Fetch three boxes from the stacks, in the basement.', goal: 'shelf', fetch: 'c2', next: 'case2' },
+    case2: { obj: 'Take the boxes up to your desk. Answer Miss Lyle’s letter.', goal: 'mydesk', case: 'c2', next: 'file2' },
+    file2: { obj: 'File the papers back in the stacks.', goal: 'shelf', file: 'c2', next: 'report2' },
+    report2: { obj: 'Tell Mr. Harrow that Miss Lyle’s letter is answered.', goal: 'harrow' },
+    fetch3: { obj: 'Fetch two boxes from the stacks again.', goal: 'shelf', fetch: 'c3', next: 'case3' },
+    case3: { obj: 'At your desk: stamp the papers for the NEW questions.', goal: 'mydesk', case: 'c3', next: 'file3' },
+    file3: { obj: 'File the papers back in the stacks.', goal: 'shelf', file: 'c3', next: 'report3' },
+    report3: { obj: 'Tell Mr. Harrow what you found.', goal: 'harrow' },
     free: { obj: 'The museum is yours to explore. More letters will come.' },
   };
 
@@ -58,9 +61,23 @@
     H('And one more rule: no answer without proof. In this office you point at the words that prove it. A guess is not an answer.'),
     H('Here is your first research question.', { card: 'rq', case: 'c1' }),
     H('There is a stack of papers about it on your desk. Come, I will show you your office.'),
-    { do: 'toOffice', stage: 'case1' },
+    { do: 'toOffice', stage: 'sample' },
     H('Here we are. Your desk, your lamp, and your first stack.'),
-    H('Sort each paper: primary or secondary, for THIS question. Prove every stamp. Sit at your desk when you are ready.', { card: 'rq', case: 'c1' }),
+    H('But first, I will show you how it is done, on a practice paper about something else entirely.'),
+    H('Sit down at the desk. I will stand right here and point.'),
+  ];
+
+  // after the practice paper: he walks you to the stacks and shows you how to file it
+  const SAMPLE_DONE = [
+    H('Well done. Now the paper goes back where it lives. Come with me to the stacks.'),
+    { do: 'toStacks', stage: 'sampleFile' },
+    H('The stacks. Every box holds the papers of ONE maker, and the shelves go A to Z by the maker’s name.'),
+    H('We never file by primary or secondary. Tomorrow someone will ask a different question, and the stamp would be wrong.'),
+    H('Stewart starts with S, and S comes between P and Z. So: this shelf. Let us put it away.'),
+    { do: 'tutorShelf' },
+    H('That is the whole job. Every paper has a home, and anyone can find it again.'),
+    H('Now, back upstairs. The stack on your desk is yours to sort, on your own. I will be in my office if you need me.', { card: 'rq', case: 'c1' }),
+    { do: 'toDesk', stage: 'case1' },
   ];
 
   const REPORT1 = [
@@ -92,6 +109,8 @@
     if (stage === 'report2') return REPORT2;
     if (stage === 'report3') return REPORT3;
     const short = {
+      sample: 'Sit at your desk, and I will show you how it is done.',
+      sampleFile: 'Stewart starts with S. Shelf P to Z. Click the shelf, and we will put the book away.',
       case1: 'Your stack is on your desk. Read the question first, then sort!',
       file1: 'The stacks are in the basement: the STACKS door, on the landing. We file by who made it, and when.',
       fetch2: 'The boxes are in the stacks. Shelves go by the maker’s name, A to Z.',
@@ -121,18 +140,13 @@
 
   // ------------------------------------------------------------------ after the desk, the fetching and the filing
   const afterCase = (id) => ({
-    c1: [
-      H('Finished? Let me see. Every stamp with its proof. Well done.'),
-      H('Now the papers go back downstairs into the stacks. And here is something new archivists get wrong.'),
-      H('We do NOT file papers as primary or secondary. Tomorrow someone will bring a different question, and the stamps will change.'),
-      H('We file by WHO MADE IT and WHEN. That never changes. The stacks are in the basement: the STACKS door, on the landing.'),
-      { do: 'harrowHome', stage: 'file1' },
-    ],
+    c0: SAMPLE_DONE,
+    c1: [Y('My first stack, sorted and proven. Now down to the stacks: every paper goes back in its box, by who made it and when.')],
     c2: [Y('Letter answered. Now these papers go back to their boxes in the stacks.')],
     c3: [Y('Same papers, new questions, new stamps. Back to the stacks with them.')],
   }[id]);
   const afterFetch = (id) => [Y(id === 'c2' ? 'That’s all three boxes. Up to my desk with them.' : 'Both boxes. Back up to my desk.')];
-  const afterFile = (id) => [Y(id === 'c1' ? 'Every paper back in its box, by who made it and when. Back up to Mr. Harrow.' : 'All filed. Time to see Mr. Harrow.')];
+  const afterFile = (id) => [Y(id === 'c0' ? 'Filed, by who made it and when. Now back upstairs: the stack on my desk is mine to sort.' : id === 'c1' ?'Every paper back in its box, by who made it and when. Back up to Mr. Harrow.' : 'All filed. Time to see Mr. Harrow.')];
   const deskIdle = (stage) => (stage.startsWith('fetch')
     ? 'The papers aren’t here yet. I need to fetch the boxes from the stacks first.'
     : stage.startsWith('file') ? 'My arms are full of papers. They belong in the stacks, downstairs.'

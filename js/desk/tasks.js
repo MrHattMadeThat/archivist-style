@@ -172,11 +172,12 @@ function stamp(t, ctx) {
     st.msg = msg;
     st.tone = grade === 'red' ? 'bad' : 'good';
     ctx.setZone(null);
-    ctx.finish({ grade, mail: grade === 'red' ? t.mail : null, stamp: t.answer });
+    ctx.finish({ grade, mail: grade === 'red' ? t.mail : null, stamp: t.answer, first: st.wrongFirst });
   }
 
   return {
     docs: [t.doc],
+    get pick() { return st.pick; },
     get pointing() { return st.phase !== 'done' && st.pick != null; },
     stamp: () => (st.pick ? { kind: st.pick, fresh: st.fresh && !(st.fresh = false) } : null),
     card() {
@@ -244,11 +245,12 @@ function question(t, ctx) {
     st.msg = [t.right];
     st.tone = grade === 'red' ? 'bad' : 'good';
     ctx.setZone(null);
-    ctx.finish({ grade, mail: grade === 'red' ? t.mail : null });
+    ctx.finish({ grade, mail: grade === 'red' ? t.mail : null, first: st.wrongFirst });
   }
 
   return {
     docs: t.docs,
+    get pick() { return st.pick; },
     get pointing() { return st.phase !== 'done' && st.pick != null; },
     card() {
       const c = el('div', 'task task-question');

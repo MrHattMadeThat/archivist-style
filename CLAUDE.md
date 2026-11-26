@@ -61,6 +61,30 @@ Read `README.md` first. This file is for agents working in the repo.
 - Port 5544 is often taken by another session's server; `archivist-office` in `REPOS/.claude/launch.json` serves the
   same folder on 5546.
 
+## Guided sample, markers, looking back (2026-11-26, second pass)
+
+- **The pointing hand** (`js/hand.js`, classic script, `window.HAND`): a printer's manicule drawn in code. One drawing,
+  three uses: the **quest marker** in the world (`questGoal()` / `questMarker()` in world.js: it points at the stage's
+  `goal` from `js/story.js`, or at the door that leads toward it, or along the screen edge when it is off screen), the
+  **idle nudge** on the desk (after 6 s without a click), and **Mr. Harrow's coaching**.
+- **The guided sample** (stages `sample` and `sampleFile`): after the meeting, Mr. Harrow stands by your desk and coaches
+  case `c0` (George Stewart's 1877 book on the Great Fire of St. John) with `js/desk/coach.js` + `js/desk/tutorial.js`:
+  a bubble with Back/Next and the hand moving with his words. Steps with `until` wait for the student. Then he walks you
+  to the stacks (`DO.toStacks`) and runs a coached, locked filing at shelf P – Z (`DO.tutorShelf`), then sends you back
+  up (`DO.toDesk`) to case 1 on your own.
+- **Dialogue Back/Next**: buttons and the ← → keys. Back never crosses a `do` line (a walk, a fade or a stage change).
+- **Looking back on the desk**: ◂ Back in the work card's top row, or a coloured pip, shows an earlier answer
+  read-only with its proof underlined. Results now keep `proof` (the line key) and `first` (a wrong first answer).
+- **Paper seams**: `T(..., {cut:{t, b}})` removes the white paper margin above `t` / below `b` px, where two pieces join.
+  Used for the necks (they tuck under the collars) and the elbows (the upper sleeve also overlaps the forearm). Keep
+  new jointed pieces to this.
+- **Thick walls**: partitions are `thickWall()`: the cutaway outline extruded 0.22 units, faces textured, cut edges
+  hatched plaster (`TX.poche`).
+- **No spinning**: the Archivist turns by the way they actually moved, and only when they moved, so pushing into a wall
+  never flips them.
+- Browser module caching: `?v=` on the page does not refresh ES module imports. In the preview, `fetch(file, {cache:
+  'reload'})` each changed module before reloading.
+
 ## Arrival (`arrival.html`)
 
 - `window.stage.set(t)`, `style(key)`, `play(bool)`, `frame(t)`.

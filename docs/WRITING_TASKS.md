@@ -97,6 +97,14 @@ did NOT happen."
 - **`mail`** is what happens in the world when a paper is mis-stamped. It is a small, funny, believable 1910
   consequence, never a scolding.
 
+## Coaching steps (the guided sample)
+
+- One `say` per step, two short sentences at most, about the thing the hand points at. If the hand points at the
+  label's WHEN line, the words are about WHEN.
+- A step where the student must act has `until`, and the bubble shows **Your turn**. Give it a `wrong` / `wrongSay`
+  for the likely mistake.
+- Never let a coached step hand out a red seal: guide the student to the right choice before they can press Check.
+
 ## Sources
 
 - **Real sources only**, public domain or quoted with credit, and **only sources that existed by 1910** (the desk is

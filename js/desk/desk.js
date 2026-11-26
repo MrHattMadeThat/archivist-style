@@ -7,19 +7,24 @@
 // The research question is the first thing on the desk and never leaves it: a paper can't be sorted until you know
 // the question. Each case starts by reading it (task type `readq`), and every stamp says which question it is for.
 //
+// Looking back: ◂ Back (or a coloured pip) shows an earlier answer, read-only, with its proof; Next ▸ comes forward
+// again. A pointing hand appears after a few idle seconds to show what to do next. In the guided sample, Mr. Harrow
+// coaches instead (opts.coach, js/desk/coach.js).
+//
 // Console while the desk is open: desk.solve() answers the current task, desk.next() moves on, desk.state.
 import { el, button } from './dom.js';
 import { renderDoc } from './doc.js';
 import { TASKS } from './tasks.js';
 import { prepareAll, matches, lookup } from './text.js';
+import { startCoach } from './coach.js';
 
 const SEAL = { gold: 'Proven first time', silver: 'Proven, with help', red: 'Fixed' };
 
-export function openDesk(root, { theCase: C, sources, save, persist, onLeave, onComplete }) {
+export function openDesk(root, { theCase: C, sources, save, persist, onLeave, onComplete, coach, face }) {
   const docs = prepareAll(sources);
   if (!save.results) Object.assign(save, { task: 0, results: {}, marked: {}, introSeen: false });
 
-  let task = null, shown = null, sel = null, zone = null;
+  let task = null, shown = null, sel = null, zone = null, viewing = null;
   const versions = {};
   const t = () => C.tasks[save.task];
   const rqAt = (i) => { let q = C.rq; for (let k = 0; k <= i; k++) if (C.tasks[k]?.rq) q = C.tasks[k].rq; return q; };
@@ -64,7 +69,7 @@ export function openDesk(root, { theCase: C, sources, save, persist, onLeave, on
     markRq(tag) { const k = rq().text; save.marked[k] = [...new Set([...(save.marked[k] || []), tag])]; persist(); },
     aboutLine: () => rq().marks.map((m) => m.words).join(' · '),
     finish(result) {
-      save.results[save.task] = result;
+      save.results[save.task] = { ...result, proof: sel };
       persist();
       refresh();
       work.querySelector('.next')?.focus({ preventScroll: true });
@@ -74,18 +79,18 @@ export function openDesk(root, { theCase: C, sources, save, persist, onLeave, on
 
   // ------------------------------------------------------------------ the research question, pinned to the desk
   function renderRq() {
-    const q = rq();
+    const q = rqAt(viewing ?? save.task);
     const marked = new Set(save.marked[q.text] || []);
     rqCard.replaceChildren();
     const changed = save.task > 0 && rqAt(save.task - 1) !== q;
     const tag = el('div', 'rq-tag');
     tag.append('Your research question');
-    if (changed && !result()) tag.append(el('span', 'rq-new', 'New question!'));
+    if (changed && !result() && viewing == null) tag.append(el('span', 'rq-new', 'New question!'));
     const text = el('p', 'rq-text');
     // split the question into plain words and the marked phrases (WHEN, WHERE, WHO)
     const spans = q.marks.map((m, i) => ({ i, m, at: q.text.indexOf(m.words) })).filter((s) => s.at >= 0).sort((a, b) => a.at - b.at);
     let pos = 0;
-    const clickable = task?.rqWords;
+    const clickable = viewing == null && task?.rqWords;
     const word = (w, markIndex) => {
       if (!clickable || !w.trim()) return document.createTextNode(w);
       const b = button('rq-word', w);
@@ -115,8 +120,9 @@ export function openDesk(root, { theCase: C, sources, save, persist, onLeave, on
     const pips = el('div', 'pips');
     C.tasks.forEach((x, i) => {
       const r = result(i);
-      const p = el('span', `pip${x.type === 'readq' ? ' q' : ''}${r ? ` ${r.grade}` : ''}${i === save.task ? ' now' : ''}`);
-      p.title = `${kindOf(x)}${r ? ` · ${SEAL[r.grade]}` : i === save.task ? ' · now' : ''}`;
+      const p = el(i < save.task ? 'button' : 'span', `pip${x.type === 'readq' ? ' q' : ''}${r ? ` ${r.grade}` : ''}${i === (viewing ?? save.task) ? ' now' : ''}`);
+      p.title = `${kindOf(x)}${r ? ` · ${SEAL[r.grade]}` : i === save.task ? ' · now' : ''}${i < save.task ? ' · click to look back' : ''}`;
+      if (i < save.task) { p.type = 'button'; p.onclick = () => view(i); }
       pips.append(p);
     });
     meta.append(pips);
@@ -134,7 +140,7 @@ export function openDesk(root, { theCase: C, sources, save, persist, onLeave, on
 
   function renderPile() {
     pile.replaceChildren();
-    const now = task.docs;
+    const now = viewing != null ? docsOfTask(C.tasks[viewing]) : task.docs;
     const add = (id, list) => {
       const d = docs[id];
       const b = button(`pilebtn look-${d.src.look}${shown === id ? ' on' : ''}${now.includes(id) ? ' now' : ''}`);
@@ -150,7 +156,7 @@ export function openDesk(root, { theCase: C, sources, save, persist, onLeave, on
       now.forEach((id) => add(id, l));
       pile.append(l);
     }
-    const rest = caseDocs.filter((id) => !now.includes(id) && C.tasks.findIndex((x) => (x.docs || [x.doc]).includes(id)) < save.task);
+    const rest = caseDocs.filter((id) => !now.includes(id) && C.tasks.findIndex((x) => docsOfTask(x).includes(id)) < save.task);
     if (rest.length) {
       pile.append(el('h3', null, 'Already sorted'));
       const l = el('div', 'pilelist done');
@@ -165,6 +171,22 @@ export function openDesk(root, { theCase: C, sources, save, persist, onLeave, on
     const same = paper.dataset.doc === shown;
     paper.replaceChildren();
     paper.dataset.doc = shown || '';
+    if (viewing != null) {
+      const r = result(viewing), x = C.tasks[viewing];
+      if (!shown) {
+        const blank = el('div', 'blotter');
+        blank.append(el('p', null, 'You read the research question.'), el('p', 'small', 'It is pinned at the top of the desk. ↑'));
+        paper.append(blank);
+        return;
+      }
+      paper.append(el('p', 'readonly', 'Looking back: the underlined line is the proof you chose.'));
+      paper.append(renderDoc(docs[shown], {
+        version: versions[shown], pointing: false, selected: r.proof,
+        stamp: x.type === 'stamp' && x.doc === shown ? { kind: r.stamp, q: rqAt(viewing).short } : null,
+        onVersion: (v) => { versions[shown] = v; renderPaper(); },
+      }));
+      return;
+    }
     if (!shown) {
       const blank = el('div', 'blotter');
       if (result()) blank.append(el('p', null, 'Now you know what to look for.'), el('p', 'small', 'Click Next → and the papers come out from under the paperweight.'));
@@ -207,10 +229,27 @@ export function openDesk(root, { theCase: C, sources, save, persist, onLeave, on
 
   function renderWork() {
     work.replaceChildren();
-    const n = C.tasks.slice(0, save.task + 1).filter((x) => x.type === t().type).length;
-    const of = C.tasks.filter((x) => x.type === t().type).length;
+    const at = viewing ?? save.task, x = C.tasks[at];
+    const n = C.tasks.slice(0, at + 1).filter((y) => y.type === x.type).length;
+    const of = C.tasks.filter((y) => y.type === x.type).length;
     const kicker = el('div', 'work-kicker');
-    kicker.append(el('span', null, kindOf(t())), el('span', null, of > 1 ? `${n} of ${of}` : ''));
+    kicker.append(el('span', null, `${viewing != null ? 'Looking back · ' : ''}${kindOf(x)}${of > 1 ? ` · ${n} of ${of}` : ''}`));
+    const nav = el('span', 'work-nav');
+    if (at > 0 && result(at - 1)) {
+      const b = button('navbtn', '◂ Back');
+      b.title = 'Look at your answer before this one';
+      b.onclick = () => view(at - 1);
+      nav.append(b);
+    }
+    if (viewing != null) {
+      const fwd = viewing + 1 < save.task;
+      const b = button('navbtn fwd', fwd ? 'Next ▸' : 'Back to my work ▸');
+      b.onclick = () => view(fwd ? viewing + 1 : null);
+      nav.append(b);
+    }
+    kicker.append(nav);
+    work.classList.toggle('reviewing', viewing != null);
+    if (viewing != null) { work.append(kicker, reviewCard(viewing)); return; }
     work.append(kicker, task.card());
     const r = result();
     if (r) {
@@ -224,6 +263,55 @@ export function openDesk(root, { theCase: C, sources, save, persist, onLeave, on
       next.onclick = advance;
       work.append(next);
     }
+  }
+
+  const docsOfTask = (x) => x.docs || (x.doc ? [x.doc] : []);
+
+  // an earlier answer, read-only: what was asked, the answer, the proof, and why
+  function reviewCard(i) {
+    const x = C.tasks[i], r = result(i), q = rqAt(i);
+    const c = el('div', 'task task-review');
+    if (x.type === 'readq') {
+      c.append(el('p', 'ask', 'You read the research question first.'));
+      const rule = el('div', 'rule-now');
+      rule.append(el('p', 'rule-lead', 'So, for that question:'));
+      const p = el('p', 'rule-p'); p.append(el('b', null, 'PRIMARY '), q.primary); rule.append(p);
+      const s = el('p', 'rule-s'); s.append(el('b', null, 'SECONDARY '), q.secondary); rule.append(s);
+      c.append(rule);
+      return c;
+    }
+    const seal = el('div', `seal ${r.grade}`);
+    seal.append(el('span', 'seal-dot'), el('span', null, SEAL[r.grade]));
+    c.append(seal, el('p', 'ask', x.ask || `${docs[x.doc].src.title}: primary or secondary for ${q.short}?`));
+    const ans = el('p', 'review-answer');
+    if (x.type === 'stamp') {
+      ans.className = `stamped-as ${x.answer}`;
+      ans.append('Your stamp: ', el('b', null, x.answer.toUpperCase()));
+      if (r.first) ans.append(el('span', 'small', ` (you first chose ${r.first})`));
+    } else {
+      ans.append(el('b', null, 'Answer: '), x.options[x.answer]);
+      if (r.first != null) ans.append(el('span', 'small', ` (you first chose ${'ABCD'[r.first]})`));
+    }
+    c.append(ans);
+    const pf = el('div', 'proof filled');
+    const qt = r.proof && lookup(docs, r.proof);
+    pf.append(el('div', 'proof-label', 'Your proof'), el('blockquote', null, qt ? `“${qt.text}”` : '—'));
+    c.append(pf);
+    const m = el('div', 'msg good');
+    m.append(el('p', null, x.right));
+    c.append(m);
+    return c;
+  }
+
+  function view(i) {
+    viewing = i;
+    if (i != null) {
+      const x = C.tasks[i], r = result(i);
+      shown = (r?.proof && lookup(docs, r.proof)?.doc.id) || docsOfTask(x)[0] || null;
+    } else shown = task.docs.includes(shown) ? shown : task.docs[0] || null;
+    refresh();
+    paper.scrollTop = 0;
+    if (i != null) requestAnimationFrame(() => paper.querySelector('.line.chosen')?.scrollIntoView({ block: 'center' }));
   }
 
   function refresh() {
@@ -245,10 +333,11 @@ export function openDesk(root, { theCase: C, sources, save, persist, onLeave, on
     persist();
     refresh();
     paper.scrollTop = 0;
-    if (!save.introSeen) showIntro();
+    if (!save.introSeen && !coach) showIntro();
   }
 
   function advance() {
+    viewing = null;
     save.task++;
     begin();
   }
@@ -313,6 +402,8 @@ export function openDesk(root, { theCase: C, sources, save, persist, onLeave, on
   }
 
   function close(complete) {
+    coachRun?.stop();
+    clearInterval(idleTick);
     desk.remove();
     delete window.desk;
     delete document.body.dataset.overlay;
@@ -328,10 +419,34 @@ export function openDesk(root, { theCase: C, sources, save, persist, onLeave, on
   window.desk = {
     get state() { return save; },
     get task() { return task; },
+    get sel() { return sel; },
     solve() { closeModal(); save.introSeen = true; task.solve(); },
     next() { closeModal(); if (result()) advance(); },
   };
 
+  // ------------------------------------------------------------------ the hand: what to do next, after a few idle seconds
+  const nudge = window.HAND.make(desk, 'nudge');
+  let idle = 0;
+  const wake = () => { idle = 0; nudge.hide(); };
+  desk.addEventListener('pointerdown', wake, true);
+  desk.addEventListener('keydown', wake, true);
+  function nudgeTarget() {
+    if (!modal.hidden) return modal.querySelector('.go');
+    if (viewing != null) return work.querySelector('.navbtn.fwd');
+    if (result()) return work.querySelector('.next');
+    if (task.rqWords) return rqCard.querySelector('.rq-mark:not(.marked)');
+    const go = work.querySelector('.go:not(.next):not(:disabled)');
+    if (go) return go;
+    return work.querySelector('.step.now .pads') || work.querySelector('.step.now .options') || work.querySelector('.step.now .step-title');
+  }
+  const idleTick = setInterval(() => {
+    if (coachRun) return;
+    idle += 0.5;
+    if (idle >= 6) nudge.to(nudgeTarget()); // it follows the page as it changes
+  }, 500);
+
+  let coachRun = null;
   if (save.done) showReport();
   else begin();
+  if (coach && !save.done) coachRun = startCoach(desk, coach(window.desk), { face, onEnd: () => { coachRun = null; } });
 }

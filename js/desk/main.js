@@ -7,6 +7,7 @@ import { openDesk } from './desk.js';
 import { openShelf } from './stacks.js';
 import { SOURCES, SHELVES, BOXES, shelfOf } from './sources.js';
 import { CASES } from './cases.js';
+import { SAMPLE_COACH, SHELF_COACH } from './tutorial.js';
 
 const root = () => document.getElementById('overlays');
 
@@ -14,9 +15,12 @@ window.Activities = {
   CASES, SOURCES, SHELVES, BOXES, shelfOf,
   caseById: (id) => CASES.find((c) => c.id === id),
   docsOf: (c) => [...new Set(c.tasks.flatMap((t) => t.docs || (t.doc ? [t.doc] : [])))],
-  desk({ caseId, save, persist, onLeave, onComplete }) {
-    openDesk(root(), { theCase: this.caseById(caseId), sources: SOURCES, save, persist, onLeave, onComplete });
+  // face: an image URL of Mr. Harrow's head, for the coaching bubble
+  desk({ caseId, save, persist, onLeave, onComplete, face }) {
+    const C = this.caseById(caseId);
+    openDesk(root(), { theCase: C, sources: SOURCES, save, persist, onLeave, onComplete, face, coach: C.coach ? SAMPLE_COACH : null });
   },
-  shelf(opts) { openShelf(root(), { ...opts, sources: SOURCES }); },
+  // tutor: true runs Mr. Harrow's filing lesson on this shelf
+  shelf(opts) { openShelf(root(), { ...opts, sources: SOURCES, coach: opts.tutor ? SHELF_COACH : null, locked: opts.tutor }); },
 };
 window.dispatchEvent(new Event('activities-ready'));

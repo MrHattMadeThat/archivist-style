@@ -23,6 +23,33 @@ const GANONG = (what) => ({
 export const SOURCES = {
   ...CHAMPLAIN,
 
+  // the guided sample: a different subject, so the new archivist sees the method, not the answer to their first stack
+  'stewart-fire': {
+    title: 'The Great Fire of 1877', look: 'old', box: 'stewart',
+    meta: {
+      by: 'George Stewart, Jr., of St. John, N.B.',
+      when: 'Printed in 1877, the same year as the fire',
+      what: 'Chapter 1 of his book The Story of the Great Fire in St. John, N.B.',
+      words: 'Easy words: retold simply for you, nothing added. His own words are in the next tab.',
+    },
+    body: [
+      'One of the worst fires of modern times happened in St. John, N.B., on Wednesday, June 20, 1877.',
+      'In only nine hours, two-fifths of the city burned, and 1,612 houses were destroyed. At one time, three parts of the city were burning at once.',
+      'Thick smoke rolled up into the sky. A brisk north-west wind carried burning embers for miles. Men and women stood frozen in the streets.',
+      'Even old stone buildings that had stood for sixty years crumbled. About 200 acres burned: all of the city south of King Street.',
+      'Fires are nothing new here. The first fire we know of was on June 18, 1784, when eleven houses burned.',
+    ],
+    orig: [
+      'One of the most destructive fires of modern times occurred at St. John, N.B., on Wednesday, the 20th June, 1877.',
+      '…in St. John an immense area of territory was destroyed in the incredibly short space of nine hours, and fully two-fifths of the entire city were laid in ashes, and one thousand six hundred and twelve houses levelled to the earth… At one time three portions of the city were burning at once…',
+      'The blinding smoke rolled heavenwards in a thick heavy mass; the flying embers were carried along for miles, and the brisk north-western wind brought the destroying flame to a thousand households. Men and women stood paralyzed in the streets, fearing the worst and hoping against hope.',
+      'Even old stone buildings that had stood for sixty years, in the outskirts of the city, and had withstood many a serious fire before, now crumbled and tumbled before the conquering scourge. 200 acres were destroyed, all that part of the city south of King Street…',
+      'A glance at the earlier history of St. John will show that destructive fires have been of frequent occurrence… In 1784, on Friday, the 18th June, the first fire of which we have any knowledge took place… Eleven houses were burned…',
+    ],
+    credit: 'George Stewart, Jr., The Story of the Great Fire in St. John, N.B., June 20th, 1877 (Toronto: Belford Brothers, 1877), chapter 1. Text from the Project Gutenberg e-text, via the Internet Archive. Public domain.',
+    link: 'https://archive.org/details/thestoryofthegre39260gut',
+  },
+
   parkman: {
     title: 'A historian tells the story', look: 'old', box: 'parkman',
     meta: {
@@ -86,13 +113,14 @@ export const SOURCES = {
 export const SHELVES = [
   { id: 'a-f', name: 'A – F', boxes: ['bird-labels', 'champlain'] },
   { id: 'g-o', name: 'G – O', boxes: ['ganong', 'gesner', 'society'] },
-  { id: 'p-z', name: 'P – Z', boxes: ['parkman', 'visitors'] },
+  { id: 'p-z', name: 'P – Z', boxes: ['parkman', 'stewart', 'visitors'] },
 ];
 
 export const BOXES = {
   champlain: { maker: 'CHAMPLAIN, Samuel de', what: 'His book of voyages', year: '1613', place: 'Paris' },
   parkman: { maker: 'PARKMAN, Francis', what: 'Pioneers of France in the New World', year: '1865', place: 'Boston' },
   ganong: { maker: 'GANONG, W. F.', what: 'Dochet (St. Croix) Island', year: '1902', place: 'Ottawa' },
+  stewart: { maker: 'STEWART, George, Jr.', what: 'The Story of the Great Fire in St. John', year: '1877', place: 'Toronto' },
   gesner: { maker: 'GESNER, Abraham', what: 'Catalogue of his museum', year: '1842', place: 'Saint John', decoy: true },
   society: { maker: 'NATURAL HISTORY SOCIETY', what: 'Minutes of meetings', year: '1890–1899', place: 'Saint John', decoy: true },
   'bird-labels': { maker: 'BIRDS & MAMMALS ROOM', what: 'Old specimen labels', year: '1904', place: 'Saint John', decoy: true },

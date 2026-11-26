@@ -30,6 +30,15 @@ used are in `docs/source-texts/`.
 - "The island in Ganong's day": a footnote to his reprint of Champlain's account of the sickness (around line 2632
   of the OCR text). One sentence after "He thought them remains of the French settlers" is left out on purpose.
 
+## George Stewart, Jr., *The Story of the Great Fire in St. John, N.B., June 20th, 1877* (Toronto, 1877)
+
+- The guided sample's paper. Stewart signs the book "of St. John, N.B."; copyright entered in 1877.
+- Text: the Project Gutenberg e-text (39260), via the Internet Archive:
+  https://archive.org/details/thestoryofthegre39260gut. Chapter 1's opening and the title page are in
+  `docs/source-texts/stewart-1877-ch1-excerpt.txt`.
+- The chapter's second paragraph is about the first fire, in 1784: the same book is secondary for a question about
+  1784. Mr. Harrow points this out.
+
 ## Invented (and labelled as such in README.md)
 
 - Mr. Harrow, the attendant, Miss Agnes Lyle, the offices and the stacks, the archive boxes' labels, and every

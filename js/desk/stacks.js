@@ -6,11 +6,13 @@
 // question, and tomorrow's question will be different.
 import { el, button } from './dom.js';
 import { BOXES, SHELVES } from './sources.js';
+import { startCoach } from './coach.js';
 
-export function openShelf(root, { shelfId, mode, need = [], have = [], carrying = [], sources, onTake, onFile, onClose }) {
+// coach: Mr. Harrow's steps (the guided sample); locked: Step back stays hidden until every paper is filed
+export function openShelf(root, { shelfId, mode, need = [], have = [], carrying = [], sources, onTake, onFile, onClose, coach, face, locked }) {
   const shelf = SHELVES.find((s) => s.id === shelfId);
   let pick = carrying[0] || null;
-  let say = null, tone = null;
+  let say = null, tone = null, wrong = false;
   const wrap = el('div', 'stacks');
   wrap.setAttribute('role', 'dialog');
   wrap.setAttribute('aria-label', `Shelf ${shelf.name}`);
@@ -27,6 +29,7 @@ export function openShelf(root, { shelfId, mode, need = [], have = [], carrying 
     h.append(el('div', 'shelf-kicker', 'The stacks'), el('h2', null, `Shelf ${shelf.name}`));
     const back = button('leave', 'Step back');
     back.onclick = close;
+    back.hidden = !!locked && carrying.length > 0;
     head.append(h, back);
     panel.append(head);
 
@@ -45,6 +48,7 @@ export function openShelf(root, { shelfId, mode, need = [], have = [], carrying 
       const b = BOXES[id];
       const taken = have.includes(id);
       const box = button(`abox${taken ? ' taken' : ''}${mode === 'file' && pick ? ' target' : ''}`);
+      box.dataset.box = id;
       const card = el('span', 'abox-card');
       card.append(el('b', null, b.maker), el('span', null, b.what), el('span', 'abox-year', `${b.place}, ${b.year}`));
       box.append(card);
@@ -100,6 +104,7 @@ export function openShelf(root, { shelfId, mode, need = [], have = [], carrying 
       if (!pick) { say = 'Click a paper in your arms first.'; tone = 'warn'; }
       else {
         const s = sources[pick];
+        wrong = s.box !== id;
         if (s.box === id) {
           onFile?.(pick);
           carrying = carrying.filter((x) => x !== pick);
@@ -118,13 +123,17 @@ export function openShelf(root, { shelfId, mode, need = [], have = [], carrying 
     render();
   }
 
-  function onKey(e) { if (e.key === 'Escape') close(); }
+  function onKey(e) { if (e.key === 'Escape' && !(locked && carrying.length)) close(); }
   document.addEventListener('keydown', onKey);
   function close() {
+    coachRun?.stop();
+    delete window.shelf;
     document.removeEventListener('keydown', onKey);
     delete document.body.dataset.overlay;
     wrap.remove();
     onClose?.();
   }
+  window.shelf = { get carrying() { return carrying; }, get pick() { return pick; }, get wrong() { return wrong; } };
   render();
+  const coachRun = coach ? startCoach(root, coach(window.shelf), { face }) : null;
 }
