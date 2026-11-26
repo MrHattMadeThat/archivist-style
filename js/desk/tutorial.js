@@ -1,7 +1,7 @@
 // The guided sample: Mr. Harrow sits with the new archivist and shows the whole job once, on a paper about a
 // different subject (the Great Fire of 1877 in St. John), then files it with them in the stacks.
-// Each step's words go with what the hand points at. See coach.js for how a step works. Keep each `say` to two short
-// sentences.
+// Each step's words go with what the hand points at. See coach.js for how a step works (and how it locks the page to
+// the current step). Keep each `say` to two short sentences.
 
 const marked = (d, tag) => (d.state.marked?.[Object.keys(d.state.marked).find((k) => k.includes('Great Fire'))] || []).includes(tag);
 const PROOF = ['stewart-fire@when', 'stewart-fire@by'];
@@ -25,7 +25,7 @@ export const SAMPLE_COACH = (d) => [
   },
   {
     say: 'Yes. Now prove it. Click the line in the label that shows WHEN it was made.',
-    point: '.sheet .tag-row:nth-child(2) .line', until: () => PROOF.includes(d.sel) && d.task?.pick === 'primary',
+    point: '.sheet .tag-row:nth-child(2) .line', allow: '.sheet .tag', until: () => PROOF.includes(d.sel) && d.task?.pick === 'primary',
     wrong: () => !!d.sel && !PROOF.includes(d.sel), wrongSay: 'That line is about the fire, not about when the book was made. Try the label, the line WHEN.',
   },
   { say: 'Your proof is in the box. Click Check.', point: '.work .go:not(.next)', until: () => !!d.state.results?.[1] },
@@ -42,7 +42,7 @@ export const SHELF_COACH = (s) => [
   { say: 'This shelf holds makers from P to Z. Stewart starts with S, so his box is on this shelf.', point: '.rack-sign' },
   {
     say: 'Click the paper, then click the box that says STEWART, 1877.',
-    point: () => (s.pick ? '.abox[data-box="stewart"]' : '.armpaper'), until: () => s.carrying.length === 0,
+    point: () => (s.pick ? '.abox[data-box="stewart"]' : '.armpaper'), allow: '.armpaper, .abox', until: () => s.carrying.length === 0,
     wrong: () => !!s.wrong, wrongSay: 'Not that box. Read the box labels: you want STEWART, 1877.',
   },
   { say: 'Filed. Tomorrow, anyone with any question can find it again. Click Step back.', point: '.stacks .leave', until: () => false },

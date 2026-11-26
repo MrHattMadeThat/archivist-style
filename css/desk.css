@@ -283,3 +283,14 @@
 button.pip{padding:0;cursor:pointer;background-clip:padding-box}
 button.pip:hover{transform:scale(1.25)}
 .stacks ~ .coach{left:auto;right:14px;width:440px;min-width:0}
+.coach-tell{margin:0 0 6px;font-family:var(--f-type);font-size:13px;color:var(--red)}
+.coach.fuss{animation:fuss .3s ease-in-out}
+@keyframes fuss{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+
+/* a big Next that pulses gently (not a flash: one slow beat a second), in the coach and in every dialogue */
+.coach-nav .coach-next,.dlg-nav #dlgnext{font-size:18px;padding:8px 22px;background:var(--brass);color:var(--ink);border:2.5px solid var(--ink);box-shadow:3px 3px 0 rgba(0,0,0,.45);animation:nextbeat 1.1s ease-in-out infinite}
+.coach-nav .coach-next:hover,.dlg-nav #dlgnext:hover{background:#e6b85e}
+@keyframes nextbeat{0%,100%{box-shadow:3px 3px 0 rgba(0,0,0,.45),0 0 0 0 rgba(255,179,75,.75)}50%{box-shadow:3px 3px 0 rgba(0,0,0,.45),0 0 0 9px rgba(255,179,75,0)}}
+@media (prefers-reduced-motion:reduce){.coach-nav .coach-next,.dlg-nav #dlgnext,.coach.fuss{animation:none}}
+/* while he coaches, everything he isn't pointing at is dimmed a little */
+.desk.coached .pile,.desk.coached .desk-meta{opacity:.55}

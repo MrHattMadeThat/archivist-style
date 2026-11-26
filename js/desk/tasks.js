@@ -94,8 +94,9 @@ const gradeOf = (st, t) => (st.wrongFirst != null ? 'red' : st.tries || (t.guide
 
 // ------------------------------------------------------------------ readq: read the research question first
 function readq(t, ctx) {
-  const st = { i: 0, phase: 'mark', msg: null, tone: null };
   const marks = () => ctx.rq.marks;
+  // pick up where the student left off: words already marked stay marked
+  const st = { i: Math.max(0, marks().findIndex((m) => !ctx.markedTags().includes(m.tag))), phase: 'mark', msg: null, tone: null };
   function done() {
     st.phase = 'done';
     ctx.finish({ grade: 'gold' });

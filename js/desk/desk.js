@@ -68,6 +68,7 @@ export function openDesk(root, { theCase: C, sources, save, persist, onLeave, on
     setZone(docId, z) { zone = docId ? { doc: docId, z } : null; if (docId) shown = docId; },
     markRq(tag) { const k = rq().text; save.marked[k] = [...new Set([...(save.marked[k] || []), tag])]; persist(); },
     aboutLine: () => rq().marks.map((m) => m.words).join(' · '),
+    markedTags: () => save.marked[rq().text] || [],
     finish(result) {
       save.results[save.task] = { ...result, proof: sel };
       persist();
@@ -448,5 +449,11 @@ export function openDesk(root, { theCase: C, sources, save, persist, onLeave, on
   let coachRun = null;
   if (save.done) showReport();
   else begin();
-  if (coach && !save.done) coachRun = startCoach(desk, coach(window.desk), { face, onEnd: () => { coachRun = null; } });
+  if (coach && !save.done) {
+    coachRun = startCoach(desk, coach(window.desk), {
+      face, start: save.coachStep || 0,
+      onStep: (i) => { save.coachStep = i; persist(); },
+      onEnd: () => { coachRun = null; },
+    });
+  }
 }

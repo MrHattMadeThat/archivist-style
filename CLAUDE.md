@@ -72,6 +72,12 @@ Read `README.md` first. This file is for agents working in the repo.
   a bubble with Back/Next and the hand moving with his words. Steps with `until` wait for the student. Then he walks you
   to the stacks (`DO.toStacks`) and runs a coached, locked filing at shelf P – Z (`DO.tutorShelf`), then sends you back
   up (`DO.toDesk`) to case 1 on your own.
+- **The coach locks the page** (user, 2026-11-26: running ahead of the tutorial was confusing). While Mr. Harrow talks
+  only his bubble works; on a "Your turn" step only the step's `allow` (or `point`) target works; everything else is
+  stopped and the bubble says what to do. Next can never skip a step the student hasn't done. His place is saved
+  (`save.coachStep`) and resumes if the student leaves the desk; `readq` resumes from the saved marks.
+- **Next is big and pulses** (brass, one slow beat a second; off with prefers-reduced-motion), in the coach bubble and
+  in every world dialogue. The user asked for a "big flashing next button"; a hard flash was avoided on purpose.
 - **Dialogue Back/Next**: buttons and the ← → keys. Back never crosses a `do` line (a walk, a fade or a stage change).
 - **Looking back on the desk**: ◂ Back in the work card's top row, or a coloured pip, shows an earlier answer
   read-only with its proof underlined. Results now keep `proof` (the line key) and `first` (a wrong first answer).
