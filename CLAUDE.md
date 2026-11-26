@@ -30,10 +30,36 @@ Read `README.md` first. This file is for agents working in the repo.
 ## Interior (`index.html`, the main page)
 
 - World: x from -20 to 20 (four 10-unit rooms), z from -5 (back wall) to +5 (open front), floor at y = 0. Partitions at x = -10, 0 and 10 have a doorway at z between -2 and 1.
-- `EXHIBITS` holds every card's text, room and interaction spot (`at`). `solid()` adds collision boxes. Tap-to-walk uses A* on a 0.25-unit grid (`routeTo`).
+- `EXHIBITS` holds every card's text, room and interaction spot (`at`). `solid()` adds collision boxes. Tap-to-walk uses A* on a 0.25-unit grid (`routeTo`). (The galleries are one of three areas now; see below.)
 - Test hooks on `window.museum`: `tick(n)` steps the simulation (needed when the browser pane is hidden, because animation frames stop), `frame()` returns a JPEG data URL of the current view, `walk(x, z)`, `open(id)`, `close()`, `go(x, z)`.
 - **Trap:** `tick()` skips the real `frame()` loop, so it can't prove the game runs. A crash inside `frame()` once froze all movement while `tick()` tests passed. Before calling it working, run the real loop: reload, replace `window.requestAnimationFrame` with a `setTimeout` shim straight away, then send real keyboard and pointer events and check `window.museum.me` moved and no errors were thrown. Load with a fresh `?v=` query, because the browser caches the old file.
 - The page is the whole experience, full-screen, with no surrounding page. Sources live in `README.md`, not on the page.
+
+## The offices, the stacks and the story (2026-11-26)
+
+- The script moved out of `index.html` into `js/world.js` (classic script). `js/story.js` (loaded first) holds the
+  stages, objectives and every line of dialogue as `window.STORY`. `js/desk/` is ES modules: `main.js` exposes
+  `window.Activities` with `.desk()` and `.shelf()`, which open over the world in `#overlays`.
+- **Areas**: `AREAS` in world.js. The galleries are x -20..20; the offices (Curator's office, landing, your office)
+  are x 60..90; the basement stacks x 120..140. Same z range and floor everywhere. Doors (`DOORS`) fade and move
+  you. `blocked()`, the A* grid, the camera clamp and `roomAt()` all read the current `AREA`.
+- **Interactables**: `EXHIBITS` (cards) plus `THINGS` (doors, Mr. Harrow, your desk, the shelves), each with an
+  `area`. `interact()` routes them. The prompt bubble is clickable (for touch).
+- **Mr. Harrow** (invented Curator): a standing rig (body, head, eyes, gesturing arm), same cel style. He stands in
+  his office, or beside your desk during case 1 (`STORY.stages[...].harrow`). His collision box moves with him.
+- **Story state** is saved in localStorage `archivist:save-v1`: stage, boxes fetched (`have`), papers carried, desk
+  progress per case. `?fresh` or the Start over button clears it.
+- While the desk or a shelf is open, `document.body.dataset.overlay` is set: the world ignores keys and pointer, and
+  skips rendering while the (opaque) desk is up.
+- The desk's content is in `js/desk/cases.js` and `js/desk/sources.js`. Word every task with `docs/WRITING_TASKS.md`
+  and run `node scripts/check.mjs` after any content edit. Only sources that existed by 1910 (the desk is in 1910).
+- Test hooks added to `window.museum`: `go(x, z, area)`, `area()`, `stage(name)` (set or read), `game()`,
+  `say(lines)`, `open(id)` (any exhibit or thing, e.g. `open('mydesk')`). On the desk: `desk.solve()`, `desk.state`.
+- **Card height check** (lab PCs, 1366 × 650): for every task, force the tallest states (wrong first answer, a
+  non-proof line, every hint open, then solved) and assert `.work` scrollHeight ≤ clientHeight. The last run passed
+  for all 15 tasks and the three reports.
+- Port 5544 is often taken by another session's server; `archivist-office` in `REPOS/.claude/launch.json` serves the
+  same folder on 5546.
 
 ## Arrival (`arrival.html`)
 

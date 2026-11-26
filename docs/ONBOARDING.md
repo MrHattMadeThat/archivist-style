@@ -1,0 +1,43 @@
+# The first evening: onboarding
+
+The player arrives as the new archivist and learns the job by doing it once, with the Curator beside them. The
+words are in `js/story.js`; the stages are run by the story code in `js/world.js`.
+
+## Goals
+
+1. Meet the boss, hear the job in four parts, see the office and the stacks.
+2. Learn the rule of the office **before** touching a paper: primary or secondary depends on the research
+   question. Practise it on something with no history in it (the Curator's diary) so the idea is clean.
+3. Sort the first stack with every instruction printed, then do the full loop (letter → fetch → desk → file) with
+   less help.
+4. Hit the big idea again, hard: the same papers, new questions, new stamps.
+
+## The flow
+
+| Stage | Where | What happens |
+|---|---|---|
+| `arrive` | Entrance Hall | The attendant: "You must be the new archivist… the door marked CURATOR." |
+| `upstairs` / `meet` | The offices | Mr. Harrow: the Society keeps papers; your job in four parts (card); PRIMARY / SECONDARY (card); "it depends on the QUESTION"; the diary quiz (two questions, same diary, two answers; a wrong pick explains and asks again); no answer without proof; your first research question (card). He walks you to your office. |
+| `case1` | Your office | The desk, case 1: read the question (click WHEN and WHERE), then five papers to stamp with proof. The first two print where to look; the rest hide it behind a hint. Mr. Harrow stands by. |
+| `file1` | The stacks | Mr. Harrow: "We do NOT file papers as primary or secondary… We file by WHO MADE IT and WHEN." Put five papers back in their boxes on shelves A–F, G–O, P–Z. |
+| `report1` → `fetch2` | Curator's office → the stacks | A letter from Miss Lyle, a schoolteacher. The request slip: fetch three boxes. |
+| `case2` | Your office | Same research question, read again. Three questions with proof (why no firewood; where Parkman got his facts; Ganong's fact or opinion). |
+| `file2` → `report2` → `fetch3` | | Mr. Harrow's puzzle: what if the question changes? Fetch Ganong and Parkman again. |
+| `case3` | Your office | Two NEW questions ("What was St. Croix Island like around 1900?", "How did historians in the 1860s tell the story?"). Ganong and Parkman are now PRIMARY. Last question: "What changed?" The question. |
+| `file3` → `report3` → `free` | | "You cannot sort a paper until you know the question." The galleries are yours. |
+
+## How the big idea keeps coming back
+
+- The research question is pinned to the top of the desk all the time, with its WHEN / WHERE marked.
+- Every case starts by reading the question, even when it is the same question as before.
+- Stamp buttons say what PRIMARY and SECONDARY mean *for this question*; stamps say which question they were for.
+- Filing is by maker and date, and the Curator says why: tomorrow's question will be different.
+- The end-of-case report closes with a "Remember" line.
+
+## Not done yet (ideas)
+
+- More letters after `free`, arriving in the LETTERS rack on the landing.
+- Other activities in the same building that are not about sources (the user wants the museum to hold other
+  social studies activities too). `js/desk/main.js` is where a new activity plugs in.
+- Mr. Harrow walking (he only appears and disappears behind a fade).
+- A teacher view of seals per student.
