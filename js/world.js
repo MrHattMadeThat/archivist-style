@@ -816,7 +816,12 @@ const base=v=>v.mode!=='side'?0:(v.facing<0?Math.PI:0);
 function wantView(vx,vz){const sp=Math.hypot(vx,vz);if(sp<1e-4)return ME.view;if(Math.abs(vx)>0.38*sp)return{mode:'side',facing:Math.sign(vx)};return{mode:vz<0?'back':'front',facing:ME.view.facing};}
 function faceFront(){if(ME.view.mode!=='front'&&!ME.flip)ME.flip={from:ME.view,to:{mode:'front',facing:ME.view.facing},u:0};}
 const keys={};
-window.addEventListener('keydown',e=>{const k=e.key.toLowerCase();if(document.body.dataset.overlay||FADE.on)return;
+/* the start menu (#title) and the pause menu (#pausemenu): while either is up the world stands still */
+const pauseMenu=document.getElementById('pausemenu'),titleScreen=document.getElementById('title');
+const paused=()=>pauseMenu.open||!titleScreen.hidden;
+window.addEventListener('keydown',e=>{const k=e.key.toLowerCase();if(paused()||document.body.dataset.overlay||FADE.on)return;
+  if(k==='escape'&&!cardOpen){e.preventDefault();openPause();return;}
+  if(e.target.id==='menubtn')return;
   if(DLG.open){if(k==='arrowleft'){e.preventDefault();dlgBack();return;}if(k==='arrowright'){e.preventDefault();dlgNext();return;}
     if((k==='e'||k==='enter'||k===' ')&&!(document.activeElement&&document.activeElement.closest('.dlg-choices,.dlg-nav'))){e.preventDefault();dlgNext();}return;}
   if(cardOpen){if(k==='escape'||k==='e'||k==='enter'||k===' '){e.preventDefault();closeCard();}return;}
@@ -826,7 +831,7 @@ window.addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=false;});
 window.addEventListener('blur',()=>{for(const k in keys)keys[k]=false;});
 
 /* ---------- catalogue card ---------- */
-const ui={room:document.getElementById('room'),prompt:document.getElementById('prompt'),wrap:document.getElementById('cardwrap'),no:document.getElementById('cno'),croom:document.getElementById('croom'),title:document.getElementById('ctitle'),label:document.getElementById('clabel'),labelText:document.getElementById('clabeltext'),body:document.getElementById('cbody'),close:document.getElementById('close'),cat:document.getElementById('cat'),count:document.getElementById('count'),intro:document.getElementById('intro'),obj:document.getElementById('obj'),fade:document.getElementById('fade'),
+const ui={room:document.getElementById('room'),prompt:document.getElementById('prompt'),wrap:document.getElementById('cardwrap'),no:document.getElementById('cno'),croom:document.getElementById('croom'),title:document.getElementById('ctitle'),label:document.getElementById('clabel'),labelText:document.getElementById('clabeltext'),body:document.getElementById('cbody'),close:document.getElementById('close'),cat:document.getElementById('cat'),count:document.getElementById('count'),obj:document.getElementById('obj'),fade:document.getElementById('fade'),
   dlg:document.getElementById('dlg'),dlgFace:document.getElementById('dlgface'),dlgWho:document.getElementById('dlgwho'),dlgText:document.getElementById('dlgtext'),dlgCard:document.getElementById('dlgcard'),dlgChoices:document.getElementById('dlgchoices'),dlgMore:document.getElementById('dlgmore'),dlgBack:document.getElementById('dlgback'),dlgNextBtn:document.getElementById('dlgnext')};
 let cardOpen=null,near=null;const seen=new Set();
 function esc(s){return s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
@@ -841,10 +846,10 @@ ui.close.onclick=closeCard;ui.wrap.addEventListener('click',e=>{if(e.target===ui
 function renderCat(){ui.count.textContent=`${seen.size}/${EXHIBITS.length} examined`;}
 /* ================= STORY: the first evening at work =================
    The stages, their objectives and every line people say are in js/story.js (window.STORY). This part runs them:
-   talking, the doors, the desk and the shelves move the story on. Saved in localStorage; ?fresh starts over. */
+   talking, the doors, the desk and the shelves move the story on. Saved in localStorage. */
 const SAVE_KEY='archivist:save-v1';
 const newGame=()=>({v:1,stage:'arrive',have:[],carrying:[],desk:{}});
-let G=(()=>{try{if(/[?&]fresh\b/.test(location.search))localStorage.removeItem(SAVE_KEY);return Object.assign(newGame(),JSON.parse(localStorage.getItem(SAVE_KEY))||{});}catch(e){return newGame();}})();
+let G=(()=>{try{return Object.assign(newGame(),JSON.parse(localStorage.getItem(SAVE_KEY))||{});}catch(e){return newGame();}})();
 function persist(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(G));}catch(e){}}
 const STAGE=()=>window.STORY.stages[G.stage]||{};
 const busy=()=>!!(cardOpen||DLG.open||FADE.on||document.body.dataset.overlay);
@@ -965,7 +970,7 @@ vp.addEventListener('pointerup',e=>{if(!drag.on)return;drag.on=false;if(drag.mov
 vp.addEventListener('pointercancel',()=>{drag.on=false;});
 
 /* ---------- frame ---------- */
-const v3=new THREE.Vector3();let last=performance.now(),TM=0,introT=0,hintT=0;const camPos=new THREE.Vector3(-6.8,4.8,13.2),camLook=new THREE.Vector3(-6.8,2.3,0.7);
+const v3=new THREE.Vector3();let last=performance.now(),TM=0,hintT=0;const camPos=new THREE.Vector3(-6.8,4.8,13.2),camLook=new THREE.Vector3(-6.8,2.3,0.7);
 function step(dt){
   TM+=dt;
   let ix=0,iz=0;
@@ -1043,18 +1048,50 @@ function hud(){
     const touch=matchMedia('(pointer: coarse)').matches;const html=(touch?'Tap: ':'<kbd>E</kbd>')+(e.verb?esc(e.verb):e.talk?'Talk to the attendant':esc(e.name));if(ui.prompt.dataset.h!==html){ui.prompt.innerHTML=html;ui.prompt.dataset.h=html;}}
   else ui.prompt.hidden=true;
 }
-function frame(now){const dt=Math.min(0.05,(now-last)/1000);last=now;step(dt);pose();world();placeCamera(dt);if(document.body.dataset.overlay!=='desk')renderer.render(scene,camera);hud();
-  introT+=dt;if(introT>2.6&&ui.intro.style.opacity!=='0')ui.intro.style.opacity='0';if(ME.dist>3&&!hintT){hintT=1;document.getElementById('keyhint').style.opacity='0';}requestAnimationFrame(frame);}
+function frame(now){const dt=Math.min(0.05,(now-last)/1000);last=now;if(paused()){requestAnimationFrame(frame);return;}step(dt);pose();world();placeCamera(dt);if(document.body.dataset.overlay!=='desk')renderer.render(scene,camera);hud();
+  if(ME.dist>3&&!hintT){hintT=1;document.getElementById('keyhint').style.opacity='0';}requestAnimationFrame(frame);}
 function resize(){const w=vp.clientWidth,h=vp.clientHeight;if(!w||!h)return;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();}
 new ResizeObserver(resize).observe(vp);
+/* ---------- start menu and pause menu ----------
+   New game on the start menu is the only way to begin again; the pause menu never erases anything.
+   A new game over an old one clears the save and reloads, then skips the start menu once (BEGIN_KEY). */
+const BEGIN_KEY='archivist:begin';let playedThisVisit=false;
+const objText=()=>{const st=STAGE();return typeof st.obj==='function'?st.obj(AREA.id):st.obj||'';};
+const hasSave=()=>{try{return localStorage.getItem(SAVE_KEY)!==null;}catch(e){return false;}};
+const menuBtn=()=>document.getElementById('menubtn');
+function haltPlayer(){stopWalking();drag.on=false;}
+function showTitle(){
+  haltPlayer();if(pauseMenu.open)pauseMenu.close();
+  const can=playedThisVisit||hasSave(),cont=document.getElementById('continue');
+  cont.hidden=!can;document.getElementById('newgame').classList.toggle('big',!can);document.getElementById('continue-where').textContent=can&&objText()?'To do: '+objText():'';
+  document.getElementById('titlemenu').hidden=false;document.getElementById('titleconfirm').hidden=true;
+  menuBtn().hidden=true;titleScreen.hidden=false;(can?cont:document.getElementById('newgame')).focus();}
+function startPlay(){titleScreen.hidden=true;menuBtn().hidden=false;playedThisVisit=true;last=performance.now();vp.focus({preventScroll:true});}
+function openPause(){
+  if(paused()||document.body.dataset.overlay)return;haltPlayer();
+  const t=objText();document.getElementById('pause-obj').innerHTML=t?'<b>To do</b>'+esc(t):'';
+  pauseMenu.showModal();document.getElementById('resume').focus();}
+function setupMenus(){
+  const $=id=>document.getElementById(id);
+  $('continue').onclick=startPlay;
+  $('newgame').onclick=()=>{
+    if(!playedThisVisit&&!hasSave())return startPlay();
+    $('titlemenu').hidden=true;$('titleconfirm').hidden=false;$('newgame-no').focus();};
+  $('newgame-no').onclick=()=>{$('titleconfirm').hidden=true;$('titlemenu').hidden=false;$('newgame').focus();};
+  $('newgame-yes').onclick=()=>{try{localStorage.removeItem(SAVE_KEY);sessionStorage.setItem(BEGIN_KEY,'1');}catch(e){}location.reload();};
+  menuBtn().onclick=openPause;
+  $('to-title').onclick=showTitle;
+  pauseMenu.addEventListener('close',()=>{last=performance.now();if(titleScreen.hidden)vp.focus({preventScroll:true});});}
 async function boot(){
   try{await Promise.race([Promise.all(['40px "IM Fell English SC"','40px "IM Fell English"','20px "Special Elite"'].map(f=>document.fonts.load(f))),new Promise(r=>setTimeout(r,2500))]);}catch(e){}
   build();for(const e of TEXS){compose(e);e.t.needsUpdate=true;}renderCat();resize();placeHarrow();renderObj();
   window.addEventListener('activities-ready',renderObj);
   ui.prompt.addEventListener('click',()=>interact(near));ui.dlg.addEventListener('click',e=>{if(!e.target.closest('button,.dlg-cardslot'))dlgNext();});ui.dlgBack.onclick=e=>{e.stopPropagation();dlgBack();};ui.dlgNextBtn.onclick=e=>{e.stopPropagation();dlgNext();};
   ui.marker=window.HAND.make(vp,'quest',130);
-  document.getElementById('menubtn').onclick=()=>{if(confirm('Start the game again from the very beginning? Everything done so far will be forgotten.')){localStorage.removeItem(SAVE_KEY);location.reload();}};
-  document.getElementById('loading').hidden=true;vp.focus({preventScroll:true});
+  setupMenus();
+  document.getElementById('loading').hidden=true;
+  snapCamera();pose();world();placeCamera(1);renderer.render(scene,camera);
+  if(sessionStorage.getItem(BEGIN_KEY)){sessionStorage.removeItem(BEGIN_KEY);startPlay();}else showTitle();
   window.museum={tick:(n=60,dt=1/60)=>{for(let i=0;i<n;i++){step(dt);pose();}return[ME.x,ME.z];},keys,go:(x,z,area)=>{if(area)enterArea(area);ME.x=x;ME.z=z;snapCamera();},area:()=>AREA.id,say:l=>say(l),stage:st=>{if(st)setStage(st);return G.stage;},game:()=>G,open:id=>interact(EXHIBITS.concat(THINGS).find(e=>e.id===id)),close:closeCard,walk:routeTo,me:ME,
     frame:(w=960,h=540,cam)=>{renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();pose();world();placeCamera(1);if(cam){camera.position.set(cam[0],cam[1],cam[2]);camera.lookAt(cam[3],cam[4],cam[5]);}renderer.render(scene,camera);const d=canvas.toDataURL('image/jpeg',0.85);resize();return d;}};
   requestAnimationFrame(frame);

@@ -48,7 +48,7 @@ Read `README.md` first. This file is for agents working in the repo.
 - **Mr. Harrow** (invented Curator): a standing rig (body, head, eyes, gesturing arm), same cel style. He stands in
   his office, or beside your desk during case 1 (`STORY.stages[...].harrow`). His collision box moves with him.
 - **Story state** is saved in localStorage `archivist:save-v1`: stage, boxes fetched (`have`), papers carried, desk
-  progress per case. `?fresh` or the Start over button clears it.
+  progress per case. Only **New game** on the start menu clears it (see below); `?fresh` is gone.
 - While the desk or a shelf is open, `document.body.dataset.overlay` is set: the world ignores keys and pointer, and
   skips rendering while the (opaque) desk is up.
 - The desk's content is in `js/desk/cases.js` and `js/desk/sources.js`. Word every task with `docs/WRITING_TASKS.md`
@@ -90,6 +90,19 @@ Read `README.md` first. This file is for agents working in the repo.
   never flips them.
 - Browser module caching: `?v=` on the page does not refresh ES module imports. In the preview, `fetch(file, {cache:
   'reload'})` each changed module before reloading.
+
+## Start menu and pause menu (2026-11-26)
+
+- **User's rule: no Start over button in the game window.** The only way to begin again is **New game** on the start
+  menu (`#title`). With a save (or after playing this visit) New game asks first, then clears the save, sets
+  sessionStorage `archivist:begin` and reloads; that flag skips the start menu once so the new game starts straight away.
+- The start menu shows on every load: **Continue** (with the current To do) when there is a save, and **New game**.
+- **Pause**: the button (top right; the dialogue box covered it at the bottom) or **Esc** in the world, including during
+  dialogue. Esc with a catalogue card open still closes the card. `#pausemenu` is a `<dialog>`: Resume (Esc also
+  resumes) and Main menu. It never erases anything. No pause inside the desk or stacks (Esc closes those).
+- `paused()` (title up or pause open) stops `frame()` entirely: no stepping, no animation, keys ignored.
+- Testing: clear `localStorage['archivist:save-v1']` for a fresh game, and set `sessionStorage['archivist:begin']='1'`
+  before a reload to skip the start menu.
 
 ## Arrival (`arrival.html`)
 

@@ -35,13 +35,14 @@ You arrive as the new archivist. The attendant sends you upstairs to Mr. Harrow,
 
 The source desk is one activity. Other social studies activities can open from other things in the building (see `js/desk/main.js`).
 
-`?fresh` in the address, or the **Start over** button, starts the game again (for the next student on a shared PC).
+The game opens on a **start menu**: **Continue** (when this computer has a saved game) or **New game**. New game is the only way to begin again; over an old save it asks first, because it erases that save (for the next student on a shared PC). In play, **Pause** (top right) or **Esc** opens the pause menu: Resume, or Main menu. Pausing never erases anything; the game saves itself as you play.
 
 ## Controls (interior)
 
 - WASD or arrow keys to walk, E (or Enter/Space) to examine
 - Tap or click the floor to walk there; tap an exhibit to walk to it and examine it
 - Drag to peek around the room
+- Esc or the Pause button to pause
 - The counter in the top corner shows how many of the 13 exhibits you've examined
 
 ## History: sources and what's made up

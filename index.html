@@ -30,9 +30,6 @@ body{font-family:var(--f-body);font-size:17px;line-height:1.5;overscroll-behavio
 .hud .count{color:var(--dim);margin-left:10px}
 .prompt{position:absolute;transform:translate(-50%,-100%);font-family:var(--f-type);font-size:14px;background:var(--paper);color:var(--ink);padding:6px 11px;box-shadow:3px 3px 0 rgba(0,0,0,.6);cursor:pointer;white-space:nowrap}
 .prompt kbd{font-family:var(--f-type);border:1.5px solid var(--ink);padding:0 5px;margin-right:6px}
-.intro{position:absolute;left:50%;top:42%;transform:translate(-50%,-50%) rotate(-1deg);text-align:center;pointer-events:none;padding:14px 34px 18px;background:var(--paper);color:var(--ink);box-shadow:5px 6px 0 rgba(0,0,0,.55);transition:opacity .6s ease;clip-path:polygon(0 6%,3% 0,40% 3%,72% 0,100% 4%,99% 50%,100% 96%,62% 100%,30% 97%,2% 100%,0 55%)}
-.intro small{display:block;font-family:var(--f-type);font-size:clamp(10px,1.2vw,13px);letter-spacing:.2em;text-transform:uppercase;color:var(--red)}
-.intro b{display:block;font-family:var(--f-display);font-weight:400;font-size:clamp(22px,4vw,44px);line-height:1.05}
 .loading{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--f-type);color:var(--dim);letter-spacing:.1em;background:var(--wall)}
 /* the catalogue card that opens on an exhibit */
 .cardwrap{position:absolute;inset:0;display:grid;place-items:center;background:rgba(5,6,9,.45);padding:12px}
@@ -57,13 +54,12 @@ body{font-family:var(--f-body);font-size:17px;line-height:1.5;overscroll-behavio
   <div class="hud right" id="keyhint" aria-hidden="true">WASD or arrows to walk &middot; E to examine &middot; or tap the floor</div>
   <div class="obj" id="obj" aria-live="polite"></div>
   <div class="prompt" id="prompt" hidden></div>
-  <button class="menubtn" id="menubtn" type="button" title="Start the game again from the beginning (for a new student)">Start over</button>
+  <button class="menubtn" id="menubtn" type="button" aria-haspopup="dialog" aria-keyshortcuts="Escape" hidden>&#10074;&#10074; Pause <kbd>Esc</kbd></button>
   <div class="dlg" id="dlg" role="dialog" aria-live="polite" tabindex="-1" hidden>
     <canvas class="dlg-face" id="dlgface" width="96" height="96" aria-hidden="true"></canvas>
     <div><div class="dlg-who" id="dlgwho"></div><p class="dlg-text" id="dlgtext"></p><div class="dlg-choices" id="dlgchoices"></div><div class="dlg-nav"><button type="button" id="dlgback">&#9664; Back</button><span class="dlg-more" id="dlgmore"></span><button type="button" id="dlgnext">Next &#9654;</button></div></div>
     <div class="dlg-cardslot" id="dlgcard" hidden></div>
   </div>
-  <div class="intro" id="intro" aria-hidden="true"><small>Saint John, N.B. &middot; 1910</small><b>72 Union Street</b></div>
   <div class="cardwrap" id="cardwrap" hidden>
     <article class="icard" id="card" role="dialog" aria-modal="true" aria-labelledby="ctitle">
       <button class="close" id="close" type="button" aria-label="Close card">&times;</button>
@@ -78,6 +74,33 @@ body{font-family:var(--f-body);font-size:17px;line-height:1.5;overscroll-behavio
 
 <div class="overlays" id="overlays"></div>
 <div class="fade" id="fade" aria-hidden="true"></div>
+<!-- the start menu: the only way to begin again is New game here -->
+<section class="title" id="title" aria-labelledby="title-name" hidden>
+  <div class="title-card">
+    <small>Saint John, N.B. &middot; 1910</small>
+    <h1 id="title-name">72 Union Street</h1>
+    <p class="title-sub">The Archivist</p>
+    <div class="title-menu" id="titlemenu">
+      <button type="button" class="big" id="continue" hidden>Continue<span id="continue-where"></span></button>
+      <button type="button" id="newgame">New game</button>
+    </div>
+    <div class="title-menu" id="titleconfirm" hidden>
+      <p class="title-warn">A new game erases the saved game on this computer and starts from the very beginning.</p>
+      <button type="button" class="danger" id="newgame-yes">Erase it and start a new game</button>
+      <button type="button" id="newgame-no">Go back</button>
+    </div>
+    <p class="title-keys">WASD or arrows to walk &middot; E to examine &middot; Esc to pause</p>
+  </div>
+</section>
+<dialog id="pausemenu" aria-labelledby="pause-title">
+  <h2 id="pause-title">Paused</h2>
+  <p class="pause-obj" id="pause-obj"></p>
+  <form method="dialog">
+    <button class="big" id="resume" autofocus>Resume</button>
+    <button type="button" id="to-title">Main menu</button>
+  </form>
+  <p class="pause-note">Your place is saved on this computer as you play.</p>
+</dialog>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="js/hand.js"></script>
