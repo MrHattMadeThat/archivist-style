@@ -115,7 +115,7 @@ function shade(ctx,p,x0,y0,x1,y1,a=0.45,c){ctx.save();ctx.clip(p);const g=ctx.cr
 function mottle(ctx,p,c,a,n,sz,bb){const W=ctx.canvas.width,H=ctx.canvas.height;const[x0,y0,w,h]=bb||[0,0,W,H];ctx.save();ctx.clip(p);ctx.fillStyle=c;for(let i=0;i<n;i++){ctx.globalAlpha=a*rr(0.3,1);ctx.fill(path(ell(x0+rr(0,w),y0+rr(0,h),sz*rr(.4,1.2),sz*rr(.3,1),9,0.25)));}ctx.restore();}
 function dot(ctx,x,y,r,c){ctx.fillStyle=c;ctx.beginPath();ctx.arc(x,y,r,0,TAU);ctx.fill();}
 function txt(ctx,s,x,y,size,o={}){const font=o.font||FD,c=o.c||P.ink,align=o.align||'center',jit=o.jit||0;
-  ctx.save();ctx.translate(x,y);ctx.rotate(o.rot||0);ctx.font=`${size}px ${font}`;ctx.globalAlpha=o.a??1;ctx.fillStyle=c;ctx.textBaseline='alphabetic';
+  ctx.save();ctx.translate(x,y);ctx.rotate(o.rot||0);ctx.font=`${size}px ${font}`;if(o.maxW){const w0=ctx.measureText(s).width*(jit?1.04:1);if(w0>o.maxW){size=size*o.maxW/w0;ctx.font=`${size}px ${font}`;}}ctx.globalAlpha=o.a??1;ctx.fillStyle=c;ctx.textBaseline='alphabetic';
   if(!jit){ctx.textAlign=align;ctx.fillText(s,0,0);}else{const w=ctx.measureText(s).width;let cx=align==='center'?-w/2:align==='right'?-w:0;ctx.textAlign='left';for(const ch of s){const cw=ctx.measureText(ch).width;ctx.save();ctx.translate(cx+cw/2,rr(-jit,jit));ctx.rotate(rr(-1,1)*jit*0.012);ctx.fillText(ch,-cw/2,0);ctx.restore();cx+=cw;}}
   ctx.restore();}
 function curl(ctx,x,y,a,r,lw=4,c){const cx=x+Math.cos(a+Math.PI/2)*r,cy=y+Math.sin(a+Math.PI/2)*r,t0=a-Math.PI/2;const pts=[];for(let i=0;i<=22;i++){const k=i/22,th=t0+k*TAU*1.15,rad=r*(1-k*0.85);pts.push([cx+Math.cos(th)*rad,cy+Math.sin(th)*rad]);}line(ctx,pts,lw,c);}
@@ -240,8 +240,8 @@ function drawSash(ctx,cx,top,w,h){
   ctx.restore();
   line(ctx,[[cx-w/2,top+h/2],[cx+w/2,top+h/2]],9,P.woodLight);line(ctx,[[cx,top],[cx,top+h]],5,P.woodLight);for(const k of [0.25,0.75])line(ctx,[[cx-w/2,top+h*k],[cx+w/2,top+h*k]],4,P.woodLight);
   ink(ctx,gl,3);const sill=box(cx-w/2-30,top+h+16,w+60,16,1);fill(ctx,sill,P.woodLight);ink(ctx,sill,2.5);
-  for(const sx of [-1,1]){const x0=cx+sx*(w/2+30);const cur=path([[x0-sx*6,top-34],[x0+sx*40,top-34],[x0+sx*44,top+h*0.5],[x0+sx*30,top+h+40],[x0-sx*16,top+h+40],[x0-sx*28,top+h*0.55],[x0-sx*44,top+h*0.4]],{jit:1.5});
-    fill(ctx,cur,P.felt);hatch(ctx,cur,{ang:1.45,gap:7,a:0.35});shade(ctx,cur,x0+sx*40,0,x0-sx*40,0,0.4);ink(ctx,cur,3);const tb=box(x0-sx*30-12,top+h*0.53,26,10,1);fill(ctx,tb,P.brass);ink(ctx,tb,1.5);}
+  for(const sx of [-1,1]){const x0=cx+sx*(w/2+22);const ty=top+h*0.55;const cur=path([[x0-sx*34,top-34],[x0+sx*44,top-34],[x0+sx*40,top+h*0.2],[x0+sx*30,ty],[x0+sx*38,top+h*0.8],[x0+sx*48,top+h+44],[x0-sx*8,top+h+44],[x0+sx*4,top+h*0.8],[x0+sx*2,ty],[x0-sx*14,top+h*0.3]],{smooth:false,jit:1.5});
+    fill(ctx,cur,P.felt);hatch(ctx,cur,{ang:1.45,gap:7,a:0.35});shade(ctx,cur,x0+sx*40,0,x0-sx*40,0,0.4);ink(ctx,cur,3);const tb=box(x0+sx*16-14,ty-6,28,12,1);fill(ctx,tb,P.brass);ink(ctx,tb,1.5);}
   line(ctx,[[cx-w/2-80,top-36],[cx+w/2+80,top-36]],6,P.brass);
 }
 function drawBackWall(room){return(ctx,W,H)=>{
@@ -256,8 +256,10 @@ function drawBackWall(room){return(ctx,W,H)=>{
   ctx.fillStyle=P.woodLight;ctx.fillRect(0,516,W,14);line(ctx,[[0,516],[W,516]],2.5);line(ctx,[[0,530],[W,530]],2.5);
   ctx.fillStyle=P.wood;ctx.fillRect(0,530,W,120);for(let x=10;x<W-60;x+=124)panel(ctx,x,542,112,84,P.wood);
   ctx.fillStyle=P.woodDark;ctx.fillRect(0,632,W,18);line(ctx,[[0,632],[W,632]],2.5);
-  if(room.door){const dx=room.door;const df=box(dx-64,320,128,330,1.5);fill(ctx,df,P.woodLight);ink(ctx,df,3);const d=box(dx-50,334,100,316,1);fill(ctx,d,P.wood);shade(ctx,d,dx-50,0,dx+50,0,0.35);
-    const fg=box(dx-36,352,72,96,1);fill(ctx,fg,mix(P.paper,P.glowDim,0.45));txt(ctx,'CURATOR',dx,406,15,{font:FT,c:P.ink,a:0.8});ink(ctx,fg,2.5);panel(ctx,dx-36,466,72,160,P.wood);dot(ctx,dx+36,500,5,P.brass);ink(ctx,d,3);}
+  if(room.door){const dx=room.door;const df=box(dx-86,196,172,454,1.5);fill(ctx,df,P.woodLight);ink(ctx,df,3);const d=box(dx-70,212,140,438,1);fill(ctx,d,P.wood);shade(ctx,d,dx-70,0,dx+70,0,0.35);
+    const tr=box(dx-70,150,140,40,1);fill(ctx,tr,mix(P.glowDim,P.ink,0.35));for(let k=1;k<4;k++)line(ctx,[[dx-70+k*35,150],[dx-70+k*35,190]],2.5,P.woodLight);ink(ctx,tr,2.5);
+    const fg=box(dx-52,236,104,140,1);fill(ctx,fg,mix(P.paper,P.glowDim,0.45));txt(ctx,'CURATOR',dx,300,20,{font:FT,c:P.ink,a:0.85,maxW:92});line(ctx,[[dx-30,316],[dx+30,316]],1.5,P.ink,0.5);txt(ctx,'Private',dx,338,14,{font:FT,c:P.ink,a:0.7});ink(ctx,fg,2.5);
+    panel(ctx,dx-52,396,104,104,P.wood);panel(ctx,dx-52,510,104,116,P.wood);const kn=path(ell(dx+50,440,7,7,8,0.05));fill(ctx,kn,P.brass);ink(ctx,kn,1.6);ink(ctx,d,3);}
 }}
 function drawPartition(door){return(ctx,W,H)=>{
   const sh=path([[0,H],[0,H-140],[350,0],[W,0],[W,H]],{smooth:false,jit:1.5});const pc=mix(P.plaster,P.wood,0.25);fill(ctx,sh,pc);
@@ -269,10 +271,10 @@ function drawPartition(door){return(ctx,W,H)=>{
   // the section cut: hatched poche along the top edge
   const cut=path([[0,H-140],[350,0],[W,0],[W,18],[362,18],[12,H-126],[0,H-126]],{smooth:false});fill(ctx,cut,mix(P.plaster,P.paper,0.4));hatch(ctx,cut,{ang:-0.8,gap:6,a:0.7,lw:1.6});
   ink(ctx,sh,4);
-  if(door){const x0=400,x1=700,top=290;const fr=box(x0-26,top-34,x1-x0+52,H-top+34,1.5);fill(ctx,fr,P.woodLight);shade(ctx,fr,0,top-34,0,H,0.35);ink(ctx,fr,3);
+  if(door){const x0=400,x1=700,top=210;const fr=box(x0-26,top-34,x1-x0+52,H-top+34,1.5);fill(ctx,fr,P.woodLight);shade(ctx,fr,0,top-34,0,H,0.35);ink(ctx,fr,3);
     ctx.save();ctx.globalCompositeOperation='destination-out';ctx.fillRect(x0,top,x1-x0,H-top);ctx.restore();}
 }}
-function drawSign(text,size){return(ctx,W,H)=>{const b=box(6,6,W-12,H-12,1.5);fill(ctx,b,P.woodDark);ctx.save();ctx.strokeStyle=P.brass;ctx.lineWidth=2.5;ctx.strokeRect(18,16,W-36,H-32);ctx.restore();txt(ctx,text,W/2,H/2+size*0.34,size,{c:P.brass,jit:0.8});ink(ctx,b,3);}}
+function drawSign(text,size){return(ctx,W,H)=>{const b=box(6,6,W-12,H-12,1.5);fill(ctx,b,P.woodDark);ctx.save();ctx.strokeStyle=P.brass;ctx.lineWidth=2.5;ctx.strokeRect(18,16,W-36,H-32);ctx.restore();ctx.font=`${size}px ${FD}`;const fs=Math.min(size,size*(W-90)/ctx.measureText(text).width);txt(ctx,text,W/2,H/2+fs*0.34,fs,{c:P.brass});for(const sx of [-1,1])dot(ctx,W/2+sx*(W/2-30),H/2,4,P.brass);ink(ctx,b,3);}}
 /* furniture and exhibits */
 function vitrineFrame(ctx,felt,contents,label){
   for(const x of [40,260]){const l=box(x-8,170,16,90,1);fill(ctx,l,P.wood);ink(ctx,l,2.5);}const st=box(40,230,220,10,1);fill(ctx,st,P.woodDark);ink(ctx,st,2);
@@ -281,7 +283,7 @@ function vitrineFrame(ctx,felt,contents,label){
   const gl=box(20,40,260,88,1);fill(ctx,gl,felt);ctx.save();ctx.clip(gl);contents(ctx);
   ctx.fillStyle='rgba(170,200,215,0.10)';ctx.fillRect(0,0,300,260);ctx.strokeStyle='rgba(255,255,255,0.22)';ctx.lineWidth=16;ctx.beginPath();ctx.moveTo(90,30);ctx.lineTo(50,140);ctx.moveTo(220,30);ctx.lineTo(196,140);ctx.stroke();ctx.restore();
   ink(ctx,gl,3);for(const b of [box(14,32,272,10,1),box(14,32,10,98,1),box(276,32,10,98,1)]){fill(ctx,b,P.woodLight);ink(ctx,b,2);}
-  if(label){const lb=box(100,110,100,14,0.6);fill(ctx,lb,P.paper);txt(ctx,label,150,121,10,{font:FT});ink(ctx,lb,1.4);}
+  if(label){const lb=box(60,106,180,20,0.6);fill(ctx,lb,P.paper);txt(ctx,label,150,121,13,{font:FT,maxW:168});ink(ctx,lb,1.6);}
 }
 function drawVitrine(kind){return ctx=>{
   if(kind==='minerals')vitrineFrame(ctx,mix(P.felt,P.ink,0.2),c=>{
@@ -335,7 +337,7 @@ function drawPortrait(ctx,W,H){
   dot(ctx,100,110,2.6,P.ink);dot(ctx,120,110,2.6,P.ink);line(ctx,[[110,112],[112,126],[106,128]],1.6,P.ink,0.6);line(ctx,[[102,136],[118,136]],1.8,P.ink,0.7);
   ctx.strokeStyle=hexA(P.ink,0.25);ctx.lineWidth=0.8;for(let i=0;i<30;i++){const x=rr(30,W-30),y=rr(30,H-54);ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+rr(-12,12),y+rr(-12,12));ctx.stroke();}
   ctx.restore();ink(ctx,cv2,2.5);
-  const pl=box(W/2-60,H-46,120,24,1);fill(ctx,pl,mix(P.brass,P.paper,0.2));txt(ctx,'ABRAHAM GESNER',W/2,H-29,13,{c:P.ink});ink(ctx,pl,1.8);
+  const pl=box(W/2-60,H-46,120,24,1);fill(ctx,pl,mix(P.brass,P.paper,0.2));txt(ctx,'ABRAHAM GESNER',W/2,H-29,14,{c:P.ink,maxW:108});ink(ctx,pl,1.8);
 }
 function drawFernSlab(ctx,W,H){
   const fr=box(6,6,W-12,H-52,1.5);fill(ctx,fr,P.wood);ink(ctx,fr,3);
@@ -346,7 +348,7 @@ function drawFernSlab(ctx,W,H){
   for(let i=0;i<4;i++){const x=270+i*16;line(ctx,[[x,H-70],[x+rr(-8,8),50]],5,mix(fc,P.stoneDark,0.3));}
   const cal=box(300,60,26,110,1);fill(ctx,cal,mix(fc,P.stoneDark,0.2));for(let y=62;y<170;y+=6)line(ctx,[[302,y],[324,y]],1,P.ink,0.4);line(ctx,[[300,100],[326,100]],2.5,P.ink,0.7);
   ink(ctx,sl,3);
-  const lb=box(W/2-120,H-40,240,30,1);fill(ctx,lb,P.paper);txt(ctx,'FERN LEDGES, LANCASTER · C. F. HARTT',W/2,H-20,13,{font:FT});ink(ctx,lb,2);
+  const lb=box(W/2-150,H-42,300,32,1);fill(ctx,lb,P.paper);txt(ctx,'FERN LEDGES, LANCASTER · C. F. HARTT',W/2,H-20,15,{font:FT,maxW:284});ink(ctx,lb,2);
 }
 function drawLampPed(ctx,W,H){
   const base=box(30,H-24,80,22,1);fill(ctx,base,P.woodDark);ink(ctx,base,2.5);const sh=path([[50,H-24],[54,150],[86,150],[90,H-24]],{smooth:false,jit:1});fill(ctx,sh,P.wood);shade(ctx,sh,86,0,50,0,0.45);for(let k=0;k<3;k++)line(ctx,[[60+k*10,154],[58+k*12,H-28]],1.4,P.ink,0.4);ink(ctx,sh,2.5);
@@ -363,7 +365,7 @@ function drawDesk(ctx,W,H){
   ctx.save();ctx.translate(120,62);const bk=path([[-56,0],[-50,-16],[0,-10],[50,-16],[56,0]],{smooth:false,jit:0.8});fill(ctx,bk,P.paper);line(ctx,[[0,-10],[0,0]],2);for(let k=0;k<3;k++){line(ctx,[[-44,-10+k*3.5],[-8,-6+k*3.5]],1,P.ink,0.5);line(ctx,[[8,-6+k*3.5],[44,-10+k*3.5]],1,P.ink,0.5);}ink(ctx,bk,2);ctx.restore();
   const iw=box(238,46,20,18,1);fill(ctx,iw,P.ink);ink(ctx,iw,1.5);line(ctx,[[252,48],[270,18]],2.5,P.paper);
   const bell=new Path2D();bell.arc(320,62,16,Math.PI,0);bell.closePath();fill(ctx,bell,P.brass);ink(ctx,bell,2);dot(ctx,320,44,4,P.brass);
-  ctx.save();ctx.translate(374,48);ctx.rotate(-0.06);const sg=box(-30,-14,60,28,1);fill(ctx,sg,P.paper);txt(ctx,'INQUIRIES',0,5,11,{font:FT});ink(ctx,sg,1.8);ctx.restore();
+  ctx.save();ctx.translate(374,48);ctx.rotate(-0.06);const sg=box(-38,-15,76,30,1);fill(ctx,sg,P.paper);txt(ctx,'INQUIRIES',0,5,13,{font:FT,maxW:66});ink(ctx,sg,1.8);ctx.restore();
 }
 function drawAttendant(ctx,W,H){
   const sk=box(52,H-34,136,34,1);fill(ctx,sk,P.coat);ink(ctx,sk,3);
@@ -390,7 +392,7 @@ function drawLectern(ctx,W,H){
   line(ctx,[[120,86],[126,140],[118,150]],1.2,P.ink,0.8);line(ctx,[[118,150],[106,170]],2.5,P.paper);
 }
 function drawCaribou(ctx,W,H){
-  const pl=box(30,H-80,W-60,76,1.5);fill(ctx,pl,P.wood);shade(ctx,pl,0,H-80,0,H,0.4);ink(ctx,pl,3);const pq=box(W/2-60,H-58,120,28,1);fill(ctx,pq,P.brass);txt(ctx,'RANGIFER TARANDUS',W/2,H-39,11,{font:FT});ink(ctx,pq,1.8);
+  const pl=box(30,H-80,W-60,76,1.5);fill(ctx,pl,P.wood);shade(ctx,pl,0,H-80,0,H,0.4);ink(ctx,pl,3);const pq=box(W/2-100,H-60,200,32,1);fill(ctx,pq,P.brass);txt(ctx,'WOODLAND CARIBOU',W/2,H-45,14,{maxW:184});txt(ctx,'RANGIFER TARANDUS',W/2,H-33,10,{font:FT,maxW:184});ink(ctx,pq,1.8);
   const fur=mix(P.case,P.stone,0.25),furD=mix(P.case,P.ink,0.35),pale=mix(P.paper,P.case,0.15);const gy=H-80;
   for(const[x,lean,dark] of [[200,0.05,1],[352,-0.04,1],[222,-0.02,0],[372,0.05,0]]){const lg=path([[x-10,250],[x+10,250],[x+8+lean*60,gy-26],[x+14+lean*60,gy-4],[x-10+lean*60,gy-4],[x-6+lean*60,gy-26]],{smooth:false,jit:1});fill(ctx,lg,dark?furD:fur);ink(ctx,lg,2.5);const hf=box(x-12+lean*60,gy-10,26,10,1);fill(ctx,hf,P.ink);}
   const body=path([[170,214],[200,184],[290,176],[370,182],[410,206],[408,250],[380,270],[300,274],[210,270],[176,250]]);fill(ctx,body,fur);fill(ctx,path([[200,262],[300,272],[380,266],[372,250],[300,256],[210,250]]),pale);shade(ctx,body,0,180,0,274,0.35);hatch(ctx,body,{ang:1.3,gap:7,a:0.25});ink(ctx,body,3.5);
@@ -423,7 +425,10 @@ function drawMothTable(ctx,W,H){
   const tin=box(40,70,52,56,1);fill(ctx,tin,P.scarfA);const lb=box(44,84,44,26,0.6);fill(ctx,lb,P.paper);txt(ctx,'NAPH-',66,96,9,{font:FT});txt(ctx,'THALENE',66,106,9,{font:FT});ink(ctx,tin,2);
   const jar=path([[106,128],[104,70],[112,60],[140,60],[148,70],[146,128]],{smooth:false,jit:0.6});ctx.save();ctx.globalAlpha=0.35;fill(ctx,jar,P.paper);ctx.restore();for(let i=0;i<9;i++)dot(ctx,114+(i%3)*12,120-(i/3|0)*12,5,P.paper);ink(ctx,jar,2);const lid=box(108,52,36,10,1);fill(ctx,lid,P.brass);ink(ctx,lid,1.6);
 }
-function drawBench(ctx,W,H){const st=box(10,60,W-20,16,1);fill(ctx,st,P.woodLight);ink(ctx,st,2.5);const bk=box(14,6,W-28,14,1);fill(ctx,bk,P.wood);ink(ctx,bk,2.5);for(let x=30;x<W-30;x+=40)line(ctx,[[x,20],[x,60]],4,P.wood);for(const x of [24,W-40]){const l=box(x,6,16,H-10,1);fill(ctx,l,P.wood);ink(ctx,l,2.5);}}
+function drawBench(ctx,W,H){for(const x of [24,W-40]){const l=box(x,6,16,H-10,1);fill(ctx,l,P.woodDark);ink(ctx,l,2.5);}
+  const bk=box(20,4,W-40,56,1.5);fill(ctx,bk,P.wood);for(let x=34;x<W-60;x+=58)panel(ctx,x,12,48,40,P.wood);ink(ctx,bk,2.5);
+  const st=box(10,60,W-20,16,1);fill(ctx,st,P.woodLight);ink(ctx,st,2.5);const ap=box(16,76,W-32,12,1);fill(ctx,ap,P.woodDark);ink(ctx,ap,2);
+  const cu=box(30,52,W-60,10,1);fill(ctx,cu,P.felt);ink(ctx,cu,2);}
 function drawStand(ctx,W,H){const u=[[30,10,-0.1],[56,24,0.12]];for(const[x,y,r] of u){ctx.save();ctx.translate(x,y);ctx.rotate(r);line(ctx,[[0,0],[0,90]],3,P.ink);const c=path([[-12,30],[0,20],[12,30],[6,90],[-6,90]]);fill(ctx,c,P.coat);ink(ctx,c,2);curl(ctx,0,0,-Math.PI/2,6,3,P.ink);ctx.restore();}
   const pot=path([[14,90],[76,90],[70,H-6],[20,H-6]],{smooth:false,jit:1});fill(ctx,pot,mix(P.scarfA,P.ink,0.3));for(let y=104;y<H-10;y+=18)line(ctx,[[18,y],[72,y]],2,P.brass,0.8);ink(ctx,pot,2.5);}
 function drawRug(ctx,W,H){const b=box(10,10,W-20,H-20,2);fill(ctx,b,P.rug);ctx.save();ctx.strokeStyle=mix(P.scarfB,P.rug,0.4);ctx.lineWidth=14;ctx.strokeRect(34,34,W-68,H-68);ctx.strokeStyle=mix(P.ink,P.rug,0.3);ctx.lineWidth=5;ctx.strokeRect(54,54,W-108,H-108);ctx.restore();
@@ -434,10 +439,12 @@ function drawClock(ctx,W,H){const cs=path([[20,10],[W-20,10],[W-12,40],[W-12,H-3
   const ha=-Math.PI/2+(9+5/60)/12*TAU,ma=-Math.PI/2+5/60*TAU;line(ctx,[[W/2,70],[W/2+Math.cos(ha)*20,70+Math.sin(ha)*20]],3.5);line(ctx,[[W/2,70],[W/2+Math.cos(ma)*30,70+Math.sin(ma)*30]],2.2);ink(ctx,d,2.5);
   const pw=box(W/2-24,124,48,H-170,1);fill(ctx,pw,mix(P.glass,P.woodDark,0.5));ink(ctx,pw,2);}
 function drawPendulum(ctx,W,H){line(ctx,[[W/2,0],[W/2,H-24]],3,P.brass);const b=path(ell(W/2,H-14,12,12,12,0.02));fill(ctx,b,P.brass);ink(ctx,b,2);}
-function drawGasolier(ctx,W,H){line(ctx,[[W/2,0],[W/2,170]],6,P.brass);ctx.translate(0,60);const body=path(ell(W/2,122,18,16,12,0.03));fill(ctx,body,P.brass);ink(ctx,body,2.5);
-  for(const sx of [-1,0,1]){const ex=W/2+sx*90,ey=sx?170:180;if(sx){line(ctx,[[W/2,126],[W/2+sx*40,150],[ex,ey-20]],5,P.brass);curl(ctx,W/2+sx*40,150,sx>0?0.6:Math.PI-0.6,10,3,P.brass);}else line(ctx,[[W/2,136],[W/2,ey-20]],5,P.brass);
-    const sh=path([[ex-22,ey-16],[ex+22,ey-16],[ex+14,ey+18],[ex-14,ey+18]],{smooth:true});ctx.save();ctx.globalAlpha=0.85;fill(ctx,sh,mix(P.paper,P.glow,0.35));ctx.restore();ink(ctx,sh,2.5);}
-  dot(ctx,W/2,140,6,P.brass);}
+function drawSconce(ctx,W,H){
+  const pl=path(ell(70,176,16,26,12,0.04));fill(ctx,pl,P.brass);shade(ctx,pl,86,0,54,0,0.4);ink(ctx,pl,2.5);
+  line(ctx,[[70,168],[78,140],[70,112],[70,96]],7,P.brass);curl(ctx,78,140,0.4,10,3,P.brass);line(ctx,[[62,150],[50,150]],4,P.brass);dot(ctx,48,150,5,P.brass);
+  const cup=box(58,90,24,10,1);fill(ctx,cup,P.brass);ink(ctx,cup,2);
+  const sh=path([[44,30],[96,30],[90,56],[80,86],[60,86],[50,56]],{jit:0.6});ctx.save();ctx.globalAlpha=0.8;fill(ctx,sh,mix(P.paper,P.glow,0.35));ctx.restore();
+  const fl=path([[64,80],[70,56],[76,80],[70,86]]);fill(ctx,fl,P.glow);line(ctx,[[46,40],[94,40]],1.6,P.ink,0.5);ink(ctx,sh,2.5);}
 function drawGlow(ctx,W,H){const g=ctx.createRadialGradient(W/2,H/2,0,W/2,H/2,W/2);g.addColorStop(0,'rgba(255,255,255,1)');g.addColorStop(0.25,'rgba(255,255,255,0.45)');g.addColorStop(1,'rgba(255,255,255,0)');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);}
 function drawMoth(ctx){const wc=mix(P.paper,P.stone,0.3);for(const sx of [-1,1]){const w=path([[60,44],[60+sx*50,14],[60+sx*56,44],[60+sx*40,74],[60,56]]);fill(ctx,w,wc);dot(ctx,60+sx*34,40,6,P.ink);dot(ctx,60+sx*34,40,2.5,wc);ink(ctx,w,2.5);}const b=path(ell(60,48,6,22,8,0.05));fill(ctx,b,mix(P.stoneDark,P.ink,0.3));ink(ctx,b,2);}
 function drawBlob(ctx,W,H){const g=ctx.createRadialGradient(W/2,H/2,0,W/2,H/2,W/2);g.addColorStop(0,'rgba(0,0,0,0.6)');g.addColorStop(1,'rgba(0,0,0,0)');ctx.save();ctx.scale(1,H/W);ctx.fillStyle=g;ctx.fillRect(0,0,W,W);ctx.restore();}
@@ -515,24 +522,26 @@ function build(){
   TX.floor=T(1024,512,drawFloor,{border:0,repeat:[8,2]});TX.cut=T(512,90,drawCut,{border:0,repeat:[10,1]});
   TX.walls=ROOMS.map((r,i)=>T(1000,650,drawBackWall(r),{border:0,seed:500+i}));
   TX.partD=T(1000,650,drawPartition(true),{border:4,seed:700});TX.partE=T(1000,650,drawPartition(false),{border:4,seed:701});
-  TX.signs=ROOMS.map((r,i)=>T(r.sign.length>24?1000:700,100,drawSign(r.sign,r.sign.length>24?40:50),{border:4,seed:800+i}));
+  TX.signs=ROOMS.map((r,i)=>T(1000,110,drawSign(r.sign,54),{border:4,seed:800+i}));
   TX.vMin=T(300,260,drawVitrine('minerals'));TX.vIns=T(300,260,drawVitrine('insects'));TX.vTri=T(300,260,drawVitrine('trilobites'));
   TX.cabRocks=T(300,560,drawCabinet('rocks'));TX.cabBirds=T(300,560,drawCabinet('birds'));
   TX.portrait=T(220,300,drawPortrait);TX.fern=T(400,300,drawFernSlab);TX.lamp=T(140,320,drawLampPed,{border:5});
   TX.desk=T(420,300,drawDesk);TX.att=T(240,330,drawAttendant);TX.notice=T(260,320,drawNotice);TX.lectern=T(140,260,drawLectern,{border:5});
   TX.caribou=T(520,460,drawCaribou,{border:7});TX.moose=T(240,220,drawMoose);TX.mothTable=T(180,250,drawMothTable,{border:5});
   TX.bench=T(300,120,drawBench,{border:5});TX.stand=T(90,180,drawStand,{border:4});TX.rug=T(640,400,drawRug,{border:0});TX.clock=T(120,300,drawClock,{border:5});TX.pend=T(40,110,drawPendulum,{border:3});
-  TX.gas=T(260,290,drawGasolier,{border:4});TX.glow=T(256,256,drawGlow,{border:0,grain:false});TX.moth=T(120,90,drawMoth,{border:4});TX.blob=T(128,64,drawBlob,{border:0,grain:false});
+  TX.sconce=T(140,210,drawSconce,{border:4});TX.glow=T(256,256,drawGlow,{border:0,grain:false});TX.moth=T(120,90,drawMoth,{border:4});TX.blob=T(128,64,drawBlob,{border:0,grain:false});
 
   /* floor, cut face, walls */
   const fl=plane(TX.floor,40,10,{order:-10});fl.rotation.x=-Math.PI/2;scene.add(fl);
   const cut=plane(TX.cut,40.4,0.7,{});cut.position.set(0,-0.35,5);scene.add(cut);
   ROOMS.forEach((r,i)=>{const w=plane(TX.walls[i],10,6.5,{});w.position.set((r.x0+r.x1)/2,3.25,-5);scene.add(w);
-    const sg=S(TX.signs[i],r.sign.length>24?140:120,TX.signs[i].userData.w/2,50);sg.position.set((r.x0+r.x1)/2,5.85,-4.97);scene.add(sg);});
+    const sg=S(TX.signs[i],150,500,55);sg.position.set((r.x0+r.x1)/2,5.85,-4.97);scene.add(sg);});
   for(const x of [-20,-10,0,10,20]){const p=S(x===-20||x===20?TX.partE:TX.partD,100,500,325);p.rotation.y=Math.PI/2;p.position.set(x,3.25,0);scene.add(p);}
   /* gas light */
-  W.gas=[];for(const r of ROOMS){const cx=(r.x0+r.x1)/2;const g=S(TX.gas,100,130,0);g.position.set(cx,6.9,-1.6);scene.add(g);
-    for(const dx of [-0.9,0,0.9]){const gl=S(TX.glow,256/1.6,128,128,{add:true,fog:false,opacity:0.6});gl.position.set(cx+dx,6.9-(dx?2.3:2.4),-1.55);scene.add(gl);W.gas.push(gl);}
+  W.gas=[];for(const x of [-19.1,-10.4,-6.3,-0.42,5.5,9.45]){const sc=S(TX.sconce,120,70,176);sc.position.set(x,3.5,-4.93);scene.add(sc);
+    const gl=S(TX.glow,256/1.5,128,128,{add:true,fog:false,opacity:0.6});gl.position.set(x,3.5+(176-60)/120,-4.9);scene.add(gl);W.gas.push(gl);
+    const ww=plane(TX.glow,3.4,3.4,{add:true,opacity:0.22,order:-6});ww.position.set(x,4.3,-4.95);scene.add(ww);}
+  for(const r of ROOMS){const cx=(r.x0+r.x1)/2;
     const pool=plane(TX.glow,9,7,{add:true,opacity:0.2,order:-5});pool.rotation.x=-Math.PI/2;pool.position.set(cx,0.01,-1.0);scene.add(pool);
     const wash=plane(TX.glow,12,7,{add:true,opacity:0.12,order:-6});wash.position.set(cx,3.6,-4.96);scene.add(wash);}
   /* Gesner room */
@@ -543,11 +552,11 @@ function build(){
   put(TX.lamp,100,70,320,-18.2,0,1.6,ex('lamp'));solid(-18.2,1.5,0.4,0.35);W.lampGlow=S(TX.glow,256/1.4,128,128,{add:true,fog:false,opacity:0.8});W.lampGlow.position.set(-18.2,2.62,1.65);scene.add(W.lampGlow);
   /* Entrance hall */
   const rug=plane(TX.rug,6.4,4,{order:-9});rug.rotation.x=-Math.PI/2;rug.position.set(-5,0.012,1.6);scene.add(rug);
-  put(TX.att,268,120,330,-5,1.45,-3.75,ex('attendant'));put(TX.desk,130,210,300,-5,0,-3.1,ex('attendant'));solid(-5,-3.3,1.7,0.6);
+  put(TX.att,165,120,330,-5,1.12,-3.75,ex('attendant'));put(TX.desk,130,210,300,-5,0,-3.1,ex('attendant'));solid(-5,-3.3,1.7,0.6);
   put(TX.notice,110,130,160,-8.2,3.4,-4.94,ex('notice'));put(TX.bench,110,150,120,-8.2,0,-4.55);solid(-8.2,-4.6,1.4,0.35);
   put(TX.lectern,100,70,260,-2.2,0,-0.9,ex('book'));solid(-2.2,-0.9,0.45,0.35);
   put(TX.clock,100,60,150,-3.6,4.0,-4.93);W.pend=S(TX.pend,100,20,0);W.pend.position.set(-3.6,4.15,-4.92);scene.add(W.pend);
-  put(TX.stand,100,45,180,-0.8,0,-4.5);solid(-0.8,-4.5,0.4,0.3);
+  put(TX.stand,100,45,180,-0.55,0,-4.5);solid(-0.55,-4.5,0.4,0.3);
   /* Fossils */
   put(TX.fern,100,200,150,2.9,3.5,-4.94,ex('fern'));
   put(TX.vIns,110,150,260,5.2,0,-1.1,ex('insects'));solid(5.2,-1.3,1.3,0.45);
@@ -689,7 +698,7 @@ function world(){
   W.lampGlow.mat.opacity=0.7+0.1*Math.sin(TM*11)*Math.sin(TM*4.1);W.pend.rotation.z=Math.sin(TM*Math.PI)*0.12;
   W.moths.forEach((m,i)=>{m.quaternion.copy(camera.quaternion);const flap=0.25+0.75*Math.abs(Math.sin(TM*26+i*1.7));
     if(i<4){const a=TM*(0.9+i*0.25)+i*1.6;m.position.set(18.1+Math.cos(a)*(0.9+i*0.15),3.2+Math.sin(a*1.6)*1.1,-3.6+Math.sin(a)*0.5);}
-    else{const cx=i===4?-5:5,a=TM*(1.4+i*0.2)+i;m.position.set(cx+Math.cos(a)*0.8,4.6+Math.sin(a*1.7)*0.25,-1.6+Math.sin(a)*0.6);}
+    else{const cx=i===4?-6.3:5.5,a=TM*(1.4+i*0.2)+i;m.position.set(cx+Math.cos(a)*0.6,4.7+Math.sin(a*1.7)*0.25,-4.4+Math.sin(a)*0.3);}
     m.scale.set(flap,1,1);});
   const pa=W.motePts.geometry.attributes.position;for(let i=0;i<W.motes.N;i++){const[x,y,z,ph,sp]=W.motes.seed[i];pa.array[i*3]=x+Math.sin(TM*0.3*sp+ph)*0.5;pa.array[i*3+1]=(y+TM*0.08*sp)%6.5;pa.array[i*3+2]=z+Math.cos(TM*0.25*sp+ph)*0.4;}pa.needsUpdate=true;
 }
@@ -704,7 +713,7 @@ function hud(){
   ui.room.textContent=ROOMS[roomOf(ME.x)].name;
   if(near&&!cardOpen){const e=near;v3.set(e.at[0],e.labelY,Math.min(e.at[1],-0.5)+ (e.at[1]>-0.5?e.at[1]+0.5:0));v3.set(e.at[0],e.labelY,e.at[1]-0.8);v3.project(camera);
     const x=(v3.x*0.5+0.5)*vp.clientWidth,y=(-v3.y*0.5+0.5)*vp.clientHeight;ui.prompt.hidden=false;ui.prompt.style.left=clamp(x,90,vp.clientWidth-90)+'px';ui.prompt.style.top=clamp(y,40,vp.clientHeight-10)+'px';
-    const touch=matchMedia('(pointer: coarse)').matches;const verb=e.talk?'Talk to':'Examine';const html=(touch?'Tap: ':'<kbd>E</kbd>')+verb+' '+esc(e.talk?'the attendant':e.name.charAt(0).toLowerCase()+e.name.slice(1));if(ui.prompt.dataset.h!==html){ui.prompt.innerHTML=html;ui.prompt.dataset.h=html;}}
+    const touch=matchMedia('(pointer: coarse)').matches;const html=(touch?'Tap: ':'<kbd>E</kbd>')+(e.talk?'Talk to the attendant':esc(e.name));if(ui.prompt.dataset.h!==html){ui.prompt.innerHTML=html;ui.prompt.dataset.h=html;}}
   else ui.prompt.hidden=true;
 }
 function frame(now){const dt=Math.min(0.05,(now-last)/1000);last=now;step(dt);pose();world();placeCamera(dt);renderer.render(scene,camera);hud();
