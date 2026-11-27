@@ -743,59 +743,132 @@ function drawSeatEnd(ctx,W,H){// 300 x 230 at 200 px a unit: the carved end of t
   const ov=path(ell(130,150,62,42,20,0.01));fill(ctx,ov,mix(wd,P.ink,0.22));line(ctx,[[90,150],[170,150]],2,P.paper,0.15);ink(ctx,ov,2);
   curl(ctx,252,64,0,13,4,mix(wd,P.ink,0.5));const arm=box(38,40,200,14,1);fill(ctx,arm,mix(wd,P.paper,0.12));ink(ctx,arm,2);ink(ctx,p,3.5);
   const foot=box(22,H-16,220,16,1);fill(ctx,foot,P.boot);ink(ctx,foot,2);}
-// the cab: a closed four-wheeler, side-on, facing right. 860 x 440 at 100 px a unit; the door's middle is x 210.
-function drawCab(ctx,W,H){const body=mix('#2c1b20',P.skyBot,0.2),line2=mix(P.brass,P.skyBot,0.3),blk=mix(P.boot,P.skyBot,0.15);
-  for(const[x0,x1,y] of [[70,250,322],[380,500,340]]){const sp=path(ell((x0+x1)/2,y,(x1-x0)/2,10,16,0.02));fill(ctx,sp,blk);ink(ctx,sp,2);}
-  // the shafts, out to the horse's collar
-  for(const[y0,y1,a] of [[300,236,1],[288,224,0.5]])line(ctx,[[480,y0],[700,y1-6],[846,y1]],a>0.6?9:7,mix('#4a3626',P.skyBot,0.3),a);
-  // the box: the cabman's seat, its leather apron in front, the footboard
-  const seat=box(360,166,150,22,1);fill(ctx,seat,blk);ink(ctx,seat,2.5);
-  const apron=path([[492,168],[534,170],[548,240],[528,318],[486,320]],{jit:0.8});fill(ctx,apron,blk);hatch(ctx,apron,{ang:1.4,gap:10,a:0.2});ink(ctx,apron,3);
-  line(ctx,[[470,322],[560,312]],7,blk);
-  // the body
-  const b=path([[54,112],[322,108],[346,128],[350,300],[330,338],[86,342],[58,318],[46,200]],{jit:1});fill(ctx,b,body);shade(ctx,b,350,0,46,0,0.35);
-  ctx.save();ctx.clip(b);ctx.strokeStyle=line2;ctx.lineWidth=2.5;ctx.strokeRect(70,128,264,198);ctx.restore();
-  const fw=path([[330,134],[346,136],[348,270],[330,272]],{smooth:false});fill(ctx,fw,mix(P.glass,P.skyBot,0.5));ink(ctx,fw,2);
-  const d=box(150,124,120,206,1);ink(ctx,d,2.5);const w=box(164,138,92,84,1);fill(ctx,w,mix(P.glass,P.skyBot,0.45));ctx.save();ctx.clip(w);ctx.strokeStyle=hexA(P.paper,0.2);ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(240,138);ctx.lineTo(176,222);ctx.stroke();ctx.restore();ink(ctx,w,2);
-  dot(ctx,262,252,6,P.brass);const qw=box(80,140,52,74,1);fill(ctx,qw,mix(P.glass,P.skyBot,0.45));ink(ctx,qw,2);
-  const roof=box(46,100,292,14,1);fill(ctx,roof,blk);ink(ctx,roof,2.5);ink(ctx,b,4);
-  // the step, and the lamp at the front corner
-  const st=box(176,346,70,10,1);fill(ctx,st,blk);ink(ctx,st,2);line(ctx,[[210,330],[210,348]],3,blk);
-  const lp=box(338,124,28,40,1);const lg=ctx.createLinearGradient(0,124,0,164);lg.addColorStop(0,mix(P.glow,P.paper,0.4));lg.addColorStop(1,P.glow);ctx.fillStyle=lg;ctx.fill(lp);ink(ctx,lp,2.5,P.boot);const lc=path([[334,124],[352,108],[370,124]],{smooth:false});fill(ctx,lc,P.boot);}
-function drawCabWheel(ctx,W,H){const c=W/2,r=W/2-6,blk=mix(P.boot,P.skyBot,0.15);
-  ctx.save();ctx.strokeStyle=blk;ctx.lineWidth=r*0.16;ctx.beginPath();ctx.arc(c,c,r-r*0.08,0,TAU);ctx.stroke();ctx.restore();
-  for(let i=0;i<12;i++){const a=i/12*TAU;line(ctx,[[c+Math.cos(a)*r*0.16,c+Math.sin(a)*r*0.16],[c+Math.cos(a)*r*0.86,c+Math.sin(a)*r*0.86]],Math.max(3,r*0.07),mix('#5c3b24',P.skyBot,0.3));}
-  dot(ctx,c,c,r*0.2,blk);dot(ctx,c,c,r*0.08,P.brass);ctx.save();ctx.strokeStyle=P.ink;ctx.lineWidth=3;ctx.beginPath();ctx.arc(c,c,r,0,TAU);ctx.stroke();ctx.beginPath();ctx.arc(c,c,r*0.76,0,TAU);ctx.stroke();ctx.restore();}
-function drawCabman(ctx,W,H){// 180 x 250: seated on the box, facing right, in a caped coat and a bowler, reins in hand
-  const coat=mix('#3e4636',P.skyBot,0.25),skin=mix(P.skin,P.glowDim,0.15);
-  const body=path([[40,100],[112,92],[134,150],[130,236],[34,240],[26,160]],{jit:0.8});cel(ctx,body,coat,{s:7});ink(ctx,body,3.5);
-  const cape=path([[34,96],[118,88],[146,140],[110,160],[30,158]],{jit:0.8});cel(ctx,cape,mix(coat,P.ink,0.15),{s:6});ink(ctx,cape,3);
-  const arm=path([[110,120],[160,150],[168,166],[154,170],[104,146]],{jit:0.6});cel(ctx,arm,coat,{s:5});ink(ctx,arm,2.5);dot(ctx,166,166,9,skin);
-  const head=path([[66,40],[108,38],[120,62],[128,72],[116,78],[112,94],[74,96],[60,70]],{jit:0.6});fill(ctx,head,skin);ink(ctx,head,3);
-  line(ctx,[[104,82],[124,84]],5,mix(P.ink,'#6b5a44',0.3));dot(ctx,104,60,3.5,P.ink);
-  const scarf=box(64,88,56,14,1);fill(ctx,scarf,mix(P.scarfB,P.skyBot,0.2));ink(ctx,scarf,2);
-  const crown=path([[64,44],[66,14],[86,6],[108,14],[112,44]],{jit:0.5});fill(ctx,crown,P.hat);ink(ctx,crown,2.5);const brim=path(ell(88,44,38,7,14,0.02));fill(ctx,brim,P.hat);ink(ctx,brim,2.5);
-  line(ctx,[[150,0],[160,176]],3,P.boot);}
-// the horse: a dark bay in harness, side-on, facing right. Body 420 x 240, neck and head 240 x 250, legs 80 x 175.
-function drawHorseBody(ctx,W,H){const bay=mix('#5b3320',P.skyBot,0.25),blk=mix(P.boot,P.skyBot,0.1);
-  const tail=path([[40,70],[18,120],[12,200],[30,214],[40,150],[54,96]],{jit:1});fill(ctx,tail,blk);hatch(ctx,tail,{ang:1.3,gap:6,a:0.3,c:P.paper});ink(ctx,tail,2.5);
-  const b=path([[44,80],[70,46],[150,52],[250,56],[310,34],[360,56],[384,100],[376,150],[340,176],[250,186],[150,182],[90,176],[54,140]],{jit:1});cel(ctx,b,bay,{s:10});
-  flecks(ctx,b,[40,30,350,160],60);ink(ctx,b,4.5);
-  // harness: collar and hames, the saddle pad and girth, the traces, the breeching round the quarters
-  const col=path([[318,36],[352,46],[376,100],[366,160],[344,164],[350,108],[330,62]],{jit:0.6});fill(ctx,col,blk);line(ctx,[[340,48],[362,110],[352,154]],4,P.brass);ink(ctx,col,2.5);
-  const pad=path([[196,46],[250,46],[256,92],[190,92]],{jit:0.6});fill(ctx,pad,blk);ink(ctx,pad,2);line(ctx,[[222,92],[226,184]],10,blk);dot(ctx,222,56,6,P.brass);
-  line(ctx,[[348,120],[250,120],[120,118]],5,blk);line(ctx,[[60,96],[100,150],[180,160]],6,blk);}
-function drawHorseNeck(ctx,W,H){const bay=mix('#5b3320',P.skyBot,0.25),blk=mix(P.boot,P.skyBot,0.1);
-  const n=path([[20,230],[30,150],[90,70],[150,36],[186,30],[224,82],[230,104],[214,118],[176,110],[140,120],[96,176],[80,236]],{jit:1});cel(ctx,n,bay,{s:8});ink(ctx,n,4);
-  const mane=path([[26,156],[86,64],[146,30],[150,44],[96,84],[40,170]],{jit:1.5});fill(ctx,mane,blk);ink(ctx,mane,2);
-  const ear=path([[150,36],[156,6],[170,32]],{smooth:false});fill(ctx,ear,bay);ink(ctx,ear,2.5);
-  // the bridle: a blinker over the eye, the noseband, the bit
-  const bl=path(ell(178,64,18,14,12,0.02));fill(ctx,bl,blk);dot(ctx,180,64,4,P.brass);ink(ctx,bl,2);
-  line(ctx,[[160,40],[176,96],[212,104]],4,blk);line(ctx,[[198,88],[222,94]],4,blk);dot(ctx,212,104,5,P.brass);dot(ctx,222,98,3,P.ink);}
-function drawHorseLeg(hind){return(ctx,W,H)=>{const bay=mix('#5b3320',P.skyBot,0.25),blk=mix(P.boot,P.skyBot,0.1);
-  const pts=hind?[[14,4],[66,4],[64,60],[52,92],[48,148],[30,148],[30,96],[22,52]]:[[18,4],[62,4],[56,70],[50,148],[30,148],[26,76]];
-  const l=path(pts,{jit:0.6});cel(ctx,l,bay,{s:5});ink(ctx,l,3);
-  const fet=path([[28,140],[52,140],[56,156],[26,156]],{smooth:false});fill(ctx,fet,mix(bay,P.ink,0.3));ink(ctx,fet,2);const hoof=path([[24,156],[58,156],[62,172],[20,172]],{smooth:false});fill(ctx,hoof,blk);ink(ctx,hoof,2.5);}}
+// the cab: a brougham (a closed one-horse carriage, the usual hired cab), side-on, facing right, 100 px a unit.
+// Cab frame: x 0 is the middle of the door, y 0 the road. Canvas x -2.0..3.3, y 0..4.7.
+const CABC=()=>({body:mix('#2d1a20',P.skyBot,0.15),upper:mix('#151319',P.skyBot,0.15),lining:mix('#c09443',P.skyBot,0.3),iron:mix(P.boot,P.skyBot,0.12),leather:mix('#1d1715',P.skyBot,0.12)});
+function cabU(x0,y1){return pts=>pts.map(([x,y])=>[(x-x0)*100,(y1-y)*100]);}
+function drawCab(ctx,W,H){const c=CABC(),U=cabU(-2.0,4.7),pp=(pts,o)=>path(U(pts),o),pt=(x,y)=>U([[x,y]])[0];
+  // the undercarriage: the perch from the back axle to the front, and the springs
+  line(ctx,U([[-0.9,0.95],[0.2,0.88],[1.4,0.95],[2.3,1.12]]),10,c.iron);
+  for(const[x0,x1,y] of [[-1.55,-0.25,1.02],[1.85,2.75,1.22]]){const sp=pp([[x0,y],[(x0+x1)/2,y+0.09],[x1,y],[(x0+x1)/2,y-0.09]]);fill(ctx,sp,c.iron);ink(ctx,sp,2.5);}
+  const fb=pp([[1.75,1.3],[2.85,1.3],[2.85,1.42],[1.75,1.42]],{smooth:false});fill(ctx,fb,c.iron);ink(ctx,fb,2);// the front axle bed
+  // the box: the cabman's seat, raised over the front wheels on its boot, with a footboard and a curved dashboard
+  const boot=pp([[1.3,1.5],[2.28,1.62],[2.36,2.5],[1.4,2.55]],{jit:0.8});cel(ctx,boot,c.body,{s:8,ha:0.25});ctx.save();ctx.clip(boot);ctx.strokeStyle=c.lining;ctx.lineWidth=2;ctx.stroke(pp([[1.42,1.62],[2.2,1.72],[2.26,2.4],[1.5,2.44]]));ctx.restore();ink(ctx,boot,3.5);
+  const seat=pp([[1.34,2.52],[2.42,2.5],[2.46,2.64],[1.36,2.68]],{jit:0.5});cel(ctx,seat,c.leather,{s:4,hatch:false});ink(ctx,seat,2.5);
+  line(ctx,U([[1.38,2.6],[1.3,2.95],[1.48,3.0]]),6,c.iron);// the seat rail
+  const foot=pp([[2.2,1.68],[2.98,1.86],[2.98,1.96],[2.2,1.8]],{smooth:false});fill(ctx,foot,c.leather);ink(ctx,foot,2.2);
+  const dash=pp([[2.92,1.88],[3.04,1.9],[3.2,2.35],[3.24,2.72],[3.14,2.74],[3.06,2.38]],{jit:0.5});fill(ctx,dash,c.leather);hatch(ctx,dash,{ang:1.2,gap:7,a:0.25,c:P.paper});ink(ctx,dash,2.5);stitch(ctx,U([[3.0,1.95],[3.14,2.35],[3.18,2.68]]),c.lining,0.5);
+  // the body: a curved bottom line, dropped at the door, rising at the front to clear the front wheel; a bowed glass front
+  const b=pp([[-1.72,3.02],[0.2,3.08],[1.05,3.06],[1.28,2.92],[1.42,2.25],[1.38,1.62],[1.18,1.18],[0.72,0.88],[-0.4,0.8],[-1.15,0.94],[-1.66,1.3],[-1.84,2.1],[-1.82,2.8]],{jit:0.8});
+  cel(ctx,b,c.body,{s:12,ha:0.22});
+  ctx.save();ctx.clip(b);const up=pp([[-2,3.2],[1.5,3.2],[1.5,2.08],[-2,2.08]],{smooth:false});fill(ctx,up,c.upper);// the upper quarter is black
+  ctx.strokeStyle=c.lining;ctx.lineWidth=2.4;ctx.stroke(pp([[-1.6,1.98],[-1.52,1.3],[-1.05,1.04],[-0.4,0.92],[0.65,0.99],[1.08,1.24],[1.26,1.66],[1.28,1.98]]));// coach lining
+  const shine=ctx.createLinearGradient(...pt(1.2,3),...pt(-1.4,1));shine.addColorStop(0,hexA(P.glow,0.16));shine.addColorStop(0.5,hexA(P.glow,0));ctx.fillStyle=shine;ctx.fill(b);ctx.restore();
+  // windows: the bowed front glass, the small back quarter, the door's dropped glass
+  const fg=pp([[1.05,2.95],[1.24,2.88],[1.36,2.24],[1.08,2.22]],{smooth:false});fill(ctx,fg,mix(P.glass,P.skyBot,0.45));ink(ctx,fg,2.2);
+  const qw=pp([[-1.58,2.86],[-0.72,2.9],[-0.72,2.2],[-1.58,2.2]],{jit:0.4});fill(ctx,qw,mix(P.glass,P.skyBot,0.4));ctx.save();ctx.clip(qw);ctx.strokeStyle=hexA(P.paper,0.22);ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(...pt(-0.9,2.9));ctx.lineTo(...pt(-1.3,2.2));ctx.stroke();ctx.restore();ink(ctx,qw,2.2);
+  const door=pp([[-0.5,2.98],[0.52,2.98],[0.55,0.86],[-0.48,0.84]],{smooth:false,jit:0.5});ink(ctx,door,2.6);
+  const dw=pp([[-0.36,2.86],[0.4,2.86],[0.4,2.18],[-0.36,2.18]],{jit:0.4});fill(ctx,dw,mix(P.glass,P.ink,0.3));ctx.save();ctx.clip(dw);const gl=pp([[-0.36,2.6],[0.4,2.6],[0.4,2.18],[-0.36,2.18]],{smooth:false});fill(ctx,gl,mix(P.glass,P.skyBot,0.5));line(ctx,U([[-0.36,2.6],[0.4,2.6]]),4,c.upper);ctx.restore();ink(ctx,dw,2.2);
+  const hd=pt(0.42,1.82);line(ctx,[hd,[hd[0]-14,hd[1]+2]],5,P.brass);dot(ctx,hd[0],hd[1],4,P.brass);
+  const rail=pp([[-1.8,3.02],[1.12,3.06],[1.14,3.14],[-1.8,3.12]],{smooth:false});fill(ctx,rail,c.iron);ink(ctx,rail,2);
+  ink(ctx,b,4.5);
+  // the step under the door, and the lamp on its bracket at the front corner
+  line(ctx,U([[0.0,0.84],[0.06,0.55],[0.36,0.55]]),5,c.iron);
+  line(ctx,U([[1.3,1.9],[1.46,1.98]]),4,c.iron);
+  const lp=pp([[1.4,1.92],[1.62,1.92],[1.6,2.28],[1.42,2.28]],{smooth:false});const lg=ctx.createLinearGradient(0,pt(0,2.28)[1],0,pt(0,1.92)[1]);lg.addColorStop(0,mix(P.glow,P.paper,0.45));lg.addColorStop(1,P.glow);ctx.fillStyle=lg;ctx.fill(lp);ink(ctx,lp,2.4,c.iron);
+  const lc=pp([[1.36,2.28],[1.51,2.42],[1.66,2.28]],{smooth:false});fill(ctx,lc,c.iron);ink(ctx,lc,2,c.iron);line(ctx,U([[1.51,2.42],[1.51,2.52]]),4,c.iron);}
+// a wheel: an iron tyre, painted felloes and spokes picked out with a line, a brass hub cap. No paper margin: it would fill the gaps.
+function drawCabWheel(n){return(ctx,W,H)=>{const c=CABC(),cx=W/2,r=W/2-3,red=mix('#5a2028',P.skyBot,0.2);
+  for(let i=0;i<n;i++){const a=i/n*TAU,s=[[cx+Math.cos(a)*r*0.15,cx+Math.sin(a)*r*0.15],[cx+Math.cos(a)*r*0.84,cx+Math.sin(a)*r*0.84]];line(ctx,s,Math.max(5,r*0.075)+3,P.ink);line(ctx,s,Math.max(5,r*0.075),red);}
+  ctx.save();ctx.lineWidth=r*0.13;ctx.strokeStyle=red;ctx.beginPath();ctx.arc(cx,cx,r*0.86,0,TAU);ctx.stroke();ctx.lineWidth=r*0.09;ctx.strokeStyle=c.iron;ctx.beginPath();ctx.arc(cx,cx,r*0.955,0,TAU);ctx.stroke();
+  ctx.strokeStyle=hexA(P.glow,0.35);ctx.lineWidth=2.5;ctx.beginPath();ctx.arc(cx,cx,r*0.97,-1.4,-0.2);ctx.stroke();
+  ctx.strokeStyle=P.ink;ctx.lineWidth=3;for(const k of [1,0.91,0.8])ctx.beginPath(),ctx.arc(cx,cx,r*k,0,TAU),ctx.stroke();ctx.restore();
+  const hub=path(ell(cx,cx,r*0.2,r*0.2,16,0.01));fill(ctx,hub,red);ink(ctx,hub,2.5);const cap=path(ell(cx,cx,r*0.1,r*0.1,12,0.01));fill(ctx,cap,P.brass);ink(ctx,cap,2);}}
+// the shafts: a slim bent pole from the cab's front axle to the horse's shoulder, and the trace (the pulling strap)
+// from the cab to the collar. One drawing; the far one is the same, darker. Canvas x 2.2..6.3, y 1.1..2.15 (cab frame).
+function drawShaft(ctx,W,H){const c=CABC(),U=cabU(2.2,2.15);
+  line(ctx,U([[2.95,1.5],[4.2,1.72],[5.35,1.86],[6.08,1.98]]),3.2,c.leather);// the trace
+  const wood=mix('#3a2a1c',P.skyBot,0.2);const s=U([[2.3,1.2],[3.4,1.5],[4.6,1.74],[5.6,1.86],[6.12,1.92],[6.2,2.04]]);line(ctx,s,11,P.ink);line(ctx,s,7,wood);line(ctx,U([[3.4,1.53],[5.6,1.89]]),1.5,P.glow,0.35);
+  const tip=U([[6.12,1.92]])[0];dot(ctx,tip[0],tip[1],6,P.brass);}
+// the cabman: seated on the box, in a caped greatcoat and a bowler, reins in both hands. Body and head are two pieces.
+// Body canvas x 1.3..2.7, y 2.4..3.9 (cab frame); head canvas x 1.55..2.3, y 3.4..4.3, pinned at the neck (1.9, 3.55).
+function drawCabmanBody(ctx,W,H){const U=cabU(1.3,3.9),pp=(pts,o)=>path(U(pts),o),coat=mix('#3d4433',P.skyBot,0.22),cape=mix('#4a523e',P.skyBot,0.22);
+  const lap=pp([[1.7,2.6],[2.52,2.66],[2.6,2.78],[2.5,2.86],[1.74,2.88]],{jit:0.6});cel(ctx,lap,coat,{s:6});ink(ctx,lap,3);
+  const torso=pp([[1.62,2.62],[1.98,2.62],[2.08,3.0],[2.02,3.42],[1.88,3.52],[1.66,3.46],[1.58,3.0]],{jit:0.8});cel(ctx,torso,coat,{s:9,dark:0.5});flecks(ctx,torso,[20,30,60,100],70);for(const y of [2.8,3.0,3.2])dot(ctx,...U([[2.02,y]])[0],3,P.brass);ink(ctx,torso,4);
+  // two short capes over the shoulders, the mark of a coachman's coat
+  for(const[y0,y1,k] of [[3.5,3.12,0],[3.48,3.24,1]]){const cp=pp([[1.6,y0-0.02],[1.92,y0+0.02],[2.1,y1+0.12],[2.06,y1],[1.6,y1-0.02-k*0.04],[1.54,(y0+y1)/2]],{jit:0.6});cel(ctx,cp,k?coat:cape,{s:5,hatch:false});ink(ctx,cp,2.6);stitch(ctx,U([[1.6,y1+0.04],[2.02,y1+0.06]]),P.paper,0.35);}
+  // the arm, forward to the reins; gloved hands
+  const arm=pp([[1.86,3.3],[2.0,3.34],[2.16,3.0],[2.5,2.98],[2.52,3.1],[2.18,3.14],[2.06,3.36]],{jit:0.5});cel(ctx,arm,coat,{s:5});ink(ctx,arm,2.8);
+  const hand=pp([[2.46,2.94],[2.6,2.96],[2.62,3.1],[2.48,3.12]]);fill(ctx,hand,mix(P.boot,P.skyBot,0.2));ink(ctx,hand,2);
+  const muff=pp([[1.74,3.42],[2.0,3.46],[2.0,3.58],[1.76,3.56]]);fill(ctx,muff,mix('#7a3b2a',P.skyBot,0.2));ink(ctx,muff,2.2);}
+function drawCabmanHead(ctx,W,H){const U=cabU(1.55,4.3),pp=(pts,o)=>path(U(pts),o),skin=mix(P.skin,'#c07a5a',0.25),hat=P.hat;
+  const face=pp([[1.78,3.98],[1.98,4.02],[2.06,3.92],[2.12,3.82],[2.08,3.78],[2.07,3.7],[2.02,3.6],[1.9,3.56],[1.8,3.62],[1.74,3.8]],{jit:0.5});cel(ctx,face,skin,{s:4,ha:0.2});
+  const ck=pp([[1.96,3.72],[2.03,3.74],[2.0,3.68]]);fill(ctx,ck,hexA('#c0504a',0.4));ink(ctx,face,3);
+  const ear=pp([[1.8,3.82],[1.86,3.84],[1.86,3.74],[1.8,3.74]]);fill(ctx,ear,mix(skin,P.ink,0.15));ink(ctx,ear,1.8);
+  const mu=pp([[1.98,3.7],[2.1,3.72],[2.08,3.64],[2.0,3.62]]);fill(ctx,mu,mix('#8a7a66',P.skyBot,0.1));ink(ctx,mu,1.6);
+  dot(ctx,...U([[2.02,3.86]])[0],3,P.ink);line(ctx,U([[1.98,3.91],[2.06,3.9]]),2.2,P.ink);
+  const side=pp([[1.76,3.9],[1.8,3.66],[1.84,3.7],[1.82,3.9]]);fill(ctx,side,mix('#8a7a66',P.skyBot,0.1));
+  // the bowler: a round crown and a curled brim
+  const crown=pp([[1.74,3.98],[1.76,4.12],[1.86,4.22],[1.98,4.22],[2.06,4.12],[2.08,3.98]]);cel(ctx,crown,hat,{s:4,hatch:false,ra:0.4});ink(ctx,crown,2.6);
+  const brim=pp([[1.66,3.98],[1.72,3.95],[2.1,3.95],[2.18,3.99],[2.12,4.02],[1.7,4.02]]);fill(ctx,brim,hat);ink(ctx,brim,2.4);line(ctx,U([[1.77,4.03],[2.06,4.03]]),3,mix('#4a3f3a',P.skyBot,0.1));}
+// the horse: a dark bay in harness, side-on, facing right. Horse frame: x 0 at the point of the buttock, y 0 the road;
+// 100 px a unit; 2.55 units (about 1.55 m) at the withers. Pieces: the body with the neck (and the collar and harness),
+// the head (pinned at the poll, so it nods), the tail, and legs in two parts each (forearm + cannon, gaskin + cannon).
+const HORSE=()=>({bay:mix('#74401f',P.skyBot,0.18),black:mix('#17110e',P.skyBot,0.15),leather:mix('#1b1513',P.skyBot,0.12),hoof:mix('#2e2722',P.skyBot,0.15)});
+function drawHorseBody(ctx,W,H){const h=HORSE(),U=cabU(-0.15,3.72),pp=(pts,o)=>path(U(pts),o),pt=(x,y)=>U([[x,y]])[0];
+  const b=pp([[0.1,2.42],[0.5,2.57],[0.95,2.5],[1.4,2.44],[1.88,2.6],[2.15,2.88],[2.5,3.24],[2.84,3.56],[3.02,3.52],[3.1,3.16],[2.96,2.78],[2.82,2.36],[2.76,2.0],[2.64,1.68],[2.42,1.44],[2.06,1.32],[1.65,1.28],[1.1,1.36],[0.76,1.58],[0.62,1.54],[0.22,1.38],[0.04,1.72],[0.0,2.05],[0.03,2.3]],{jit:0.5});
+  cel(ctx,b,h.bay,{s:13,dark:0.42});flecks(ctx,b,[0,0,W,H],110);
+  // a few soft lines for the shoulder and the hip, no more
+  ctx.save();ctx.clip(b);ctx.strokeStyle=hexA(P.ink,0.3);ctx.lineWidth=2;ctx.lineCap='round';
+  for(const ln of [[[2.0,2.55],[2.25,2.1],[2.5,1.72]],[[0.62,2.5],[0.74,2.05],[0.66,1.66]]])ctx.stroke(path(U(ln),{closed:false}));ctx.restore();
+  ink(ctx,b,4.5);
+  // the mane along the crest
+  const mane=pp([[1.86,2.62],[2.1,2.92],[2.46,3.3],[2.8,3.6],[2.92,3.6],[2.78,3.44],[2.66,3.38],[2.56,3.22],[2.42,3.16],[2.32,2.98],[2.18,2.9],[2.06,2.74]],{jit:1.2});fill(ctx,mane,h.black);hatch(ctx,mane,{ang:-0.8,gap:5,a:0.22,c:P.paper});ink(ctx,mane,2.4);
+  // harness: the crupper along the back to the tail, the breeching round the quarters and its hip straps
+  line(ctx,U([[0.12,2.44],[0.5,2.58],[0.95,2.52],[1.5,2.5]]),5,h.leather);
+  line(ctx,U([[0.03,1.92],[0.4,1.86],[0.8,1.84],[1.2,1.84]]),8,h.leather);line(ctx,U([[0.56,2.56],[0.46,2.2],[0.4,1.88]]),5,h.leather);
+  // the saddle pad and its band down to the tug (which carries the shaft) and round the belly
+  line(ctx,U([[1.74,2.5],[1.76,1.86],[1.72,1.28]]),9,h.leather);
+  const tug=pp([[1.67,1.97],[1.85,1.97],[1.85,1.77],[1.67,1.77]],{smooth:false});fill(ctx,tug,h.leather);ink(ctx,tug,2);dot(ctx,...pt(1.76,1.87),3.5,P.brass);
+  const pad=pp([[1.5,2.42],[1.98,2.5],[2.0,2.7],[1.76,2.78],[1.5,2.66]],{jit:0.5});cel(ctx,pad,h.leather,{s:3,hatch:false,ra:0.3});ink(ctx,pad,2.4);
+  const ter=pt(1.75,2.84);ctx.save();ctx.strokeStyle=P.brass;ctx.lineWidth=3.5;ctx.beginPath();ctx.arc(ter[0],ter[1],7,0,TAU);ctx.stroke();ctx.restore();
+  // the collar: a thick padded ring round the base of the neck, the hames along its front, the trace hooked on
+  const col=pp([[2.12,2.94],[2.28,3.1],[2.44,3.02],[2.68,2.6],[2.84,2.18],[2.84,1.9],[2.7,1.86],[2.64,2.14],[2.5,2.56],[2.3,2.86]],{jit:0.4});cel(ctx,col,h.leather,{s:6,hatch:false,ra:0.5});ink(ctx,col,3.2);
+  line(ctx,U([[2.36,3.12],[2.6,2.7],[2.8,2.2],[2.8,1.88]]),5,P.brass);line(ctx,U([[2.36,3.12],[2.6,2.7],[2.8,2.2],[2.8,1.88]]),1.4,P.ink,0.5);dot(ctx,...pt(2.35,3.16),5,P.brass);
+  const ht=pp([[2.66,2.06],[2.86,2.04],[2.86,1.94],[2.66,1.96]],{smooth:false});fill(ctx,ht,h.leather);ink(ctx,ht,1.8);}
+function drawHorseHead(ctx,W,H){const h=HORSE(),U=cabU(2.75,4.0),pp=(pts,o)=>path(U(pts),o),pt=(x,y)=>U([[x,y]])[0];
+  const ear2=pp([[2.86,3.58],[2.86,3.9],[2.97,3.62]],{smooth:false});fill(ctx,ear2,mix(h.bay,P.ink,0.4));ink(ctx,ear2,2);
+  const hd=pp([[2.86,3.56],[3.02,3.6],[3.18,3.44],[3.36,3.12],[3.54,2.84],[3.62,2.72],[3.6,2.6],[3.48,2.56],[3.3,2.66],[3.12,2.82],[3.0,3.04],[2.9,3.3]],{jit:0.4});
+  cel(ctx,hd,h.bay,{s:8,dark:0.42});flecks(ctx,hd,[0,0,W,H],40);
+  ctx.save();ctx.clip(hd);const muz=pp([[3.34,3.0],[3.7,3.0],[3.7,2.5],[3.34,2.5]],{smooth:false});ctx.fillStyle=hexA(P.ink,0.3);ctx.fill(muz);
+  ctx.strokeStyle=hexA(P.ink,0.45);ctx.lineWidth=2.2;ctx.stroke(path(U([[3.3,3.08],[3.1,3.0],[3.06,2.86],[3.2,2.76],[3.34,2.8]]),{closed:false}));ctx.restore();// the cheek
+  const star=pp([[3.12,3.44],[3.2,3.48],[3.22,3.38],[3.15,3.36]]);fill(ctx,star,mix(P.paper,P.skyBot,0.2));
+  ink(ctx,hd,4);
+  const nos=pt(3.54,2.8);ctx.save();ctx.strokeStyle=P.ink;ctx.lineWidth=2.6;ctx.beginPath();ctx.arc(nos[0],nos[1],5.5,0.5,4.1);ctx.stroke();ctx.restore();line(ctx,U([[3.46,2.64],[3.6,2.66]]),2,P.ink);
+  const fore=pp([[2.92,3.62],[3.06,3.6],[3.14,3.42],[3.0,3.48]]);fill(ctx,fore,h.black);ink(ctx,fore,1.8);
+  const ear=pp([[2.92,3.56],[2.97,3.94],[3.08,3.6]],{smooth:false});fill(ctx,ear,h.bay);ctx.save();ctx.clip(ear);fill(ctx,pp([[2.97,3.9],[3.02,3.62],[2.95,3.62]],{smooth:false}),mix(h.bay,P.ink,0.4));ctx.restore();ink(ctx,ear,2.4);
+  // the bridle: crownpiece and cheek strap, browband, noseband, throatlatch; a blinker beside the eye; the bit
+  for(const ln of [[[2.97,3.6],[3.1,3.3],[3.26,2.96],[3.42,2.72]],[[2.99,3.52],[3.14,3.5]],[[3.26,3.0],[3.56,2.94]],[[2.96,3.48],[2.98,3.08]]])line(ctx,U(ln),4.5,h.leather);
+  const eye=pt(3.14,3.32);fill(ctx,path(ell(eye[0]+4,eye[1],5,4,10,0)),P.ink);dot(ctx,eye[0]+5,eye[1]-1.5,1.5,P.paper);
+  const bl=pp([[2.98,3.43],[3.12,3.44],[3.12,3.22],[2.98,3.22]],{jit:0.3});fill(ctx,bl,h.leather);ink(ctx,bl,2);dot(ctx,...pt(3.05,3.33),3.5,P.brass);
+  const bit=pt(3.44,2.7);ctx.save();ctx.strokeStyle=P.brass;ctx.lineWidth=3.2;ctx.beginPath();ctx.arc(bit[0],bit[1],6.5,0,TAU);ctx.stroke();ctx.restore();}
+function drawHorseTail(ctx,W,H){const h=HORSE(),U=cabU(-0.45,2.5),pp=(pts,o)=>path(U(pts),o);
+  const t=pp([[0.12,2.44],[-0.02,2.34],[-0.16,2.0],[-0.26,1.5],[-0.24,1.1],[-0.12,1.0],[-0.06,1.12],[-0.02,1.5],[0.04,1.9],[0.16,2.3]],{jit:1.2});fill(ctx,t,h.black);hatch(ctx,t,{ang:1.38,gap:5,a:0.28,c:P.paper});ink(ctx,t,2.6);}
+// legs, with muscle: a broad forearm (elbow to knee, 0.62) or gaskin (stifle to hock, 0.72, down and back with the point
+// of the hock behind), then the cannon, the fetlock joint, a sloping pastern and the hoof
+function drawHorseLeg(part){return(ctx,W,H)=>{const h=HORSE(),U=cabU(-0.35,0.08),pp=(pts,o)=>path(U(pts),o);
+  const shapes={
+    foreUp:[[-0.17,0.0],[0.16,0.0],[0.13,-0.28],[0.08,-0.54],[0.09,-0.66],[-0.09,-0.67],[-0.1,-0.5],[-0.15,-0.24]],
+    foreLo:[[-0.08,0.03],[0.08,0.03],[0.07,-0.46],[0.1,-0.54],[0.15,-0.68],[0.06,-0.7],[-0.04,-0.6],[-0.07,-0.48]],
+    hindUp:[[-0.14,0.03],[0.2,0.03],[0.16,-0.28],[0.04,-0.6],[-0.08,-0.76],[-0.25,-0.76],[-0.22,-0.56],[-0.18,-0.28]],
+    hindLo:[[-0.08,0.03],[0.08,0.03],[0.08,-0.48],[0.11,-0.56],[0.16,-0.7],[0.06,-0.72],[-0.04,-0.62],[-0.07,-0.5]]}[part];
+  const lo=part.endsWith('Lo'),l=pp(shapes,{jit:0.4});cel(ctx,l,lo?mix(h.bay,h.black,0.8):h.bay,{s:5,dark:0.45});
+  if(!lo){ctx.save();ctx.clip(l);ctx.fillStyle=hexA(h.black,0.5);const g=ctx.createLinearGradient(0,U([[0,-0.3]])[0][1],0,U([[0,-0.7]])[0][1]);g.addColorStop(0,hexA(h.black,0));g.addColorStop(1,hexA(h.black,0.85));ctx.fillStyle=g;ctx.fill(l);ctx.restore();}// bay legs darken to black
+  ink(ctx,l,3.2);
+  if(lo){const hf=pp([[0.03,-0.68],[0.17,-0.68],[0.23,-0.86],[0.0,-0.86]],{smooth:false,jit:0.3});cel(ctx,hf,h.hoof,{s:3,hatch:false,ra:0.35});ink(ctx,hf,2.8);line(ctx,U([[0.04,-0.71],[0.18,-0.71]]),2,P.paper,0.25);}}}
+// the whip, standing in its socket on the dashboard, the lash hanging in a loop. No paper margin: it is too thin.
+function drawWhip(ctx,W,H){const U=cabU(2.6,4.6);const stick=U([[3.06,2.32],[2.96,3.3],[2.8,4.45]]);line(ctx,stick,5.5,P.ink);line(ctx,stick,3,mix('#7a5c38',P.skyBot,0.2));
+  line(ctx,U([[2.8,4.45],[2.92,4.3],[3.1,3.86],[3.16,3.44],[3.1,3.16]]),1.8,P.ink,0.9);line(ctx,U([[3.04,2.2],[3.07,2.66]]),7,P.ink);}
 
 /* ================= EXHIBITS: the facts ================= */
 const ROOMS=[
@@ -1225,33 +1298,53 @@ function buildTrain(a){const cx=(a.x0+a.x1)/2,w=a.x1-a.x0;
   const cut=plane(TX.cut,w+0.4,0.7,{});cut.position.set(cx,-0.35,2.3);scene.add(cut);
   for(let x=a.x0+0.4;x<a.x1-1;x+=2.0){put(TX.seatBack,200,30,300,x,0,-1.3);put(TX.seatEnd,200,30,230,x,0,-0.2);}}
 const SEAT_X=258.4+2.0*4+0.72;// where you sit: the fifth seat
-/* The cab: one group, built once, hidden until the opening. Its origin is on the road under the cab door. */
-function buildCab(){TX.cab=T(860,440,drawCab,{border:6,seed:1310});TX.wheelR=T(196,196,drawCabWheel,{border:4,seed:1311});TX.wheelF=T(144,144,drawCabWheel,{border:4,seed:1312});
-  TX.cabman=T(180,250,drawCabman,{border:5,seed:1313});TX.horse=T(420,240,drawHorseBody,{border:6,seed:1314});TX.horseNeck=T(240,250,drawHorseNeck,{border:5,seed:1315});
-  TX.legFr=T(80,175,drawHorseLeg(false),{border:4,seed:1316});TX.legHi=T(80,175,drawHorseLeg(true),{border:4,seed:1317});
+/* The cab: one group, built once, hidden until the opening. Its origin is on the road under the cab door; the horse is
+   its own group in front (HX), in the horse frame of drawHorseBody. Paint order, back to front: far wheels, far shaft,
+   far legs, near legs, tail, neck, body, near shaft, cab, near wheels. */
+const HX=3.62;
+function buildCab(){
+  TX.cab=T(530,470,drawCab,{border:6,seed:1310});TX.wheelR=T(196,196,drawCabWheel(14),{border:0,seed:1311});TX.wheelF=T(146,146,drawCabWheel(12),{border:0,seed:1312});
+  TX.shaft=T(410,105,drawShaft,{border:3,seed:1318});TX.cabmanB=T(140,135,drawCabmanBody,{border:5,seed:1313});TX.cabmanH=T(70,75,drawCabmanHead,{border:4,seed:1319});
+  TX.horse=T(330,255,drawHorseBody,{border:6,seed:1314});TX.horseHead=T(100,155,drawHorseHead,{border:5,seed:1315});TX.horseTail=T(70,155,drawHorseTail,{border:4,seed:1320});
+  TX.whip=T(65,250,drawWhip,{border:0,seed:1321});
+  for(const k of ['foreUp','foreLo','hindUp','hindLo'])TX['leg_'+k]=T(65,104,drawHorseLeg(k),{border:4,seed:1330+k.length,cut:k.endsWith('Lo')?{t:10}:undefined});
   const g=new THREE.Group();g.visible=false;scene.add(g);const C={g,x:150,z:-1.0,v:0,d:0,goal:null,leave:false,wheels:[],legs:[]};W.cabS=C;
-  const add=(tex,ppu,ax,ay,x,y,z,tint)=>{const s=S(tex,ppu,ax,ay);s.position.set(x,y,z);if(tint)s.mat.color.setScalar(tint);g.add(s);return s;};
-  for(const[tex,x,r] of [[TX.wheelR,-0.8,0.92],[TX.wheelF,2.3,0.66]])for(const z of [-0.34,0.05]){const c=tex.userData.w/2;C.wheels.push({s:add(tex,100,c,c,x+(z<0?0.08:0),r,z,z<0?0.5:0),r});}
-  add(TX.cab,100,210,440,0,0,0);
-  const HX=3.55;// the horse's rump, just ahead of the cabman's apron
-  for(const[tex,x,z,o,t] of [[TX.legHi,1.02,-0.08,0.5,0.55],[TX.legFr,3.28,-0.08,0.75,0.55],[TX.legHi,0.9,0.02,0,0],[TX.legFr,3.16,0.02,0.25,0]])C.legs.push({s:add(tex,100,40,6,HX+x,1.72,z,t),o:o*TAU});
-  C.body=add(TX.horse,100,0,240,HX,0.62,-0.03);
-  C.neck=add(TX.horseNeck,100,40,220,HX+3.34,2.2,-0.02);
-  C.man=add(TX.cabman,100,90,250,2.25,2.62,-0.05);
-  const lamp=S(TX.glow,256/1.6,128,128,{add:true,fog:false,opacity:0.7});lamp.position.set(1.42,2.98,0.06);g.add(lamp);W.gas.push(lamp);
-  C.reins=new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(),new THREE.Vector3()]),new THREE.LineBasicMaterial({color:col(P.boot)}));g.add(C.reins);}
+  const add=(par,tex,ax,ay,x,y,z,tint)=>{const s=S(tex,100,ax,ay);s.position.set(x,y,z);if(tint)s.mat.color.setScalar(tint);par.add(s);return s;};
+  for(const[tex,x,r] of [[TX.wheelR,-0.9,0.95],[TX.wheelF,2.3,0.7]]){const c=tex.userData.w/2;C.wheels.push({s:add(g,tex,c,c,x+0.1,r,-0.42,0.45),r});}
+  add(g,TX.shaft,-220,215,0,0.06,-0.3,0.5);
+  const hg=new THREE.Group();hg.position.x=HX;g.add(hg);C.horse=hg;
+  // legs: the upper piece swings at the elbow / stifle, the lower at the knee / hock (its z just behind the upper's)
+  const leg=(fore,x,z,tint,o)=>{const up=add(hg,TX[fore?'leg_foreUp':'leg_hindUp'],35,8,x,fore?1.48:1.58,z,tint);
+    const lo=add(up,TX[fore?'leg_foreLo':'leg_hindLo'],35,8,fore?0:-0.15,fore?-0.62:-0.72,-0.004,0);C.legs.push({up,lo,fore,o:o*TAU});};
+  leg(false,0.38,-0.12,0.55,0.5);leg(true,2.16,-0.12,0.55,0.75);leg(false,0.5,-0.06,0,0);leg(true,2.3,-0.06,0,0.25);
+  C.tail=add(hg,TX.horseTail,55,10,0.1,2.4,-0.04);
+  C.body=add(hg,TX.horse,15,372,0,0,0);
+  C.neck=add(hg,TX.horseHead,22,60,2.97,3.4,0.01);// (the head: it nods at the poll)
+  add(g,TX.shaft,-220,215,0,0,0.06);
+  C.man=add(g,TX.cabmanB,-130,390,0,0,-0.05);C.head=add(C.man,TX.cabmanH,35,70,1.9,3.6,0.004);
+  add(g,TX.cab,200,470,0,0,0.02);add(g,TX.whip,-260,460,0,0,0.03);
+  for(const[tex,x,r] of [[TX.wheelR,-0.9,0.95],[TX.wheelF,2.3,0.7]]){const c=tex.userData.w/2;C.wheels.push({s:add(g,tex,c,c,x,r,0.1),r});}
+  const lamp=S(TX.glow,256/1.4,128,128,{add:true,fog:false,opacity:0.75});lamp.position.set(1.51,2.1,0.14);g.add(lamp);W.gas.push(lamp);
+  C.reins=new THREE.Line(new THREE.BufferGeometry().setFromPoints([0,1,2].map(()=>new THREE.Vector3())),new THREE.LineBasicMaterial({color:col(P.boot)}));g.add(C.reins);}
+// the walk: each leg spends about 60% of a stride on the ground, sweeping back, then lifts, folds at the knee or hock and
+// swings forward. Four beats: near hind, near fore, far hind, far fore. The head nods twice a stride; the tail swings.
+const STRIDE=1.9;
 function cabTick(dt){const C=W.cabS;if(!C||!C.g.visible)return;
-  if(C.goal!=null){const rem=C.goal-C.x,want=Math.min(4,Math.sqrt(2*1.1*Math.max(0,rem)));C.v=Math.min(want,C.v+1.3*dt);if(rem<0.03){C.x=C.goal;C.v=0;C.goal=null;}}
-  else if(C.leave){C.v=Math.min(4,C.v+1.1*dt);if(C.x>240)C.g.visible=false;}
+  if(C.goal!=null){const rem=C.goal-C.x,want=Math.min(3.4,Math.sqrt(2*0.9*Math.max(0,rem)));C.v=Math.min(want,C.v+1.1*dt);if(rem<0.03){C.x=C.goal;C.v=0;C.goal=null;}}
+  else if(C.leave){C.v=Math.min(3.4,C.v+0.9*dt);if(C.x>242)C.g.visible=false;}
   C.x+=C.v*dt;C.d+=C.v*dt;C.g.position.set(C.x,0,C.z);
   for(const w of C.wheels)w.s.rotation.z=-C.d/w.r;
-  // a walk: four beats, one leg at a time; the head nods twice a stride; standing, it shifts its head now and then
-  const ph=C.d/1.6*TAU,amp=Math.min(1,C.v/1.2);
-  for(const l of C.legs)l.s.rotation.z=Math.sin(ph+l.o)*0.36*amp;
-  C.body.position.y=0.62+Math.abs(Math.sin(ph*2))*0.025*amp;C.neck.rotation.z=Math.sin(ph*2)*0.05*amp+(1-amp)*Math.sin(TM*0.8)*0.04;
-  C.man.position.y=2.62+Math.abs(Math.sin(ph*2))*0.02*amp;
-  const n=C.neck,dx=(212-40)/100,dy=(220-104)/100,cs=Math.cos(n.rotation.z),sn=Math.sin(n.rotation.z);
-  const pa=C.reins.geometry.attributes.position;pa.setXYZ(0,3.0,C.man.position.y+0.82,-0.04);pa.setXYZ(1,n.position.x+dx*cs-dy*sn,n.position.y+dx*sn+dy*cs,-0.04);pa.needsUpdate=true;}
+  C.amp=lerp(C.amp||0,Math.min(1,C.v/1.0),1-Math.exp(-6*dt));const amp=C.amp,cyc=C.d/STRIDE;
+  for(const l of C.legs){const ph=((cyc+l.o/TAU)%1+1)%1,A=l.fore?0.3:0.26;let up,fold=0;
+    if(ph<0.6)up=lerp(A,-A,ph/0.6);else{const u=(ph-0.6)/0.4,e=u*u*(3-2*u);up=lerp(-A,A,e);fold=Math.sin(Math.PI*u);}
+    l.up.rotation.z=up*amp;l.lo.rotation.z=(l.fore?-1.0:0.7)*fold*amp-(l.fore?0:0.12*up*amp);}
+  const bob=Math.cos(cyc*TAU*2);C.horse.position.y=0.03*amp*(0.5+0.5*bob);
+  C.neck.rotation.z=0.06*amp*Math.sin(cyc*TAU*2)+(1-amp)*(0.03*Math.sin(TM*0.7)+0.02*Math.sin(TM*1.9));
+  C.tail.rotation.z=0.05*Math.sin(TM*1.3)+0.04*amp*Math.sin(cyc*TAU);
+  C.man.position.y=0.018*amp*Math.abs(Math.sin(cyc*TAU*2));C.head.rotation.z=0.03*amp*Math.sin(cyc*TAU*2+1)+(1-amp)*0.02*Math.sin(TM*0.5);
+  // the reins: from his hands, through the terret on the saddle pad, to the bit (which moves with the head)
+  const n=C.neck,bx=3.44-2.97,by=2.7-3.4,cs=Math.cos(n.rotation.z),sn=Math.sin(n.rotation.z),hy=C.horse.position.y,pa=C.reins.geometry.attributes.position;
+  pa.setXYZ(0,2.56,3.04+C.man.position.y,0.05);pa.setXYZ(1,HX+1.75,2.84+hy,0.05);pa.setXYZ(2,HX+2.97+bx*cs-by*sn,3.4+hy+bx*sn+by*cs,0.05);pa.needsUpdate=true;}
 
 /* ================= THE OPENING =================
    Played once, at the start of a new game (stage 'arrive', until G.opening is set). The train (narration from
@@ -1480,7 +1573,7 @@ async function boot(){
   if(G.stage==='arrive'){enterArea('street');ME.x=183.5;ME.z=-3.4;ME.view={mode:'side',facing:1};}// a new game starts outside
   snapCamera();pose();world();placeCamera(1);renderer.render(scene,camera);
   if(sessionStorage.getItem(BEGIN_KEY)){sessionStorage.removeItem(BEGIN_KEY);startPlay();}else showTitle();
-  window.museum={tick:(n=60,dt=1/60)=>{for(let i=0;i<n;i++){step(dt);if(CUT.on)cutTick(dt);pose();}return[ME.x,ME.z];},opening:runOpening,skip:skipOpening,cut:CUT,keys,go:(x,z,area)=>{if(area)enterArea(area);ME.x=x;ME.z=z;snapCamera();},area:()=>AREA.id,say:l=>say(l),stage:st=>{if(st)setStage(st);return G.stage;},game:()=>G,open:id=>interact(EXHIBITS.concat(THINGS).find(e=>e.id===id)),close:closeCard,walk:routeTo,me:ME,
+  window.museum={tick:(n=60,dt=1/60)=>{for(let i=0;i<n;i++){step(dt);if(CUT.on)cutTick(dt);pose();}return[ME.x,ME.z];},opening:runOpening,skip:skipOpening,cut:CUT,cab:()=>W.cabS,keys,go:(x,z,area)=>{if(area)enterArea(area);ME.x=x;ME.z=z;snapCamera();},area:()=>AREA.id,say:l=>say(l),stage:st=>{if(st)setStage(st);return G.stage;},game:()=>G,open:id=>interact(EXHIBITS.concat(THINGS).find(e=>e.id===id)),close:closeCard,walk:routeTo,me:ME,
     frame:(w=960,h=540,cam)=>{renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();pose();world();placeCamera(1);if(cam){camera.position.set(cam[0],cam[1],cam[2]);camera.lookAt(cam[3],cam[4],cam[5]);}renderer.render(scene,camera);const d=canvas.toDataURL('image/jpeg',0.85);resize();return d;}};
   requestAnimationFrame(frame);
 }

@@ -150,8 +150,18 @@ Read `README.md` first. This file is for agents working in the repo.
   `destination-out` only half-cuts), the country and the telegraph line scroll behind (`TX.country`, `TX.trackPoles`
   offsets). Seats are drawn at 200 px a unit to match the character. The cab is `W.cabS` (`buildCab`, `cabTick`: a
   four-beat walk, wheels turning by distance, reins as a line).
-- Testing: the browser pane is often hidden, which stalls `requestAnimationFrame`; shim it with `setTimeout` after
-  load (see the trap above). `museum.opening()`, `museum.skip()`, `museum.cut` are test hooks.
+- **The cab, redrawn 2026-11-27** (the user found the first one "pretty derpy"): a brougham (curved body dropped at the
+  door, bowed front glass, raised box seat, curved dashboard, lamp, whip in its socket as its own thin, margin-free
+  piece), wheels drawn with no paper margin (a margin fills the gaps between spokes), slim dark shafts with the
+  traces. The horse is the body and neck in one piece (no seam at the neck; the padded collar sits over the
+  shoulder), the head pinned at the poll (it nods), a tail, and two-part legs (forearm/gaskin + cannon) so knees and
+  hocks fold. `cabTick` walks it in four beats (near hind, near fore, far hind, far fore): ~60% of a stride on the
+  ground sweeping back, then lift, fold and swing. Horse frame: x 0 at the point of the buttock, 2.55 at the withers.
+- Testing: the browser pane is often hidden, which stalls `requestAnimationFrame` (and throttles `setTimeout` to about
+  once a second); drive frames with a `MessageChannel` pump instead. A hidden pane's screenshot shows only its top-left
+  800 px or so, so an emulated 1366-wide viewport looks zoomed in: render `museum.frame(w, h, [cam xyz, look xyz])` into
+  a fixed `<img>` in the top-left to inspect a view. `museum.opening()`, `museum.skip()`, `museum.cut`, `museum.cab()`
+  are test hooks.
 
 ## Arrival (`arrival.html`)
 
