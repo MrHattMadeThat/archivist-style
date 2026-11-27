@@ -5,7 +5,7 @@
 //   'doc#some words'   the one sentence of `doc`'s easy words that contains "some words" (case-insensitive)
 //   'doc@by'           one line of the paper's label (by, when, what, words)
 
-const ABBR = ['U.S.', 'St.', 'Dr.', 'Mme.', 'Mr.', 'Ms.', 'Mrs.', 'W. F.', 'M.A.', 'Ph.D.'];
+const ABBR = ['U.S.', 'St.', 'Dr.', 'Mme.', 'Mr.', 'Ms.', 'Mrs.', 'W. F.', 'W. H.', 'N.B.', 'M.A.', 'Ph.D.'];
 
 export const META = [
   ['by', 'Made by'],

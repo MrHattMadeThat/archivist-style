@@ -14,7 +14,7 @@
 // Console while the desk is open: desk.solve() answers the current task, desk.next() moves on, desk.state.
 import { el, button } from './dom.js';
 import { renderDoc } from './doc.js';
-import { TASKS } from './tasks.js';
+import { TASKS, papersOf } from './tasks.js';
 import { prepareAll, matches, lookup } from './text.js';
 import { startCoach } from './coach.js';
 
@@ -29,7 +29,7 @@ export function openDesk(root, { theCase: C, sources, save, persist, onLeave, on
   const t = () => C.tasks[save.task];
   const rqAt = (i) => { let q = C.rq; for (let k = 0; k <= i; k++) if (C.tasks[k]?.rq) q = C.tasks[k].rq; return q; };
   const rq = () => rqAt(save.task);
-  const caseDocs = [...new Set(C.tasks.flatMap((x) => x.docs || (x.doc ? [x.doc] : [])))];
+  const caseDocs = [...new Set(C.tasks.flatMap(papersOf))];
 
   // ------------------------------------------------------------------ layout
   const desk = el('div', 'desk');
@@ -68,9 +68,14 @@ export function openDesk(root, { theCase: C, sources, save, persist, onLeave, on
     setZone(docId, z) { zone = docId ? { doc: docId, z } : null; if (docId) shown = docId; },
     markRq(tag) { const k = rq().text; save.marked[k] = [...new Set([...(save.marked[k] || []), tag])]; persist(); },
     aboutLine: () => rq().marks.map((m) => m.words).join(' · '),
+    whoOf: (id) => whoOf(id),
+    // the task moved the student to another paper: open its easy words, where lines can be clicked
+    show(id) { if (docs[id]) { shown = id; versions[id] = 'plain'; } },
+    // scroll the paper so the chosen line is in view (sort: the line was picked on the card, not in the paper)
+    reveal() { paper.querySelector('.line.chosen')?.scrollIntoView({ block: 'center' }); },
     markedTags: () => save.marked[rq().text] || [],
     finish(result) {
-      save.results[save.task] = { ...result, proof: sel };
+      save.results[save.task] = { proof: sel, ...result };
       persist();
       refresh();
       work.querySelector('.next')?.focus({ preventScroll: true });
@@ -114,7 +119,9 @@ export function openDesk(root, { theCase: C, sources, save, persist, onLeave, on
 
   // ------------------------------------------------------------------ render
   const result = (i = save.task) => save.results[i];
-  const kindOf = (x) => (x.type === 'readq' ? 'Read the question' : x.type === 'stamp' ? 'Sort a paper' : 'Answer a question');
+  const KIND = { readq: 'Read the question', stamp: 'Sort a paper', question: 'Answer a question', compare: 'Compare two papers', sort: 'Sort the lines', order: 'Put them in order', catalogue: 'Write the label' };
+  const kindOf = (x) => KIND[x.type] || 'A task';
+  const firstKey = (p) => [].concat(p || []).find(Boolean) || null;
 
   function renderMeta() {
     meta.replaceChildren(el('div', 'case-title', C.title));
@@ -129,7 +136,8 @@ export function openDesk(root, { theCase: C, sources, save, persist, onLeave, on
     meta.append(pips);
   }
 
-  const whoOf = (id) => docs[id].src.meta.by.split(',')[0];
+  // while the student is writing a paper's label (catalogue), its maker stays a secret everywhere on the desk
+  const whoOf = (id) => (viewing == null && task?.hide?.includes('by') && task.docs.includes(id) ? 'Maker not known yet' : docs[id].src.meta.by.split(',')[0]);
   function stampOn(id) {
     // the latest stamp this case gave the paper, with the question it was for
     for (let i = C.tasks.length - 1; i >= 0; i--) {
@@ -159,7 +167,7 @@ export function openDesk(root, { theCase: C, sources, save, persist, onLeave, on
     }
     const rest = caseDocs.filter((id) => !now.includes(id) && C.tasks.findIndex((x) => docsOfTask(x).includes(id)) < save.task);
     if (rest.length) {
-      pile.append(el('h3', null, 'Already sorted'));
+      pile.append(el('h3', null, 'Already used'));
       const l = el('div', 'pilelist done');
       rest.forEach((id) => add(id, l));
       pile.append(l);
@@ -199,8 +207,10 @@ export function openDesk(root, { theCase: C, sources, save, persist, onLeave, on
     if (onTask && task.docs.length > 1) {
       const row = el('div', 'doctabs');
       row.setAttribute('role', 'tablist');
-      const proofDoc = sel && lookup(docs, sel)?.doc.id;
+      const picked = [].concat(task.selected !== undefined ? task.selected : sel).filter(Boolean);
+      const proofDocs = picked.map((k) => lookup(docs, k)?.doc.id);
       for (const id of task.docs) {
+        const proofDoc = proofDocs.includes(id) ? id : null;
         const b = button(`doctab${id === shown ? ' on' : ''}${id === proofDoc ? ' has-proof' : ''}`);
         b.setAttribute('role', 'tab');
         b.setAttribute('aria-selected', id === shown);
@@ -219,10 +229,11 @@ export function openDesk(root, { theCase: C, sources, save, persist, onLeave, on
     paper.append(renderDoc(docs[shown], {
       version: versions[shown],
       pointing: onTask && task.pointing,
-      selected: sel,
+      selected: task.selected !== undefined ? task.selected : sel,
+      hide: onTask ? task.hide : null,
       zone: zone && zone.doc === shown ? zone.z : null,
       stamp: s ? { ...s, q: rq().short } : stampOn(shown),
-      onPoint: (key) => ctx.setSel(key),
+      onPoint: (key) => (task.point ? task.point(key) : ctx.setSel(key)),
       onVersion: (v) => { versions[shown] = v; renderPaper(); },
     }));
     if (same) paper.scrollTop = keep;
@@ -266,7 +277,7 @@ export function openDesk(root, { theCase: C, sources, save, persist, onLeave, on
     }
   }
 
-  const docsOfTask = (x) => x.docs || (x.doc ? [x.doc] : []);
+  const docsOfTask = papersOf;
 
   // an earlier answer, read-only: what was asked, the answer, the proof, and why
   function reviewCard(i) {
@@ -284,6 +295,46 @@ export function openDesk(root, { theCase: C, sources, save, persist, onLeave, on
     const seal = el('div', `seal ${r.grade}`);
     seal.append(el('span', 'seal-dot'), el('span', null, SEAL[r.grade]));
     c.append(seal, el('p', 'ask', x.ask || `${docs[x.doc].src.title}: primary or secondary for ${q.short}?`));
+    const quoteBox = (label, key) => {
+      const pf = el('div', 'proof filled');
+      const qt = key && lookup(docs, key);
+      pf.append(el('div', 'proof-label', label), el('blockquote', null, qt ? `“${qt.text}”` : '—'));
+      return pf;
+    };
+    const why = (text) => { const m = el('div', 'msg good'); m.append(el('p', null, text)); return m; };
+    if (x.type === 'compare') {
+      x.find.forEach((f, k) => c.append(quoteBox(`${whoOf(f.doc)} says`, [].concat(r.proof || [])[k])));
+      const ans = el('p', 'review-answer');
+      ans.append(el('b', null, 'Answer: '), x.options[x.answer]);
+      c.append(ans, why(x.right));
+      return c;
+    }
+    if (x.type === 'sort') {
+      const tally = el('div', 'tally');
+      x.bins.forEach((bn, j) => {
+        const col = el('div', `tally-col tally-${j ? 'b' : 'a'}`);
+        col.append(el('b', null, bn.name));
+        x.items.forEach((it, i) => { if (it.bin === bn.id) col.append(el('span', `tally-item${(r.wrong || []).includes(i) ? ' fixed' : ''}`, it.text || lookup(docs, matches(docs, it.ref)[0])?.text || '')); });
+        tally.append(col);
+      });
+      c.append(tally, why(x.right));
+      return c;
+    }
+    if (x.type === 'order') {
+      const ol = el('ol', 'ordered');
+      for (const it of x.items) { const li = el('li'); if (it.when) li.append(el('b', 'when', it.when)); li.append(el('span', null, it.text)); ol.append(li); }
+      c.append(ol, why(x.right));
+      return c;
+    }
+    if (x.type === 'catalogue') {
+      x.fields.forEach((f, k) => {
+        const got = el('p', 'filled-line');
+        got.append(el('b', null, `${f.k === 'by' ? 'MADE BY' : 'WHEN'}  `), f.options[f.answer]);
+        c.append(got, quoteBox('Your proof', [].concat(r.proof || [])[k]));
+      });
+      c.append(why(x.right));
+      return c;
+    }
     const ans = el('p', 'review-answer');
     if (x.type === 'stamp') {
       ans.className = `stamped-as ${x.answer}`;
@@ -295,7 +346,7 @@ export function openDesk(root, { theCase: C, sources, save, persist, onLeave, on
     }
     c.append(ans);
     const pf = el('div', 'proof filled');
-    const qt = r.proof && lookup(docs, r.proof);
+    const qt = firstKey(r.proof) && lookup(docs, firstKey(r.proof));
     pf.append(el('div', 'proof-label', 'Your proof'), el('blockquote', null, qt ? `“${qt.text}”` : '—'));
     c.append(pf);
     const m = el('div', 'msg good');
@@ -308,7 +359,7 @@ export function openDesk(root, { theCase: C, sources, save, persist, onLeave, on
     viewing = i;
     if (i != null) {
       const x = C.tasks[i], r = result(i);
-      shown = (r?.proof && lookup(docs, r.proof)?.doc.id) || docsOfTask(x)[0] || null;
+      shown = (firstKey(r?.proof) && lookup(docs, firstKey(r.proof))?.doc.id) || docsOfTask(x)[0] || null;
     } else shown = task.docs.includes(shown) ? shown : task.docs[0] || null;
     refresh();
     paper.scrollTop = 0;
@@ -367,6 +418,7 @@ export function openDesk(root, { theCase: C, sources, save, persist, onLeave, on
   function taskName(x, i) {
     if (x.type === 'readq') return 'Read the research question';
     if (x.type === 'stamp') return `${whoOf(x.doc)}, “${docs[x.doc].src.title}”: ${x.answer}`;
+    if (x.type === 'catalogue') return `Write the label: “${docs[x.doc].src.title}”`;
     return x.ask;
   }
 
@@ -438,7 +490,8 @@ export function openDesk(root, { theCase: C, sources, save, persist, onLeave, on
     if (task.rqWords) return rqCard.querySelector('.rq-mark:not(.marked)');
     const go = work.querySelector('.go:not(.next):not(:disabled)');
     if (go) return go;
-    return work.querySelector('.step.now .pads') || work.querySelector('.step.now .options') || work.querySelector('.step.now .step-title');
+    return work.querySelector('.step.now .pads button:not(:disabled)') || work.querySelector('.step.now .options') || work.querySelector('.step.now .sortitem, .step.now .orderitem')
+      || work.querySelector('.step.now .proof') || work.querySelector('.step.now .step-title');
   }
   const idleTick = setInterval(() => {
     if (coachRun) return;

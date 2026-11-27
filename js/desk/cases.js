@@ -8,10 +8,17 @@
 //   rq.secondary what SECONDARY means for this question
 //   rq.short     a name for the question, printed on stamps: "PRIMARY for the 1900 question"
 //
-// Task types (js/desk/tasks.js):
+// Task types (js/desk/tasks.js). Mix them: a case that is all one type feels like the same question over and over.
 //   readq     click the WHEN and WHERE (or WHO) words in the research question
 //   stamp     primary or secondary for this question, then click the line that proves it
 //   question  pick an answer, then click the line that proves it
+//   compare   find the same thing in two papers (find: [{doc, proof, near}, {…}]), then say if they agree (options)
+//   sort      put lines of the papers into two bins (bins, items: [{ref, bin, why, text?}]); no hints, a wrong bin is
+//             put right at once with its `why`
+//   order     click events earliest first (items in the right order, with `when`; shuffle = the order shown)
+//   catalogue the paper's label is blank: choose each missing line (fields: [{k, ask, options, answer, proof, …}])
+//             and prove it from the paper's own words
+// A case may have `chapter` (2, 3…): js/story.js tells the story between the cases.
 // Every stamp and question has:
 //   look      WHERE TO LOOK: which part of which paper. Plain words: "the label, the line MADE BY".
 //   shows     WHAT THE PROOF MUST SHOW: "who made it, and whether they were there".
@@ -51,6 +58,22 @@ const RQ_FIRE = {
   marks: [{ tag: 'WHEN', words: 'June 20, 1877' }, { tag: 'WHERE', words: 'St. John' }],
   primary: 'Made by someone who was there: in St. John, at the time of the fire.',
   secondary: 'Made later, by someone who was not there. They learned it from other sources.',
+};
+
+const RQ_DEAD = {
+  short: 'the how-many question',
+  text: 'How many French died on St. Croix Island in the winter of 1604–1605?',
+  marks: [{ tag: 'WHEN', words: 'the winter of 1604–1605' }, { tag: 'WHERE', words: 'St. Croix Island' }],
+  primary: 'Made by someone who was there: on St. Croix Island, in the winter of 1604–1605.',
+  secondary: 'Made by someone who was not there. They learned it from others.',
+};
+
+const RQ_1797 = {
+  short: 'the 1797 question',
+  text: 'How did people prove, in 1797, which island was St. Croix Island?',
+  marks: [{ tag: 'WHEN', words: 'in 1797' }, { tag: 'WHERE', words: 'St. Croix Island' }],
+  primary: 'Made in 1797 by the people doing the proving. They were there.',
+  secondary: 'Made later, by someone who read about it.',
 };
 
 const LABEL_BY = 'The label at the top of the paper, the line MADE BY.';
@@ -113,34 +136,16 @@ export const CASES = [
         mail: 'A public lecture in Saint John called Parkman “an eyewitness”. Somebody in the audience laughed.',
       },
       {
-        type: 'stamp', doc: 'ch-map', answer: 'primary', guide: 'hint',
+        type: 'question', docs: ['ch-map'], guide: 'hint',
+        ask: 'The last paper isn’t writing at all. It’s a map. Can a map be a primary source for your question?',
+        options: ['Yes: Champlain drew the island he was living on.', 'No: only writing can be a source.', 'No: it was printed in 1613, after the winter.', 'Only if it has a date on it.'],
+        answer: 0,
         look: LABEL_BY,
         shows: 'Who drew it, and whether he was there.',
         proof: ['ch-map@by'],
         near: { 'ch-map@when': 'The date is the printing, not the drawing. Who drew it, and was he there?' },
-        right: 'Primary. A map can be a source too. Champlain drew the island he was living on.',
-        wrong: 'This one is primary. Sources are not only writing. Champlain drew this map of the island he was living on.',
+        right: 'Yes. A map can be a source too, and so can a drawing, a photograph or a building. Champlain drew the island he was living on.',
         mail: 'Champlain’s map went into the drawer of modern maps. A surveyor spent a whole afternoon looking for it.',
-      },
-      {
-        type: 'stamp', doc: 'ganong-winter', answer: 'secondary', guide: 'hint',
-        look: 'The label (WHEN), or the first sentence of the easy words.',
-        shows: 'That he wrote long after, using other people’s accounts.',
-        proof: ['ganong-winter@when', 'ganong-winter#left full accounts'],
-        near: { 'ganong-winter#mild one': 'That is his idea about what might have happened. It doesn’t show when he wrote, or how he knew.' },
-        right: 'Secondary. Ganong wrote in 1902, and he says how he knows: from the accounts Champlain and Lescarbot left.',
-        wrong: 'This one is secondary for your question. Ganong wrote in 1902, using Champlain’s and Lescarbot’s accounts.',
-        mail: 'Ganong’s study was filed as “written on the island, 1605”. Ganong himself would have been surprised.',
-      },
-      {
-        type: 'stamp', doc: 'ch-scurvy', answer: 'primary', guide: 'hint',
-        look: 'The label, or any line where Champlain says “we” or “us”.',
-        shows: 'That the maker was there that winter.',
-        proof: ['ch-scurvy@by', 'ch-scurvy#Of the 79 of us', 'ch-scurvy#We could not find any cure', 'ch-scurvy#many of our men', 'ch-scurvy#We thought the change'],
-        near: { 'ch-scurvy#Learned men later told me': 'Close! But this line is about what he heard LATER. Find a line that shows he was there that winter.' },
-        right: 'Primary. “Of the 79 of us, 35 died.” He counted his own companions.',
-        wrong: 'This one is primary. Champlain lived through that winter. He writes “of the 79 of us”.',
-        mail: 'The sickness pages ended up in a box of medical books. A doctor borrowed them and never knew who wrote them.',
       },
     ],
     remember: 'You sorted these papers for ONE question: what happened on the island in 1604–1605. Ask a different question, and the same paper can sort differently.',
@@ -158,14 +163,17 @@ export const CASES = [
     tasks: [
       { type: 'readq' },
       {
-        type: 'question', docs: ['ch-cider', 'parkman'], guide: 'show',
-        ask: 'Why couldn’t the men get firewood and fresh water from the mainland?',
-        options: ['Ice in the river cut them off.', 'The ships had all gone back to France.', 'De Mons ordered everyone to stay inside.', 'The mainland had no trees.'],
+        type: 'compare', guide: 'show',
+        ask: 'Why couldn’t the men get firewood and fresh water from the mainland? Champlain and Parkman both say. Find it in each.',
+        find: [
+          { doc: 'ch-cider', proof: ['ch-cider#we could not get to the shore', 'ch-cider#short of firewood'], near: { 'ch-cider#We had to drink': 'That says WHAT they drank. Find the line that says WHY they couldn’t reach the shore.' } },
+          { doc: 'parkman', proof: ['parkman#cut them off from wood and water'], near: { 'parkman#Cider and wine froze': 'That is about the drinks. Find what cut them off from the mainland.' } },
+        ],
+        verdict: 'What stopped them? Do the two papers agree?',
+        options: ['They agree: ice in the river cut them off.', 'They disagree: Parkman says the ships had gone.', 'They agree: de Mons ordered everyone inside.'],
         answer: 0,
-        look: 'Champlain’s frozen-cider pages, paragraph 2. Or Parkman, paragraph 3.',
-        shows: 'What stopped them from reaching the shore.',
-        proof: ['ch-cider#we could not get to the shore', 'ch-cider#short of firewood', 'parkman#cut them off from wood and water'],
-        near: { 'ch-cider#We had to drink': 'That says WHAT they drank. Find the line that says WHY they couldn’t reach the shore.' },
+        look: 'Champlain’s frozen-cider pages, paragraph 2. Parkman, paragraph 3.',
+        shows: 'What stopped them from reaching the shore, in each paper.',
         right: 'Ice. And two sources agree: Champlain, who was there, and Parkman, who read Champlain.',
       },
       {
@@ -246,5 +254,240 @@ export const CASES = [
       },
     ],
     remember: 'Same paper, new question, new stamp. This is why the archive files papers by who made them and when, and never by primary or secondary.',
+  },
+
+  // ================================================================== CHAPTER 2: TWO ACCOUNTS
+  // Corroboration and perspective: two accounts of one winter. Where they disagree, who was in a better position to
+  // know? Where they agree, how much does that prove? Which lines are claims you can check, and which are opinions?
+  {
+    id: 'c4', title: 'Two accounts', chapter: 2, from: 'Mr. Silas Mott, who writes for a Saint John newspaper',
+    rq: RQ_DEAD,
+    fetch: ['champlain', 'lescarbot', 'ganong'],
+    intro: [
+      '“Sir or Madam: Mr. Harrow once told my readers that 35 men died on St. Croix Island. Now I have found a French book that says 36. Which is it? I mean to print the answer, and the name of whoever is wrong. S. Mott”',
+      'Two accounts of one winter. Find where they agree and where they don’t, and work out who was in a better position to know.',
+    ],
+    tasks: [
+      { type: 'readq' },
+      {
+        type: 'compare', guide: 'show',
+        ask: 'Champlain and Lescarbot both say how many men died. Find the number in each paper.',
+        find: [
+          { doc: 'ch-scurvy', proof: ['ch-scurvy#Of the 79 of us'], near: { 'ch-scurvy#teeth got so loose': 'That is about the sickness, not the number who died.' } },
+          { doc: 'lescarbot-winter', proof: ['lescarbot-winter#Thirty-six died'], near: { 'lescarbot-winter#Another thirty-six or forty': 'Those are the men who got BETTER. Find the number who died.' } },
+        ],
+        verdict: 'Put the two numbers side by side. Do they agree?',
+        options: ['They disagree: Champlain says 35, Lescarbot says 36.', 'They agree: both say 35.', 'They agree: both say 36.'],
+        answer: 0,
+        look: 'Champlain’s sickness pages, paragraph 3. Lescarbot’s winter pages, the last paragraph.',
+        shows: 'The number of men who died, in each paper.',
+        right: 'They disagree, by one man. When two sources disagree, a historian asks: which writer was in a better position to know?',
+        mail: 'Mr. Mott printed that the museum “cannot count to thirty-six”. Mr. Harrow did not enjoy his breakfast.',
+      },
+      {
+        type: 'question', docs: ['ganong-lescarbot', 'lescarbot-winter'], guide: 'show',
+        ask: 'Lescarbot tells the story of that winter. Was he on the island to see it?',
+        options: ['No. He came to Acadia two years later.', 'Yes. He writes “our people”, so he was there.', 'Yes. His book came out first, in 1609.', 'We can’t tell from these papers.'],
+        answer: 0,
+        look: 'Ganong’s paper “How Lescarbot knew”, paragraph 1 or the last paragraph.',
+        shows: 'Ganong saying whether Lescarbot saw it himself.',
+        proof: ['ganong-lescarbot#He did not see them himself', 'ganong-lescarbot#did not come to Acadia until two years later'],
+        near: {
+          'lescarbot-winter#Our people had three big troubles': '“Our people” means the French. It doesn’t say he was there. Look in Ganong’s paper.',
+          'ganong-lescarbot#notebook': 'That is how he collected his facts. Does it say whether he saw the winter himself?',
+          'ganong-lescarbot#One writer has said': 'Careful: that is the mistake Ganong is about to correct. Read the next sentence.',
+        },
+        right: 'No. Lescarbot heard about the winter from the men who lived through it, two years later, at Port Royal.',
+        mail: 'A Saint John lecturer called Lescarbot “an eyewitness of St. Croix”. Ganong would have written him a stiff letter.',
+      },
+      {
+        type: 'question', docs: ['ch-scurvy', 'ganong-lescarbot'], guide: 'hint',
+        ask: 'So which writer was in a better position to count the dead?',
+        options: ['Champlain: he was there, and counted his own companions.', 'Lescarbot: his book was printed first, in 1609.', 'Lescarbot: his story is livelier and has more facts.', 'Neither: they are both old books.'],
+        answer: 0,
+        look: 'Champlain’s sickness pages, paragraph 3.',
+        shows: 'Champlain counting the men as one of them.',
+        proof: ['ch-scurvy#Of the 79 of us', 'ganong-lescarbot#got his facts from Champlain'],
+        near: {
+          'ganong-lescarbot#livelier': 'Livelier is not the same as better informed. Who was there, counting?',
+          'ganong-lescarbot#He did not see them himself': 'True, that is about Lescarbot. Now find the line that shows Champlain was one of the men.',
+        },
+        right: 'Champlain. “Of the 79 of us, 35 died.” He counted his own companions. Lescarbot heard the number later, and it came out one different.',
+        mail: 'Mr. Mott printed “36, from the newest book”. Newer is not the same as better.',
+      },
+      {
+        type: 'compare', guide: 'hint',
+        ask: 'Now look for something they agree on. Both say what happened to the cider. Find it in each paper.',
+        find: [
+          { doc: 'ch-cider', proof: ['ch-cider#all our drinks froze', 'ch-cider#cider was handed out by the pound'], near: { 'ch-cider#We had to drink very bad water': 'That is about the water. Find the cider.' } },
+          { doc: 'lescarbot-winter', proof: ['lescarbot-winter#cider froze in the barrels'], near: { 'lescarbot-winter#drank melted snow': 'That is about the water. Find the cider.' } },
+        ],
+        verdict: 'Do they agree?',
+        options: ['They agree: it froze, and was handed out by weight.', 'They disagree: only Champlain says it froze.', 'They disagree: Lescarbot says the cider was fine.'],
+        answer: 0,
+        look: 'Champlain’s frozen-cider pages, paragraph 1. Lescarbot’s winter pages, paragraph 3.',
+        shows: 'The same thing happening, in each paper.',
+        right: 'They agree. But remember where Lescarbot got his facts: from Champlain and the men who were there. When one writer learned it from the other, agreeing proves less.',
+      },
+      {
+        type: 'sort', docs: ['lescarbot-island', 'lescarbot-winter'],
+        ask: 'Lescarbot mixes what happened with what he thinks. Sort each line.',
+        bins: [
+          { id: 'check', name: 'CAN BE CHECKED', means: 'Something that happened. Other papers can say if it is right.' },
+          { id: 'opinion', name: 'HIS OPINION', means: 'What Lescarbot thinks. Nobody can prove it right or wrong.' },
+        ],
+        items: [
+          { ref: 'lescarbot-island#make themselves prisoners', text: '…people who go to a country to take the land should not stop on islands and make themselves prisoners.', bin: 'opinion', why: 'His opinion: “I will always think…” Champlain thought the island was a fine choice.' },
+          { ref: 'lescarbot-winter#cider froze in the barrels', bin: 'check', why: 'It can be checked, and it was: Champlain says the same.' },
+          { ref: 'lescarbot-island#not a good place to start a colony', bin: 'opinion', why: 'His opinion. “Not a good place” is a judgement, not something that happened.' },
+          { ref: 'lescarbot-winter#Thirty-six died', bin: 'check', why: 'It can be checked, and we did: Champlain says 35. A claim you can check can still be wrong!' },
+          { ref: 'lescarbot-winter#To get water or wood', text: 'To get water or wood, they had to cross the river…', bin: 'check', why: 'It can be checked: Champlain says the ice cut them off from the shore.' },
+        ],
+        right: 'An opinion isn’t wrong just because it is an opinion, and a claim you can check isn’t right just because you can check it. Only a checked claim is proof.',
+        mail: 'Mr. Mott printed Lescarbot’s opinion as “a fact proven by the museum”.',
+      },
+      {
+        type: 'question', docs: ['ch-island', 'lescarbot-island'], guide: 'hint',
+        ask: 'Champlain explains why they chose the island. What does Lescarbot think of the choice?',
+        options: ['A mistake: on an island you are a prisoner.', 'A good choice: it was easy to defend.', 'He agrees with every reason Champlain gives.', 'He does not say what he thinks.'],
+        answer: 0,
+        look: 'Lescarbot’s pages about the island, paragraph 2 or 4.',
+        shows: 'Lescarbot giving his own view of the choice.',
+        proof: ['lescarbot-island#make themselves prisoners', 'lescarbot-island#not a good place to start a colony'],
+        near: {
+          'ch-island#easy to defend': 'That is Champlain’s reason. Now find what LESCARBOT thinks.',
+          'lescarbot-island#strong and easy to guard': 'That is why they stopped there. Find what Lescarbot himself thinks of it.',
+        },
+        right: 'Two writers, two points of view. Champlain saw a fort that guarded the river. Lescarbot saw a prison. Knowing who thinks what, and why, is part of the job.',
+      },
+    ],
+    remember: 'When two accounts disagree, ask who was in a better position to know. When they agree, ask whether one learned it from the other. And an opinion is never proof.',
+  },
+
+  // ================================================================== CHAPTER 3: THE RUINS THAT DREW A BORDER
+  // Evidence in action, a source inside a source, and judging significance: in 1797, a map printed in 1613 and a few
+  // old bricks settled which river was the border between the United States and the British colonies.
+  {
+    id: 'c5', title: 'The ruins that drew a border', chapter: 3, from: 'Miss Agnes Lyle, a schoolteacher in Saint John',
+    rq: RQ_1797,
+    fetch: ['ganong', 'kilby', 'champlain'],
+    intro: [
+      '“Dear Archivist, thank you again for the St. Croix proofs. But now Tom Nason asks: how do we KNOW Dochet Island is the real St. Croix Island? The French left in 1605. How could anyone tell, two hundred years later, which island was theirs? I confess I don’t know either. Agnes Lyle”',
+      'Somebody had to prove it once, a long time ago. Find out who, and how.',
+    ],
+    tasks: [
+      { type: 'readq' },
+      {
+        type: 'order', docs: ['ganong-boundary', 'ganong-decision'],
+        ask: 'Before you dig in, get the story straight. Put these in order, earliest first.',
+        items: [
+          { text: 'The French spend a hard winter on the island.', when: '1604–05' },
+          { text: 'Champlain’s book, with his plan of the island, is printed in Paris.', when: '1613' },
+          { text: 'A peace treaty makes the St. Croix River part of the border. But which river is it?', when: '1783' },
+          { text: 'Robert Pagan takes a copy of Champlain’s plan to Dochet Island, and digs.', when: '1797' },
+          { text: 'The commissioners decide: the Schoodic is the true St. Croix.', when: '1798' },
+        ],
+        shuffle: [3, 0, 4, 2, 1],
+        look: 'The dates are in Ganong’s two papers on your desk. The first two you know from Champlain.',
+        right: 'The treaty came first, then the argument, then the proof. Almost two hundred years after the French left, their ruins were called as witnesses.',
+      },
+      {
+        type: 'catalogue', doc: 'pagan-1797', guide: 'hint',
+        ask: 'This paper came up from the stacks with half its label blank. Write the missing lines from what the paper itself says.',
+        fields: [
+          {
+            k: 'by', ask: 'MADE BY: whose words are these?',
+            options: ['Robert Pagan, of St. Andrews', 'W. H. Kilby, who printed them', 'Samuel de Champlain, who made the plan', 'Daniel McMasters, the Justice of the Peace'],
+            answer: 0,
+            look: 'The easy words, paragraph 1 or the last paragraph.',
+            shows: 'Whose statement it is.',
+            proof: ['pagan-1797#Robert Pagan says', 'pagan-1797#Signed by Robert Pagan'],
+            near: { 'pagan-1797@what': 'That line says who PRINTED it, in 1888. Whose words are they? Look in the easy words.' },
+            right: 'Robert Pagan. Kilby only printed his words, ninety-one years later.',
+          },
+          {
+            k: 'when', ask: 'WHEN: when were these words made?',
+            options: ['20 July 1797', '1888', '1613', '1604'],
+            answer: 0,
+            look: 'The easy words, the last paragraph.',
+            shows: 'The day Pagan swore to his statement, with the year.',
+            proof: ['pagan-1797#sworn at St. Andrews on 20 July 1797'],
+            near: {
+              'pagan-1797#said to be printed in Paris in 1613': 'That is when the PLAN was printed. When did Pagan make his statement?',
+              'pagan-1797@what': 'That is when Kilby printed it. When did Pagan swear to it?',
+              'pagan-1797#On the 7th day of this July': 'Close! That is when he dug. But which year? Find the line with the full date.',
+            },
+            right: '20 July 1797. Always ask when the WORDS were made, not just when the book was printed.',
+          },
+        ],
+        right: 'A source can sit inside another source. The words are Pagan’s, from 1797. The book is Kilby’s, from 1888.',
+        mail: 'The Pagan statement was catalogued as “written by Kilby, 1888”. A lawyer hunting for 1797 evidence never found it.',
+      },
+      {
+        type: 'stamp', doc: 'pagan-1797', answer: 'primary', guide: 'hint',
+        look: 'The label, now that you have written it: MADE BY and WHEN.',
+        shows: 'Who made it, and that it was made in 1797 by someone doing the proving.',
+        proof: ['pagan-1797@by', 'pagan-1797@when', 'pagan-1797#On the 7th day of this July', 'pagan-1797#On the 18th of July'],
+        near: { 'pagan-1797@what': 'That says when Kilby printed it, in 1888. For a question about 1797, look at when Pagan made it.' },
+        right: 'Primary. Pagan dug on the island himself in July 1797. The book is from 1888, but the words inside it are from 1797.',
+        wrong: 'This one is primary for your question. Pagan was there, digging, in 1797.',
+        mail: 'Pagan’s statement was stamped secondary “because the book is from 1888”. A visiting surveyor laughed out loud.',
+      },
+      {
+        type: 'compare', guide: 'show',
+        ask: 'Pagan says his ruins stand at the spot marked A on the plan. Check the plan: what does A mark?',
+        find: [
+          { doc: 'pagan-1797', proof: ['pagan-1797#spot marked A', 'pagan-1797#where the plan shows the French buildings'], near: { 'pagan-1797#agreed most strikingly': 'Good, but that is about the shores. Find the line about the ruins and the letter on the plan.' } },
+          { doc: 'ch-map', proof: ['ch-map#A the houses'], near: { 'ch-map#E the cemetery': 'That is E, the cemetery. Pagan’s ruins are at A.', 'ch-map#B gardens': 'That is B. Pagan’s ruins are at A.' } },
+        ],
+        verdict: 'Does Pagan’s dig match Champlain’s plan?',
+        options: ['They match: the ruins are where Champlain drew the houses.', 'They don’t match: the plan shows gardens there.', 'They don’t match: the plan shows the cemetery there.'],
+        answer: 0,
+        look: 'Pagan’s statement, paragraph 3. Champlain’s map, the easy words, paragraph 2.',
+        shows: 'The letter A, in each paper.',
+        right: 'They match. A plan drawn in 1604 and printed in 1613 led Pagan to the very spot where the houses had stood. That is how a map becomes evidence.',
+        mail: 'Somebody filed Champlain’s plan as “decoration”. It was the most important paper in the case.',
+      },
+      {
+        type: 'compare', guide: 'hint',
+        ask: 'Thomas Wright surveyed the island that October. Find what he and Champlain each say about fresh water.',
+        find: [
+          { doc: 'wright-1797', proof: ['wright-1797#did not see a single stream or spring'], near: { 'wright-1797#deep holes': 'Holes dug for water? Interesting! But find the line that says whether there WAS any fresh water.' } },
+          { doc: 'ch-cider', proof: ['ch-cider#no springs or streams'], near: { 'ch-cider#We had to drink very bad water': 'That is what they drank. Find the line that says what the island did not have.' } },
+        ],
+        verdict: 'Do they agree?',
+        options: ['They agree: there was no fresh water on the island.', 'They disagree: Wright found a spring.', 'They can’t be compared: they are almost 200 years apart.'],
+        answer: 0,
+        look: 'Wright’s statement, paragraph 5. Champlain’s frozen-cider pages, paragraph 2.',
+        shows: 'Each man saying there was no fresh water on the island.',
+        right: 'They agree. Champlain lived there in 1604–05 and Wright searched it in 1797, almost 200 years apart. Two eyewitnesses who never met describe the same island.',
+      },
+      {
+        type: 'question', docs: ['ganong-decision'], guide: 'hint',
+        ask: 'The American agent explained the ruins another way. What did he say they were?',
+        options: ['A trading post from later French times.', 'A British fort from the war of the Revolution.', 'Ruins Pagan had built himself.', 'An old lighthouse.'],
+        answer: 0,
+        look: 'Ganong’s paper “How much did the island matter?”, paragraph 1.',
+        shows: 'The other explanation for the ruins.',
+        proof: ['ganong-decision#trading post'],
+        near: { 'ganong-decision#not proven to be de Monts': 'Right idea! That says he doubted it. Now find what he thought the ruins WERE.' },
+        right: 'A rival explanation! Good historians always ask what ELSE could explain the evidence. The commissioners heard it, and still all agreed with the British agent.',
+      },
+      {
+        type: 'question', docs: ['ganong-decision'], guide: 'hint',
+        ask: 'Did the island alone decide the border? What does Ganong think?',
+        options: ['Not alone, but it helped the commissioners all agree.', 'Yes: without the island there would be no border.', 'No: the island did not matter at all.', 'Ganong does not say.'],
+        answer: 0,
+        look: 'Ganong’s paper “How much did the island matter?”, paragraphs 4 and 5.',
+        shows: 'Ganong weighing how much the island mattered.',
+        proof: ['ganong-decision#too much to say', 'ganong-decision#would probably have been divided', 'ganong-decision#enough other evidence'],
+        near: {
+          'ganong-decision#On October 25, 1798': 'That is what they decided. Find where Ganong weighs how much the island mattered.',
+          'ganong-decision#peace between nations': 'That is his conclusion. Find the reasons he gives for it.',
+        },
+        right: 'A careful judgement. The island was not the ONLY evidence, but without it the commissioners would probably have been divided. Ganong weighs it, and gives his reasons.',
+      },
+    ],
+    remember: 'A source can sit inside another source: Pagan’s words of 1797, printed by Kilby in 1888. Maps and ruins are evidence too. And a careful historian says how much something mattered, not just that it did.',
   },
 ];

@@ -45,6 +45,32 @@ SORT A PAPER                                   2 of 5
 4. **The card never scrolls** at 1366 × 650 (the lab PCs), in any state: before answering, after a wrong answer
    with every hint open, and after it's done. Finished steps collapse to one line. Test with the loop in CLAUDE.md.
 
+## Mix the task types
+
+The first class to play said the questions were "basically all the same": every task was *stamp it, prove it*. A
+case should mix types, and `scripts/check.mjs` fails a case with three tasks of one type in a row.
+
+| Type | What the student does | Good for |
+|---|---|---|
+| `readq` | clicks WHEN and WHERE in the research question | the start of every case |
+| `stamp` | primary or secondary, then the proof line | the big idea; one or two per case |
+| `question` | chooses A–D, then the proof line | reading for a fact, a reason, an opinion |
+| `compare` | finds one line in each of two papers, then says whether they agree | corroboration, disagreement, matching a map to a description |
+| `sort` | puts 4–6 lines into two bins (e.g. CAN BE CHECKED / HIS OPINION) | fact or opinion, eyewitness or hearsay |
+| `order` | clicks events earliest first; dates show once placed | a timeline before a hard case, cause and effect |
+| `catalogue` | the label's MADE BY and WHEN are blank: chooses each, proves it from the paper's own words | dating a document, a source printed inside another source |
+
+- **compare**: two proof boxes sit side by side, one per paper. A wrong line empties only that box. Each paper in
+  `find` has its own `proof` and `near`. `verdict` is the step 2 question; options under 12 words, three is plenty.
+- **sort**: each item quotes a line of the paper (`ref`); give a shorter `text` if the sentence is long. Every item
+  needs a `why`. A wrong bin is corrected straight away (no guessing loops): gold = none wrong, silver = one, red = more.
+- **order**: 3 to 6 items, no dates in the text (the dates are the reward). `shuffle` must not already be in order.
+  `look` is shown after two wrong clicks in a row.
+- **catalogue**: the fields' proof must be in the easy words (the label is blank). A believable wrong option is the
+  printer or the date of printing: that is the lesson.
+- A paper whose words are one person's but whose copy is printed in another's book has `printedIn`. It is filed in the
+  book's box, and the stacks say why.
+
 ## Wording the question (`ask`)
 
 - **One question, one sentence, under 25 words.** If it needs a setup sentence, the setup comes first and is short:

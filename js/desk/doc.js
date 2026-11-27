@@ -3,7 +3,8 @@
 //
 // renderDoc(p, opts) returns a fresh element. opts:
 //   pointing   true while a task wants proof: every line can be clicked
-//   selected   the key of the chosen line
+//   selected   the key of the chosen line, or a list of keys (comparing two papers)
+//   hide       label keys to show blank (the student is writing the label: task type `catalogue`)
 //   stamp      { kind: 'primary'|'secondary', q: 'question 1', fresh } the ink on this paper for this task
 //   version    which tab is open
 //   zone       third hint: 'label' or a paragraph number to outline
@@ -39,7 +40,7 @@ function line(span, opts, tag = 'span') {
     s.addEventListener('click', () => opts.onPoint?.(span.key));
     s.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); opts.onPoint?.(span.key); } });
   }
-  if (opts.selected === span.key) {
+  if ([].concat(opts.selected).includes(span.key)) {
     s.classList.add('chosen');
     s.setAttribute('aria-pressed', 'true');
   }
@@ -60,7 +61,8 @@ export function renderDoc(p, opts = {}) {
     const row = el('div', 'tag-row');
     row.append(el('dt', null, m.label));
     const dd = el('dd');
-    dd.append(line(m, opts));
+    if (opts.hide?.includes(m.k)) dd.append(el('span', 'blank', '?  You write this line.'));
+    else dd.append(line(m, opts));
     row.append(dd);
     label.append(row);
   }
@@ -70,7 +72,8 @@ export function renderDoc(p, opts = {}) {
     const tabs = el('div', 'tabs');
     tabs.setAttribute('role', 'tablist');
     for (const v of versions) {
-      const name = typeof TAB[v] === 'function' ? TAB[v](src) : TAB[v];
+      // a paper can name its own tabs (src.tabs), e.g. { orig: 'In English, 1902' }
+      const name = src.tabs?.[v] || (typeof TAB[v] === 'function' ? TAB[v](src) : TAB[v]);
       const b = button(`tab${v === version ? ' on' : ''}`, name);
       b.setAttribute('role', 'tab');
       b.setAttribute('aria-selected', v === version);

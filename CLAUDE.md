@@ -104,6 +104,24 @@ Read `README.md` first. This file is for agents working in the repo.
 - Testing: clear `localStorage['archivist:save-v1']` for a fresh game, and set `sessionStorage['archivist:begin']='1'`
   before a reload to skip the start menu.
 
+## Chapters 2 and 3, and new task types (2026-11-27)
+
+- The class's first playtest: "the questions were basically all the same" (every task was stamp + proof). The desk now
+  has seven task types: `readq`, `stamp`, `question`, `compare`, `sort`, `order`, `catalogue` (js/desk/tasks.js; the
+  table is in `docs/WRITING_TASKS.md`). `node scripts/check.mjs` fails a case with three tasks of one type in a row.
+- `papersOf(task)` (tasks.js) is the ONE place that lists a task's papers (compare keeps them in `find`, not `docs`).
+  The world's `docsOf` and the desk's pile both use it: forgetting this once left compare papers out of the filing.
+- Tasks may handle line clicks themselves (`point`), underline several lines (`selected`), and blank label lines
+  (`hide`, for catalogue; the pile then says "Maker not known yet"). `ctx.show(id)` switches paper AND opens its easy
+  words (the map opens on its scan otherwise, where nothing can be clicked); `ctx.reveal()` scrolls to the chosen line.
+- Chapter 1 trimmed: case 1 is two stamps and a "can a map be a source?" question; case 2 opens with a compare.
+- Chapter 2 (`c4`, stages fetch4 → report4) and chapter 3 (`c5`, fetch5 → report5) in `js/story.js`; a narrator line
+  ("Chapter 2 · Two accounts") marks each start. Sources: Lescarbot via Ganong 1902; Pagan's 1797 deposition via Kilby
+  1888 (`printedIn`: filed in Kilby's box); Wright's via Ganong. Details in `docs/SOURCES.md`.
+- Card height: all 30 tasks pass the 1366 × 650 check (fresh, wrong answer with every hint open, solved). The compare
+  card only fits because its two proof boxes sit side by side.
+- Preview: `archivist-chapters` in `REPOS/.claude/launch.json` serves this folder on 5547 (5544/5546 are often taken).
+
 ## Union Street, outside No. 72 (2026-11-26)
 
 - **The building is 72 Union Street, not Douglas Avenue.** The user asked about the NBM's Douglas Avenue building; it

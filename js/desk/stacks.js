@@ -81,6 +81,8 @@ export function openShelf(root, { shelfId, mode, need = [], have = [], carrying 
         const s = sources[id];
         const c = button(`armpaper${pick === id ? ' on' : ''}`);
         c.append(el('b', null, s.title), el('span', null, `Made by: ${s.meta.by.split(',')[0]}`), el('span', null, `When: ${s.meta.when}`));
+        // a paper printed inside someone else's book lives in that book's box
+        if (s.printedIn) c.append(el('span', 'printed-in', `Printed in: ${s.printedIn}`));
         c.setAttribute('aria-pressed', pick === id);
         c.onclick = () => { pick = id; say = null; render(); };
         row.append(c);
@@ -112,7 +114,9 @@ export function openShelf(root, { shelfId, mode, need = [], have = [], carrying 
           tone = 'good';
           pick = carrying[0] || null;
         } else {
-          say = `That box holds papers made by ${b.maker}, ${b.year}. This paper was made by ${s.meta.by.split(',')[0]} (${s.meta.when.toLowerCase()}).${shelf.boxes.includes(s.box) ? '' : ' Its box is on another shelf.'}`;
+          say = s.printedIn
+            ? `That box holds papers made by ${b.maker}, ${b.year}. These words are ${s.meta.by.split(',')[0]}’s, but the copy you hold is printed in ${s.printedIn}. It goes back in that book’s box.${shelf.boxes.includes(s.box) ? '' : ' Its box is on another shelf.'}`
+            : `That box holds papers made by ${b.maker}, ${b.year}. This paper was made by ${s.meta.by.split(',')[0]} (${s.meta.when.toLowerCase()}).${shelf.boxes.includes(s.box) ? '' : ' Its box is on another shelf.'}`;
           tone = 'warn';
         }
       }

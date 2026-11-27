@@ -7,6 +7,7 @@ import { openDesk } from './desk.js';
 import { openShelf } from './stacks.js';
 import { SOURCES, SHELVES, BOXES, shelfOf } from './sources.js';
 import { CASES } from './cases.js';
+import { papersOf } from './tasks.js';
 import { SAMPLE_COACH, SHELF_COACH } from './tutorial.js';
 
 const root = () => document.getElementById('overlays');
@@ -14,7 +15,7 @@ const root = () => document.getElementById('overlays');
 window.Activities = {
   CASES, SOURCES, SHELVES, BOXES, shelfOf,
   caseById: (id) => CASES.find((c) => c.id === id),
-  docsOf: (c) => [...new Set(c.tasks.flatMap((t) => t.docs || (t.doc ? [t.doc] : [])))],
+  docsOf: (c) => [...new Set(c.tasks.flatMap(papersOf))],
   // face: an image URL of Mr. Harrow's head, for the coaching bubble
   desk({ caseId, save, persist, onLeave, onComplete, face }) {
     const C = this.caseById(caseId);

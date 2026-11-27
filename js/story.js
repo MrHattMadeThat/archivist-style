@@ -7,7 +7,12 @@
 //   do: 'stage' | 'toOffice' | 'harrowHome'    something happens (with `stage`: the stage to move to)
 // Lines are short on purpose: two sentences at most, so a Grade 6 reader can take each one in at a glance.
 //
-// Mr. Harrow, the attendant and Miss Lyle are invented. The building's rooms upstairs and downstairs are invented.
+// Mr. Harrow, the attendant, Miss Lyle and Mr. Mott are invented. The building's rooms upstairs and downstairs are
+// invented.
+//
+// Chapters: 1 the first evening (c0–c3: primary or secondary depends on the question), 2 two accounts (c4:
+// corroboration, who was in a better position to know, fact or opinion, points of view), 3 the ruins that drew a
+// border (c5: a source inside a source, writing a label, maps and ruins as evidence, how much something mattered).
 (function () {
   const H = (text, more) => ({ who: 'harrow', text, ...more });
   const A = (text, more) => ({ who: 'attendant', text, ...more });
@@ -32,6 +37,16 @@
     case3: { obj: 'At your desk: stamp the papers for the NEW questions.', goal: 'mydesk', case: 'c3', next: 'file3' },
     file3: { obj: 'File the papers back in the stacks.', goal: 'shelf', file: 'c3', next: 'report3' },
     report3: { obj: 'Tell Mr. Harrow what you found.', goal: 'harrow' },
+    // chapter 2: two accounts
+    fetch4: { obj: 'Fetch three boxes from the stacks: Champlain, Lescarbot and Ganong.', goal: 'shelf', fetch: 'c4', next: 'case4' },
+    case4: { obj: 'At your desk: compare the two accounts for Mr. Mott.', goal: 'mydesk', case: 'c4', next: 'file4' },
+    file4: { obj: 'File the papers back in the stacks.', goal: 'shelf', file: 'c4', next: 'report4' },
+    report4: { obj: 'Tell Mr. Harrow who was right.', goal: 'harrow' },
+    // chapter 3: the ruins that drew a border
+    fetch5: { obj: 'Fetch three boxes from the stacks: Ganong, Kilby and Champlain.', goal: 'shelf', fetch: 'c5', next: 'case5' },
+    case5: { obj: 'At your desk: find out how the island was proved.', goal: 'mydesk', case: 'c5', next: 'file5' },
+    file5: { obj: 'File the papers back in the stacks. Mind the ones printed in other men’s books!', goal: 'shelf', file: 'c5', next: 'report5' },
+    report5: { obj: 'Tell Mr. Harrow how the island was proved.', goal: 'harrow' },
     free: { obj: 'The museum is yours to explore. More letters will come.' },
   };
 
@@ -96,10 +111,37 @@
     { do: 'stage', stage: 'fetch3' },
   ];
 
+  const N = (text) => ({ who: 'narrator', text });
+
   const REPORT3 = [
     H('Ganong was secondary, then primary. Parkman too. Did the papers change?'),
     H('No. The QUESTION changed. Remember that all your life: you cannot sort a paper until you know the question.'),
-    H('That is all the letters for tonight. The galleries are yours. Have a look around.'),
+    N('Chapter 2 · Two accounts'),
+    H('And not a moment too soon. The evening post has brought a letter, and not a friendly one.'),
+    H('A Mr. Mott, who writes for a newspaper. I once told his readers that 35 men died on St. Croix Island. He has found a book that says 36.', { card: 'rq', case: 'c4' }),
+    H('I said 35 because Champlain says 35. But Mr. Mott means to print the name of whoever is wrong. Let it not be mine!'),
+    H('Fetch Champlain, Lescarbot and Ganong. Lescarbot is the French book. Two accounts of one winter: put them side by side.', { card: 'slip', case: 'c4' }),
+    { do: 'stage', stage: 'fetch4' },
+  ];
+
+  const REPORT4 = [
+    H('Well? Who was wrong?'),
+    Y('Champlain was there, and counted 35. Lescarbot heard about it two years later, and wrote 36.'),
+    H('One man different. So Champlain was in the better position to know, and I can sleep tonight.'),
+    H('But I will write to Mr. Mott kindly. Lescarbot was not lying. He passed on what the men told him, and one number slipped.'),
+    H('When two accounts disagree, ask who was in a better position to know. When they agree, ask whether one learned it from the other.'),
+    N('Chapter 3 · The ruins that drew a border'),
+    H('And here is Miss Lyle again. Her pupils have caught us out.'),
+    H('A boy asks how we KNOW Dochet Island is the real St. Croix Island. A fair question! Nobody put up a sign in 1605.', { card: 'rq', case: 'c5' }),
+    H('The answer is a story about a border, a map and some old bricks. You will need these three boxes.', { card: 'slip', case: 'c5' }),
+    { do: 'stage', stage: 'fetch5' },
+  ];
+
+  const REPORT5 = [
+    H('A plan printed in 1613, a few old bricks, and two men with spades. And a border between two countries was settled.'),
+    H('Ganong puts it well. The island was not the only evidence, but it helped the commissioners all agree. Evidence can keep the peace.'),
+    H('Write to Miss Lyle. Her Tom will have his answer, with proof.'),
+    H('That is all the letters for now. The galleries are yours. More letters will come.'),
     { do: 'stage', stage: 'free' },
   ];
 
@@ -108,6 +150,8 @@
     if (stage === 'report1') return REPORT1;
     if (stage === 'report2') return REPORT2;
     if (stage === 'report3') return REPORT3;
+    if (stage === 'report4') return REPORT4;
+    if (stage === 'report5') return REPORT5;
     const short = {
       sample: 'Sit at your desk, and I will show you how it is done.',
       sampleFile: 'Stewart starts with S. Shelf P to Z. Click the shelf, and we will put the book away.',
@@ -119,6 +163,12 @@
       fetch3: 'Ganong and Parkman. Their boxes are in the stacks.',
       case3: 'New questions, old papers. Read each question first!',
       file3: 'File them by who made them, and when. Never by primary or secondary.',
+      fetch4: 'Champlain, Lescarbot and Ganong. Lescarbot is on shelf G to O.',
+      case4: 'Two accounts of one winter. Where they disagree, ask who was in a better position to know.',
+      file4: 'Back in their boxes, please. Lescarbot goes on shelf G to O.',
+      fetch5: 'Ganong, Kilby and Champlain. Kilby is on shelf G to O.',
+      case5: 'Somebody proved it once, in 1797. Find out who, and how.',
+      file5: 'Careful: Pagan’s words are printed in Kilby’s book, and Wright’s in Ganong’s. A paper goes back in the box of the book it is printed in.',
       free: 'More letters will come. Until then, enjoy the galleries.',
     }[stage];
     return [H(short || 'Yes?')];
@@ -144,8 +194,10 @@
     c1: [Y('My first stack, sorted and proven. Now down to the stacks: every paper goes back in its box, by who made it and when.')],
     c2: [Y('Letter answered. Now these papers go back to their boxes in the stacks.')],
     c3: [Y('Same papers, new questions, new stamps. Back to the stacks with them.')],
+    c4: [Y('Champlain counted 35, and he was there. Mr. Harrow can sleep tonight. Now, back to the stacks with these.')],
+    c5: [Y('A map, some bricks and a border. Back to the stacks with these, and mind which book each one is printed in.')],
   }[id]);
-  const afterFetch = (id) => [Y(id === 'c2' ? 'That’s all three boxes. Up to my desk with them.' : 'Both boxes. Back up to my desk.')];
+  const afterFetch = (id) => [Y(id === 'c3' ? 'Both boxes. Back up to my desk.' : 'That’s all three boxes. Up to my desk with them.')];
   const afterFile = (id) => [Y(id === 'c0' ? 'Filed, by who made it and when. Now back upstairs: the stack on my desk is mine to sort.' : id === 'c1' ?'Every paper back in its box, by who made it and when. Back up to Mr. Harrow.' : 'All filed. Time to see Mr. Harrow.')];
   const deskIdle = (stage) => (stage.startsWith('fetch')
     ? 'The papers aren’t here yet. I need to fetch the boxes from the stacks first.'
@@ -159,7 +211,6 @@
   // On the evening train, then a cab to Union Street. Facts: the Society was founded in 1862; Gesner's museum opened
   // in 1842 and his collection came to the Society in 1890; the Society bought the Union Street building in 1906.
   // Trains into Saint John stopped at the Union Depot (1884, Station Street). Narrator lines are spoken to the player.
-  const N = (text) => ({ who: 'narrator', text });
   const opening = {
     train: [
       N('An evening in 1910. The train is nearly at Saint John, New Brunswick.'),

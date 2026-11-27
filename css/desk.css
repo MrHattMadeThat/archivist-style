@@ -334,3 +334,30 @@ body.cutscene .hud,body.cutscene .obj,body.cutscene .prompt,body.cutscene .hand.
 .dlg.noface .dlg-face{display:none}
 .dlg.narr .dlg-who{display:none}
 .dlg.narr .dlg-text{font-style:italic;font-size:19px}
+
+/* ---------------------------------------------------------------- new task types (compare, sort, order, catalogue) */
+.tag .blank{font-family:var(--f-type);font-size:13px;letter-spacing:.06em;color:var(--red);background:repeating-linear-gradient(90deg,rgba(21,24,32,.18) 0 6px,transparent 6px 10px) bottom/100% 1.5px no-repeat;padding:0 4px 2px}
+.sortitems,.orderitems{display:flex;flex-direction:column;gap:4px}
+.sortitem,.orderitem{text-align:left;background:#f6f0df;border:1.5px solid rgba(21,24,32,.4);padding:4px 8px;font-size:14px;line-height:1.28;color:var(--ink);font-family:var(--f-read)}
+.sortitem:hover,.orderitem:hover{border-color:var(--ink);background:#fff8e6}
+.sortitem.on{border:2.5px solid var(--ink);background:#fff3cf}
+.pad-a{color:#3f6a35}.pad-b{color:var(--blue)}
+.tally{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.tally-col{display:flex;flex-direction:column;gap:2px;font-size:12.5px;line-height:1.25;min-width:0}
+.tally-col>b{font-family:var(--f-type);font-weight:400;font-size:11px;letter-spacing:.1em}
+.tally-a>b{color:#3f6a35}.tally-b>b{color:var(--blue)}
+.tally-item{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-left:12px;position:relative}
+.tally-item::before{content:"✓";position:absolute;left:0;color:#3f6a35}
+.tally-item.fixed::before{content:"↻";color:var(--red)}
+.ordered{margin:0;padding:0 0 0 22px;font-size:14px;line-height:1.3;display:flex;flex-direction:column;gap:3px}
+.ordered li::marker{font-family:var(--f-type);color:#3f6a35}
+.ordered .when{font-family:var(--f-type);font-weight:400;font-size:12px;letter-spacing:.06em;color:var(--red);margin-right:6px;padding:0 4px;border:1.2px solid currentColor}
+.filled-line{margin:0;font-size:14.5px}
+.filled-line b{font-family:var(--f-type);font-weight:400;font-size:12px;letter-spacing:.1em;color:var(--red)}
+.task-catalogue .step.now{display:flex;flex-direction:column;gap:5px}
+.armpaper .printed-in{font-style:italic;color:#6b2516}
+.slots{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.slots .proof{min-height:46px;padding:3px 7px;min-width:0}
+.slots .proof blockquote{font-size:13.5px;line-height:1.3;-webkit-line-clamp:3}
+.slots .proof-empty,.slots .proof-hint{font-size:13px;line-height:1.25}
+.slots .proof-label{font-size:10.5px}

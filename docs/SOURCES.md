@@ -39,7 +39,40 @@ used are in `docs/source-texts/`.
 - The chapter's second paragraph is about the first fire, in 1784: the same book is secondary for a question about
   1784. Mr. Harrow points this out.
 
+## Marc Lescarbot, *Histoire de la Nouvelle-France* (Paris, 1609; the 1612 edition)
+
+- Not on the island: Ganong says Lescarbot came to Acadia two years later and got his facts from Champlain and the men
+  at Port Royal. That is the point of chapter 2.
+- Text: Ganong 1902 prints the 1612 edition's French and his own English translation. "What Lescarbot thought of the
+  island" (pp. 460–462 of the 1612 edition) is retold from the French (OCR around lines 2960–2990 of the Ganong text;
+  the English there has OCR gaps). "A winter he heard about" (pp. 477–479) uses Ganong's English (around lines
+  3632–3650 and 3720–3733). Lescarbot says 36 died; Champlain says 35.
+- The 1609 English translation (Erondelle, *Nova Francia*) exists too; it is not used.
+
+## Robert Pagan's deposition (sworn at St. Andrews, 20 July 1797)
+
+- Text: W. H. Kilby, *Eastport and Passamaquoddy* (Eastport, Maine: Edward E. Shead & Co., 1888), pp. 124–125,
+  https://archive.org/details/eastportpassamaq00kilb. The excerpt is in
+  `docs/source-texts/kilby-1888-boundary-excerpt.txt`. Ganong 1902 prints it too (from the Boundary Commission
+  manuscript), but his OCR has gaps; Kilby's is complete. The two agree where both are legible.
+- The last line ("Signed by Robert Pagan, and sworn at St. Andrews…") is Kilby's note; Ganong's printing has the
+  signature and the justice's oath, so it is in the deposition.
+
+## Thomas Wright's depositions (sworn at St. Andrews, 24 October 1797)
+
+- Text: Ganong 1902, pp. 202–204 (OCR around lines 4665–4830), "now published for the first time from the Ms. in the
+  records of the Boundary Commission". Kilby 1888 (pp. 125–126) summarises the same survey.
+
+## Ganong on the boundary (1902)
+
+- "Which river is the St. Croix?": pp. 198–200 (OCR around lines 4466–4590). "How much did the island matter?":
+  pp. 208–210 (around lines 4990–5070), including his judgement that the island did not decide the border alone.
+- The decision of 25 October 1798 is also in Kilby (p. 54, in the chapter reprinting Weston's history).
+- Not used yet: Kilby/Weston say the commission first met at Halifax in September 1796; Ganong says St. Andrews in
+  August 1796. Another "two sources disagree" task for later.
+
 ## Invented (and labelled as such in README.md)
 
-- Mr. Harrow, the attendant, Miss Agnes Lyle, the offices and the stacks, the archive boxes' labels, and every
+- Mr. Harrow, the attendant, Miss Agnes Lyle, her pupil Tom Nason, Mr. Silas Mott the newspaperman, the offices and
+  the stacks, the archive boxes' labels, and every
   "mail" consequence in the end-of-case reports.
