@@ -45,6 +45,9 @@ body{font-family:var(--f-body);font-size:17px;line-height:1.5;overscroll-behavio
 .close{position:absolute;right:10px;top:8px;font-family:var(--f-type);font-size:18px;background:none;border:1.5px solid var(--ink);color:var(--ink);width:30px;height:30px;cursor:pointer;line-height:1}
 .close:focus-visible{outline:2px solid var(--red);outline-offset:2px}
 @media (max-width:560px){.hud.right{display:none}}
+.audio-levels{margin:12px 0;border:1px solid currentColor;text-align:left}
+.audio-levels label{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.audio-levels input{width:45%;accent-color:var(--red)}
 </style>
 
 <div class="viewport" id="vp" tabindex="-1" aria-label="A walkable museum. Use the arrow keys or W A S D to walk, E to examine. Or tap the floor to walk and tap an exhibit to examine it.">
@@ -98,6 +101,13 @@ body{font-family:var(--f-body);font-size:17px;line-height:1.5;overscroll-behavio
 <dialog id="pausemenu" aria-labelledby="pause-title">
   <h2 id="pause-title">Paused</h2>
   <p class="pause-obj" id="pause-obj"></p>
+  <fieldset class="audio-levels">
+    <legend>Sound</legend>
+    <label>Master volume <input type="range" min="0" max="100" data-audio-bus="master"></label>
+    <label>Music <input type="range" min="0" max="100" data-audio-bus="music"></label>
+    <label>Voices <input type="range" min="0" max="100" data-audio-bus="voices"></label>
+    <label>Sound effects <input type="range" min="0" max="100" data-audio-bus="effects"></label>
+  </fieldset>
   <form method="dialog">
     <button class="big" id="resume" autofocus>Resume</button>
     <button type="button" id="to-title">Main menu</button>
@@ -108,5 +118,6 @@ body{font-family:var(--f-body);font-size:17px;line-height:1.5;overscroll-behavio
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="js/hand.js"></script>
 <script src="js/story.js"></script>
+<script src="js/audio.js"></script>
 <script src="js/world.js"></script>
 <script type="module" src="js/desk/main.js"></script>

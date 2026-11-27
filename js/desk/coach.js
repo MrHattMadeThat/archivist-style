@@ -47,7 +47,11 @@ export function startCoach(root, steps, { face, name = 'Mr. Harrow', onEnd, star
     const s = steps[i];
     if (!s) return end();
     const w = waiting(s);
-    text.textContent = s.wrong && s.wrong() ? s.wrongSay : s.say;
+    const line = s.wrong && s.wrong() ? s.wrongSay : s.say;
+    if (text.textContent !== line) {
+      text.textContent = line;
+      window.MuseumAudio.speak('harrow', line);
+    }
     back.disabled = i === 0;
     next.hidden = w;
     turn.hidden = !w;
@@ -104,6 +108,7 @@ export function startCoach(root, steps, { face, name = 'Mr. Harrow', onEnd, star
   }, 200);
   function end() { stop(); onEnd?.(); }
   function stop() {
+    window.MuseumAudio.stopVoice();
     alive = false;
     clearInterval(tick);
     document.removeEventListener('keydown', onKey);

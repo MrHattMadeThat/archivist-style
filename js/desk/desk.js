@@ -75,6 +75,7 @@ export function openDesk(root, { theCase: C, sources, save, persist, onLeave, on
     reveal() { paper.querySelector('.line.chosen')?.scrollIntoView({ block: 'center' }); },
     markedTags: () => save.marked[rq().text] || [],
     finish(result) {
+      window.MuseumAudio.play('stamp');
       save.results[save.task] = { proof: sel, ...result };
       persist();
       refresh();
@@ -156,7 +157,7 @@ export function openDesk(root, { theCase: C, sources, save, persist, onLeave, on
       b.append(el('span', 'pile-title', d.src.title), el('span', 'pile-who', whoOf(id)));
       const s = stampOn(id);
       if (s) b.append(el('span', `pile-stamp ${s.kind}`, `${s.kind === 'primary' ? 'P' : 'S'} · ${s.q}`));
-      b.onclick = () => { shown = id; refresh(); paper.scrollTop = 0; };
+      b.onclick = () => { if (shown !== id) window.MuseumAudio.play('whoosh', 0.22); shown = id; refresh(); paper.scrollTop = 0; };
       list.append(b);
     };
     if (now.length) {
@@ -216,7 +217,7 @@ export function openDesk(root, { theCase: C, sources, save, persist, onLeave, on
         b.setAttribute('aria-selected', id === shown);
         b.append(el('span', 'doctab-who', whoOf(id)), el('span', 'doctab-title', docs[id].src.title));
         if (id === proofDoc) b.title = 'Your proof is in this one';
-        b.onclick = () => { shown = id; refresh(); paper.scrollTop = 0; };
+        b.onclick = () => { if (shown !== id) window.MuseumAudio.play('whoosh', 0.22); shown = id; refresh(); paper.scrollTop = 0; };
         row.append(b);
       }
       paper.append(row);

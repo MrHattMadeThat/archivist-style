@@ -11,6 +11,7 @@ The look: paper-cutout puppets on a 3D cardboard stage (Paper Mario structure), 
 | `arrival.html` | The arrival scene: a 26-second animated loop, taxi to museum doors. Three palettes to compare. |
 | `index.html` | The game: the walkable museum (four galleries, 13 exhibits), the offices upstairs, and the stacks in the basement. |
 | `js/world.js` | The 3D world, the Archivist, Mr. Harrow, and the story engine (doors, dialogue, objectives, save). |
+| `js/audio.js`, `audio/` | Web Audio mixer and synthesized samples adapted from Props Not Included. Union Street, the train, the four galleries, the offices, the stacks and the source desk each have a score mixed from the original instrument stems. Indoor room tone and handling sounds play on the effects channel. Dialogue and coaching use the local Chimera speech synthesizer and CMU Pronouncing Dictionary in a background worker (licenses in `audio/voice/`). Pause to adjust master, music, voices and effects. |
 | `js/story.js` | Every objective and every line of dialogue: the new archivist's first evening. |
 | `js/hand.js` | The pointing hand (a printer's manicule): the quest marker, the desk's "what next" nudge, and Mr. Harrow's pointing. |
 | `js/desk/` | The paper activities that open over the world: the **source desk** (primary and secondary, with proof) and **the stacks** (fetch boxes, file papers). Adapted from `../archive-desk`. |

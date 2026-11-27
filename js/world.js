@@ -872,10 +872,10 @@ function drawWhip(ctx,W,H){const U=cabU(2.6,4.6);const stick=U([[3.06,2.32],[2.9
 
 /* ================= EXHIBITS: the facts ================= */
 const ROOMS=[
-  {name:'The Gesner Museum',x0:-20,x1:-10,wp:0,sign:'THE GESNER MUSEUM · 1842',win:560,peel:840},
-  {name:'Entrance Hall',x0:-10,x1:0,wp:1,sign:'NATURAL HISTORY SOCIETY OF NEW BRUNSWICK',doors:[{x:800,label:'CURATOR',sub:'Private'}]},
-  {name:'Fossils of Saint John',x0:0,x1:10,wp:2,sign:'FOSSILS OF SAINT JOHN',win:760},
-  {name:'Birds & Mammals',x0:10,x1:20,wp:3,sign:'BIRDS & MAMMALS',win:500,peel:120}];
+  {name:'The Gesner Museum',score:'gesner',x0:-20,x1:-10,wp:0,sign:'THE GESNER MUSEUM · 1842',win:560,peel:840},
+  {name:'Entrance Hall',score:'entrance',x0:-10,x1:0,wp:1,sign:'NATURAL HISTORY SOCIETY OF NEW BRUNSWICK',doors:[{x:800,label:'CURATOR',sub:'Private'}]},
+  {name:'Fossils of Saint John',score:'fossils',x0:0,x1:10,wp:2,sign:'FOSSILS OF SAINT JOHN',win:760},
+  {name:'Birds & Mammals',score:'birds',x0:10,x1:20,wp:3,sign:'BIRDS & MAMMALS',win:500,peel:120}];
 const EXHIBITS=[
   {id:'gesner',room:0,no:'G-1',name:'Portrait of Abraham Gesner',at:[-17.2,-3.4],labelY:5.0,
    label:'ABRAHAM GESNER, M.D. (1797–1864). Founder of the Gesner Museum, Saint John, 1842.',
@@ -1195,7 +1195,7 @@ const ui={room:document.getElementById('room'),prompt:document.getElementById('p
   dlg:document.getElementById('dlg'),dlgFace:document.getElementById('dlgface'),dlgWho:document.getElementById('dlgwho'),dlgText:document.getElementById('dlgtext'),dlgCard:document.getElementById('dlgcard'),dlgChoices:document.getElementById('dlgchoices'),dlgMore:document.getElementById('dlgmore'),dlgBack:document.getElementById('dlgback'),dlgNextBtn:document.getElementById('dlgnext')};
 let cardOpen=null,near=null;const seen=new Set();
 function esc(s){return s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
-function openCard(ex){cardOpen=ex;ME.target=[];ME.pending=null;for(const k in keys)keys[k]=false;
+function openCard(ex){MuseumAudio.play('whoosh',0.22);cardOpen=ex;ME.target=[];ME.pending=null;for(const k in keys)keys[k]=false;
   ui.no.textContent='Cat. '+ex.no;ui.croom.textContent=ROOMS[ex.room].name;ui.title.textContent=ex.name;
   ui.label.firstElementChild.textContent=ex.talk?'Says the attendant':'The museum’s label, 1910';ui.labelText.textContent=ex.label;
   ui.body.innerHTML=ex.body.map(p=>`<p>${esc(p)}</p>`).join('')+(ex.now?`<p class="now"><b>What we know now</b>${esc(ex.now)}</p>`:'');
@@ -1232,7 +1232,7 @@ function enterArea(id){AREA=AREAS[id];GRID=null;near=null;ME.target=[];ME.pendin
   const f=AREA.fog||[16,42,P.fog];scene.fog.near=f[0];scene.fog.far=f[1];scene.fog.color.copy(col(f[2]));renderObj();}
 const FADE={on:false};
 function fade(mid,done){FADE.on=true;ui.fade.classList.add('on');setTimeout(()=>{mid&&mid();setTimeout(()=>{ui.fade.classList.remove('on');setTimeout(()=>{FADE.on=false;done&&done();},160);},80);},170);}
-function useDoor(d){stopWalking();fade(()=>{enterArea(d.to[0]);ME.x=d.to[1];ME.z=d.to[2];ME.view={mode:d.face==='back'?'back':'front',facing:1};ME.flip=null;snapCamera();const s=window.STORY.onEnter?.(G.stage,d.to[0]);if(s)setStage(s);});}
+function useDoor(d){MuseumAudio.play('creak',0.35);stopWalking();fade(()=>{enterArea(d.to[0]);ME.x=d.to[1];ME.z=d.to[2];ME.view={mode:d.face==='back'?'back':'front',facing:1};ME.flip=null;snapCamera();const s=window.STORY.onEnter?.(G.stage,d.to[0]);if(s)setStage(s);});}
 function stopWalking(){ME.target=[];ME.pending=null;for(const k in keys)keys[k]=false;}
 
 /* Mr. Harrow stands in his office, or beside your desk while you work through your first stack */
@@ -1246,7 +1246,7 @@ const SPEAKERS={narrator:{name:'',face:null},conductor:{name:'The conductor',fac
 const DLG={open:false,lines:[],i:0,reply:null,end:null,who:null};
 function say(lines,end){if(!lines||!lines.length){end&&end();return;}stopWalking();if(cardOpen)closeCard();DLG.open=true;DLG.lines=lines;DLG.i=0;DLG.reply=null;DLG.end=end;if(!CUT.lockView)faceFront();showLine();}
 function showLine(){const L=DLG.lines[DLG.i];if(!L)return endDlg();
-  if(L.do){ui.dlg.hidden=true;return DO[L.do](L,()=>{DLG.i++;showLine();});}renderLine(L);}
+  if(L.do){MuseumAudio.stopVoice();ui.dlg.hidden=true;return DO[L.do](L,()=>{DLG.i++;showLine();});}renderLine(L);}
 function card(L){
   if(L.card==='duties')return`<div class="dlg-card"><div class="rq-tag">Your job, in four parts</div><ol><li><b>Read</b> the letter. Find the <b>research question</b>.</li><li><b>Fetch</b> the papers from the stacks, in the basement.</li><li>At your desk, <b>sort</b> the papers and find <b>proof</b>.</li><li><b>File</b> every paper back in its box.</li></ol></div>`;
   if(L.card==='rule')return`<div class="dlg-card rule"><div class="p"><b>PRIMARY</b><p>Made by someone who was there, at the time.</p></div><div class="s"><b>SECONDARY</b><p>Made later, by someone who learned about it from other sources.</p></div></div>`;
@@ -1256,6 +1256,7 @@ function card(L){
 function renderLine(L){const sp=SPEAKERS[L.who]||SPEAKERS.you;DLG.who=L.who;ui.dlg.classList.toggle('noface',!sp.face);ui.dlg.classList.toggle('narr',L.who==='narrator');
   const fc=ui.dlgFace.getContext('2d'),src=TX[sp.face]?.image;fc.fillStyle='#2a2c33';fc.fillRect(0,0,96,96);if(src){const[x,y,w,h]=sp.crop;fc.drawImage(src,x,y,w,h,0,0,96,96);}
   ui.dlgWho.textContent=sp.name;ui.dlgText.textContent=DLG.reply?DLG.reply.text:L.text;
+  MuseumAudio.speak(L.who,ui.dlgText.textContent);
   ui.dlgCard.innerHTML=DLG.reply?'':card(L);ui.dlgCard.hidden=!ui.dlgCard.innerHTML;
   ui.dlgChoices.replaceChildren();const ch=!DLG.reply&&L.choices;
   if(ch)for(const c of L.choices){const b=document.createElement('button');b.type='button';b.textContent=c.label;b.onclick=e=>{e.stopPropagation();DLG.reply={text:c.reply,again:!c.ok};renderLine(L);};ui.dlgChoices.append(b);}
@@ -1268,7 +1269,7 @@ function dlgNext(){if(!DLG.open||ui.dlg.hidden)return;const L=DLG.lines[DLG.i];
 // Back goes to the line before, but never back across something that happened (a walk, a fade, a new stage)
 function prevLine(){for(let j=DLG.i-1;j>=0;j--){if(DLG.lines[j].do)return-1;return j;}return-1;}
 function dlgBack(){if(!DLG.open||ui.dlg.hidden)return;const L=DLG.lines[DLG.i];if(DLG.reply){DLG.reply=null;return renderLine(L);}const j=prevLine();if(j<0)return;DLG.i=j;renderLine(DLG.lines[j]);}
-function endDlg(){DLG.open=false;DLG.who=null;ui.dlg.hidden=true;vp.focus({preventScroll:true});const e=DLG.end;DLG.end=null;e&&e();}
+function endDlg(){MuseumAudio.stopVoice();DLG.open=false;DLG.who=null;ui.dlg.hidden=true;vp.focus({preventScroll:true});const e=DLG.end;DLG.end=null;e&&e();}
 // things a line of dialogue can make happen
 const DO={
   stage:(L,next)=>{setStage(L.stage);next();},
@@ -1457,6 +1458,11 @@ function step(dt){
     if(!blocked(ME.x+ix*sp,ME.z))ME.x+=ix*sp;if(!blocked(ME.x,ME.z+iz*sp))ME.z+=iz*sp;moved=Math.hypot(ME.x-ox,ME.z-oz);ME.dist+=moved;
     if(ME.target.length){if(moved<sp*0.25){ME.stuck+=dt;if(ME.stuck>0.35){const p=ME.pending;ME.target=[];ME.pending=null;if(p&&Math.hypot(p.at[0]-ME.x,p.at[1]-ME.z)<2.4)interact(p);}}else ME.stuck=0;}
     if(!ME.flip&&moved>sp*0.35){const want=wantView(ME.x-ox,ME.z-oz);if(want.mode!==ME.view.mode||want.facing!==ME.view.facing)ME.flip={from:ME.view,to:want,u:0};}}
+  const stride=Math.floor(ME.dist/0.55);
+  if(moved && stride!==Math.floor((ME.dist-moved)/0.55) && !ME.sink && !CUT.hideMe){
+    const floor=AREA.id==='street'||AREA.id==='basement'?'stone':'wood';
+    MuseumAudio.play(floor+'_'+(stride%2),0.20,0.84+Math.random()*0.12);
+  }
   ME.amp=lerp(ME.amp,moved>0.0005?1:0,1-Math.exp(-12*dt));
   ME.idle=moved>0.0005?0:(ME.idle||0)+dt;if(ME.idle>2.6&&!cardOpen&&!CUT.lockView)faceFront();
   if(ME.flip){ME.flip.u+=dt/0.18;if(ME.flip.u>=1){ME.view=ME.flip.to;ME.flip=null;}}
@@ -1526,7 +1532,15 @@ function hud(){
     const touch=matchMedia('(pointer: coarse)').matches;const html=(touch?'Tap: ':'<kbd>E</kbd>')+(e.verb?esc(e.verb):e.talk?'Talk to the attendant':esc(e.name));if(ui.prompt.dataset.h!==html){ui.prompt.innerHTML=html;ui.prompt.dataset.h=html;}}
   else ui.prompt.hidden=true;
 }
-function frame(now){const dt=Math.min(0.05,(now-last)/1000);last=now;if(paused()){requestAnimationFrame(frame);return;}step(dt);if(CUT.on)cutTick(dt);pose();world();placeCamera(dt);if(document.body.dataset.overlay!=='desk')renderer.render(scene,camera);hud();
+function audioScene(){
+  if(paused())return '';
+  if(document.body.dataset.overlay==='desk')return 'desk';
+  if(AREA.id==='museum')return roomAt(ME.x).score;
+  return AREA.id==='basement'?'stacks':AREA.id;
+}
+function frame(now){const dt=Math.min(0.05,(now-last)/1000);last=now;
+  MuseumAudio.scene(audioScene());
+  if(paused()){requestAnimationFrame(frame);return;}step(dt);if(CUT.on)cutTick(dt);pose();world();placeCamera(dt);if(document.body.dataset.overlay!=='desk')renderer.render(scene,camera);hud();
   if(ME.dist>3&&!hintT){hintT=1;document.getElementById('keyhint').style.opacity='0';}requestAnimationFrame(frame);}
 function resize(){const w=vp.clientWidth,h=vp.clientHeight;if(!w||!h)return;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();
   if(paused())renderer.render(scene,camera);} /* setSize clears the canvas, and frame() draws nothing while a menu is up */

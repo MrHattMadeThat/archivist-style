@@ -100,7 +100,7 @@ export function openShelf(root, { shelfId, mode, need = [], have = [], carrying 
     const b = BOXES[id];
     if (mode === 'fetch') {
       if (have.includes(id)) { say = 'You already have that box.'; tone = 'warn'; }
-      else if (need.includes(id)) { have = [...have, id]; onTake?.(id); say = `You take the box: ${b.maker}, ${b.year}.`; tone = 'good'; }
+      else if (need.includes(id)) { have = [...have, id]; window.MuseumAudio.play('wood_0', 0.32); onTake?.(id); say = `You take the box: ${b.maker}, ${b.year}.`; tone = 'good'; }
       else { say = `Not this one: it holds ${b.what.toLowerCase()} (${b.maker}, ${b.year}). Check your request slip.`; tone = 'warn'; }
     } else if (mode === 'file') {
       if (!pick) { say = 'Click a paper in your arms first.'; tone = 'warn'; }
@@ -108,6 +108,7 @@ export function openShelf(root, { shelfId, mode, need = [], have = [], carrying 
         const s = sources[pick];
         wrong = s.box !== id;
         if (s.box === id) {
+          window.MuseumAudio.play('whoosh', 0.3);
           onFile?.(pick);
           carrying = carrying.filter((x) => x !== pick);
           say = `Filed: “${s.title}” is back with ${b.maker}, ${b.year}.`;
