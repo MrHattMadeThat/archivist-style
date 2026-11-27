@@ -557,6 +557,246 @@ function drawCellarWall(room){return(ctx,W,H)=>{
   line(ctx,[[0,64],[W,64]],16,mix(P.stoneDark,P.ink,0.6));line(ctx,[[0,58],[W,58]],2,P.paper,0.15);for(let x=60;x<W;x+=220){const br=box(x,52,14,26,1);fill(ctx,br,P.ink);}
   for(const dr of room.doors||[])drawDoor(ctx,dr);}}
 
+/* ================= UNION STREET: the outside of No. 72 =================
+   Drawn from the one photograph found: New Brunswick Museum 13305, "Natural History Society Building, Union Street,
+   Saint John, 1900-1910" (reproduced on the Catherine Murdoch page of womenandmuseum.com). The photo shows four
+   storeys: three of brick over a stone base, then a mansard roof with three pairs of dormer windows; a cornice under
+   the roof; two arched openings on the ground floor; telegraph poles with crossarms; a lower, darker building on the
+   left and an open lot on the right. The photo is small and sepia, so the colours, the sign board, the lamp by the
+   door and the neighbours' details are guesses. The facade is drawn at 80 px a unit; px / 80 = world units. */
+const BRICK='#6b3b2d',TRIM='#a59a84',BAYS=[120,320,550,780,980];
+function bricks(ctx,p,base,[x0,y0,w,h]){fill(ctx,p,base);ctx.save();ctx.clip(p);
+  for(let i=0;i<w*h/900;i++){ctx.fillStyle=R()<0.5?hexA(P.ink,0.14):hexA(P.paper,0.05);ctx.fillRect(x0+rr(0,w),y0+rr(0,h),rr(14,30),11);}
+  ctx.fillStyle=hexA(P.ink,0.22);let row=0;for(let y=y0;y<y0+h;y+=13,row++){ctx.fillRect(x0,y,w,1.6);for(let x=x0+(row%2?17:0);x<x0+w;x+=34)ctx.fillRect(x,y,1.6,13);}
+  ctx.restore();}
+// one window: stone lintel (or an arched stone surround), glass, sash bars, sill. Lit ones glow amber behind a blind.
+function stWin(ctx,cx,top,w,h,o={}){const trim=mix(TRIM,P.skyBot,0.3),ar=o.arch;
+  if(ar){const s=arch(cx,top-16,w+32,h+16);fill(ctx,s,trim);ink(ctx,s,2.5);}
+  else if(!o.plain){const li=box(cx-w/2-12,top-22,w+24,22,1);fill(ctx,li,trim);ink(ctx,li,2.5);}
+  const gl=ar?arch(cx,top,w,h):box(cx-w/2,top,w,h,1);
+  if(o.lit){const g=ctx.createLinearGradient(0,top,0,top+h);g.addColorStop(0,P.glow);g.addColorStop(1,P.glowDim);ctx.fillStyle=g;ctx.fill(gl);
+    ctx.save();ctx.clip(gl);const bh=h*(o.blind??0.3);ctx.fillStyle=mix(P.paper,P.glowDim,0.45);ctx.fillRect(cx-w/2,top,w,bh);line(ctx,[[cx-w/2,top+bh],[cx+w/2,top+bh]],3,P.woodDark);dot(ctx,cx,top+bh+8,4,P.woodDark);ctx.restore();}
+  else{const g=ctx.createLinearGradient(0,top,0,top+h);g.addColorStop(0,mix(P.glass,P.skyBot,0.55));g.addColorStop(1,P.glass);ctx.fillStyle=g;ctx.fill(gl);
+    ctx.save();ctx.clip(gl);ctx.strokeStyle=hexA(P.paper,0.2);ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(cx+w*0.1,top);ctx.lineTo(cx-w/2,top+h*0.5);ctx.stroke();ctx.restore();}
+  const bar=o.lit?mix(P.woodDark,P.ink,0.3):mix(P.woodLight,P.skyBot,0.45);
+  line(ctx,[[cx-w/2,top+h*0.55],[cx+w/2,top+h*0.55]],6,bar);line(ctx,[[cx,top+(ar?w*0.5:0)],[cx,top+h]],4,bar);
+  ink(ctx,gl,3);if(!o.plain){const si=box(cx-w/2-10,top+h,w+20,14,1);fill(ctx,si,trim);ink(ctx,si,2.5);}}
+function lantern(ctx,x,y){const iron=P.boot;line(ctx,[[x+34,y+58],[x+34,y+20],[x,y+4]],5,iron);curl(ctx,x+20,y+12,0.3,8,3,iron);
+  const cage=path([[x-18,y+8],[x+18,y+8],[x+13,y+58],[x-13,y+58]],{smooth:false,jit:0.5});const g=ctx.createLinearGradient(0,y+8,0,y+58);g.addColorStop(0,mix(P.glow,P.paper,0.4));g.addColorStop(1,P.glow);ctx.fillStyle=g;ctx.fill(cage);
+  line(ctx,[[x,y+8],[x,y+58]],2,iron);ink(ctx,cage,3,iron);const cap=path([[x-24,y+10],[x,y-8],[x+24,y+10]],{smooth:false});fill(ctx,cap,iron);ink(ctx,cap,2,iron);dot(ctx,x,y+64,5,iron);}
+function drawFacade72(ctx,W,H){// 1100 x 1300; the ground is the bottom edge
+  const brick=mix(BRICK,P.skyBot,0.3),trim=mix(TRIM,P.skyBot,0.3),slate=mix(P.stoneDark,P.skyTop,0.35);
+  for(const x of [130,930]){const c=box(x,24,60,90,1);bricks(ctx,c,mix(brick,P.ink,0.2),[x,24,60,90]);ink(ctx,c,3);const cap=box(x-8,16,76,14,1);fill(ctx,cap,trim);ink(ctx,cap,2.5);}
+  // the mansard: slate in scalloped rows, with three dormers, each a pair of windows (as in the photo)
+  const roof=path([[70,306],[1030,306],[1000,96],[100,96]],{smooth:false,jit:1});fill(ctx,roof,slate);
+  ctx.save();ctx.clip(roof);ctx.strokeStyle=hexA(P.ink,0.4);ctx.lineWidth=1.6;for(let y=104,k=0;y<310;y+=16,k++)for(let x=60+(k%2)*12;x<1050;x+=24){ctx.beginPath();ctx.arc(x,y,12,0.1,Math.PI-0.1);ctx.stroke();}ctx.restore();
+  shade(ctx,roof,0,96,0,306,0.35);ink(ctx,roof,4);const crest=box(94,84,912,14,1);fill(ctx,crest,mix(P.ink,slate,0.4));ink(ctx,crest,2.5);
+  for(const cx of [270,550,830]){const d=path([[cx-92,300],[cx-92,152],[cx-104,152],[cx-104,134],[cx+104,134],[cx+104,152],[cx+92,152],[cx+92,300]],{smooth:false,jit:1});fill(ctx,d,trim);shade(ctx,d,cx-92,0,cx+92,0,0.3);ink(ctx,d,3);
+    for(const dx of [-40,40])stWin(ctx,cx+dx,168,56,116,{plain:true});}
+  // the cornice under the roof, on brackets
+  const cor=box(26,300,1048,40,1);fill(ctx,cor,trim);shade(ctx,cor,0,300,0,340,0.45);ink(ctx,cor,3.5);
+  for(let x=46;x<1060;x+=56){const b=box(x,330,16,24,1);fill(ctx,b,mix(trim,P.ink,0.2));ink(ctx,b,1.8);}
+  // brick walls, darker toward the top; warm near the door lamp
+  const wall=box(50,340,1000,900,1);bricks(ctx,wall,brick,[50,340,1000,900]);shade(ctx,wall,0,900,0,340,0.42);
+  ctx.save();ctx.clip(wall);const lg=ctx.createRadialGradient(410,990,10,410,990,460);lg.addColorStop(0,hexA(P.glow,0.3));lg.addColorStop(1,hexA(P.glow,0));ctx.fillStyle=lg;ctx.fillRect(0,0,W,H);ctx.restore();ink(ctx,wall,4);
+  // upper floors: five bays, the middle one a pair. One office upstairs is still lit.
+  for(const[top,h,lit] of [[370,160,-1],[610,180,4]])for(let i=0;i<5;i++){if(i===2){for(const dx of [-38,38])stWin(ctx,BAYS[i]+dx,top,62,h);}else stWin(ctx,BAYS[i],top,96,h,{lit:i===lit,blind:0.45});}
+  // the sign board (a guess: the photo is too small to read one) and the belt course
+  const sb=box(250,812,600,46,1);fill(ctx,sb,P.woodDark);ctx.save();ctx.strokeStyle=P.brass;ctx.lineWidth=2;ctx.strokeRect(260,820,580,30);ctx.restore();
+  txt(ctx,'NATURAL HISTORY SOCIETY · MUSEUM',550,845,26,{c:P.brass,maxW:540});ink(ctx,sb,3);
+  const belt=box(44,862,1012,18,1);fill(ctx,belt,trim);ink(ctx,belt,2.5);
+  // ground floor: a wide arched doorway (bay 1, closed), lit arched windows (the museum is open), and the opening
+  // for the front door, which is its own cut-out (drawFrontDoor) so it can be clicked
+  const ca=arch(120,930,190,370);fill(ctx,ca,trim);ink(ctx,ca,3);const cd=arch(120,946,158,354);fill(ctx,cd,mix(P.woodDark,P.skyBot,0.25));
+  ctx.save();ctx.clip(cd);for(let x=44;x<200;x+=22)line(ctx,[[x,940],[x,1300]],2,P.ink,0.5);ctx.restore();line(ctx,[[120,1020],[120,1300]],3,P.ink,0.8);ink(ctx,cd,3);
+  for(const i of [1,3,4])stWin(ctx,BAYS[i],940,100,250,{lit:true,arch:true,blind:0.22});
+  fill(ctx,arch(550,880,230,420),P.ink);
+  lantern(ctx,408,920);
+  const base=box(40,1240,1020,60,1);fill(ctx,base,mix(P.stone,P.skyBot,0.3));let x=40;while(x<1060){line(ctx,[[x,1240],[x,1300]],2,P.ink,0.6);x+=rr(90,140);}ink(ctx,base,3);
+  line(ctx,[[1036,344],[1036,1292]],7,mix(P.stoneDark,P.ink,0.3));}
+// the front door: stone surround, a lit fanlight with the number, two panelled doors, two granite steps. 260 x 420.
+function drawFrontDoor(ctx,W,H){const cx=W/2,trim=mix(TRIM,P.skyBot,0.25);
+  const sur=arch(cx,4,248,H-28);fill(ctx,sur,trim);shade(ctx,sur,0,0,W,0,0.25);ink(ctx,sur,3.5);
+  const op=arch(cx,22,206,H-46);fill(ctx,op,P.ink);
+  const fan=arch(cx,26,198,99);const g=ctx.createRadialGradient(cx,125,4,cx,125,110);g.addColorStop(0,mix(P.glow,P.paper,0.35));g.addColorStop(1,P.glowDim);ctx.fillStyle=g;ctx.fill(fan);
+  for(let k=1;k<6;k++){const a=Math.PI+k/6*Math.PI;line(ctx,[[cx,125],[cx+Math.cos(a)*99,125+Math.sin(a)*99]],3,P.woodDark);}
+  txt(ctx,'72',cx,112,30,{c:P.woodDark});line(ctx,[[cx-99,125],[cx+99,125]],7,P.woodDark);ink(ctx,fan,2.5);
+  for(const s of [-1,1]){const x0=s<0?cx-100:cx+2,d=box(x0,129,98,H-170,1);fill(ctx,d,P.wood);shade(ctx,d,cx+s*100,0,cx,0,0.35);
+    for(const[py,ph] of [[146,120],[282,H-170-170]]){const pn=box(x0+14,py,70,ph,1);fill(ctx,pn,mix(P.wood,P.ink,0.18));ink(ctx,pn,2);}ink(ctx,d,3);dot(ctx,cx+s*14,262,6,P.brass);}
+  const s1=box(cx-124,H-44,248,22,1),s2=box(cx-136,H-22,272,22,1);for(const s of [s1,s2]){fill(ctx,s,mix(P.stone,P.skyBot,0.25));ctx.save();ctx.clip(s);ctx.fillStyle=hexA(P.glow,0.16);ctx.fillRect(0,0,W,H);ctx.restore();ink(ctx,s,2.5);}}
+// the neighbours (invented): v0 a darker, lower brick block with a shut shop, as on the left in the photo;
+// v1 a clapboard house with a gable, the commonest kind of house in Saint John
+function drawNeighbour(v){return(ctx,W,H)=>{
+  if(v===0){const brick=mix('#4b3a33',P.skyBot,0.35),trim=mix(TRIM,P.skyBot,0.45);
+    const wall=box(30,90,W-60,H-90,1);bricks(ctx,wall,brick,[30,90,W-60,H-90]);shade(ctx,wall,0,H,0,90,0.45);ink(ctx,wall,4);
+    const cor=box(16,70,W-32,34,1);fill(ctx,cor,trim);shade(ctx,cor,0,70,0,104,0.5);ink(ctx,cor,3);
+    for(const[top,lit] of [[170,-1],[440,1]])for(let i=0;i<4;i++)stWin(ctx,150+i*250,top,88,170,{lit:i===lit,blind:0.6});
+    const sf=box(80,700,W-160,250,1);fill(ctx,sf,P.woodDark);ink(ctx,sf,3);const fasc=box(70,672,W-140,36,1);fill(ctx,fasc,mix(P.woodDark,P.skyBot,0.2));ink(ctx,fasc,2.5);
+    for(const x of [110,620]){const gl=box(x,730,320,170,1);fill(ctx,gl,mix(P.glass,P.skyBot,0.3));ctx.save();ctx.clip(gl);ctx.strokeStyle=hexA(P.paper,0.15);ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(x+200,730);ctx.lineTo(x+60,900);ctx.stroke();ctx.restore();ink(ctx,gl,2.5);}
+    const dr=box(468,730,114,H-730,1);fill(ctx,dr,mix(P.wood,P.ink,0.3));ink(ctx,dr,3);
+    const st=box(30,H-50,W-60,50,1);fill(ctx,st,mix(P.stone,P.skyBot,0.4));ink(ctx,st,2.5);return;}
+  const wood=mix(v===1?'#5d6a62':'#6d5b48',P.skyBot,0.4),trim=mix(P.paper,P.skyBot,0.45);
+  const body=path([[40,H],[40,300],[W/2,60],[W-40,300],[W-40,H]],{smooth:false,jit:1});fill(ctx,body,wood);
+  ctx.save();ctx.clip(body);for(let y=70;y<H;y+=18){line(ctx,[[0,y],[W,y+2]],2,P.ink,0.35);line(ctx,[[0,y+2],[W,y+4]],1.5,P.paper,0.06);}ctx.restore();
+  shade(ctx,body,0,H,0,60,0.4);ink(ctx,body,4);const eave=path([[20,316],[W/2,44],[W-20,316]],{closed:false,smooth:false});line(ctx,[[20,316],[W/2,44],[W-20,316]],12,mix(P.ink,wood,0.3));
+  stWin(ctx,W/2,170,80,110,{plain:true,lit:v===2});
+  for(const[top,lit] of [[380,v===1?0:-1],[640,-1]])for(let i=0;i<3;i++)stWin(ctx,200+i*(W-400)/2,top,90,170,{plain:true,lit:i===lit,blind:0.5});
+  for(let i=0;i<3;i++)for(const top of [380,640]){const cx=200+i*(W-400)/2;for(const s of [-1,1]){const sh=box(cx+s*72-17,top-6,34,182,1);fill(ctx,sh,mix(trim,P.ink,0.35));ink(ctx,sh,2);}}
+  const dr=box(W/2-60,H-230,120,230,1);fill(ctx,dr,mix(P.wood,P.ink,0.25));ink(ctx,dr,3);const hood=box(W/2-80,H-250,160,22,1);fill(ctx,hood,trim);ink(ctx,hood,2.5);
+  for(const x of [56,W-56])line(ctx,[[x,300],[x,H]],8,trim);}}
+function drawPole(ctx,W,H){const wood=mix('#4a3b2c',P.skyBot,0.3),cx=W/2;
+  const post=path([[cx-16,H],[cx-10,40],[cx+10,40],[cx+16,H]],{smooth:false,jit:0.8});fill(ctx,post,wood);hatch(ctx,post,{ang:1.5,gap:14,a:0.22});line(ctx,[[cx+5,H-20],[cx+4,60]],2,P.paper,0.12);ink(ctx,post,3);
+  for(const[y,n] of [[110,4],[200,2]]){const arm=box(cx-n*21-14,y,n*42+28,14,1);fill(ctx,arm,wood);ink(ctx,arm,2.5);
+    for(let i=0;i<n;i++){const x=cx-(n-1)*21+i*42;const ins=path([[x-7,y],[x-6,y-18],[x+6,y-18],[x+7,y]],{smooth:false});fill(ctx,ins,'#5f8f88');ink(ctx,ins,1.8);}}
+  for(let y=360;y<H-40;y+=70)line(ctx,[[cx-12,y],[cx+12,y+4]],3,P.ink,0.7);}
+function drawFence(ctx,W,H){const wood=mix('#5b4a38',P.skyBot,0.45);let x=4;let i=0;
+  while(x<W-4){const w=rr(38,46),top=rr(6,22)+(i%7===3?28:0);if(!(i%9===5)){const b=path([[x,H-4],[x,top+8],[x+w/2,top],[x+w,top+8],[x+w,H-4]],{smooth:false,jit:0.8});fill(ctx,b,mix(wood,P.ink,rr(0,0.25)));hatch(ctx,b,{ang:1.52,gap:9,a:0.18});ink(ctx,b,2.2);}x+=w+2;i++;}
+  line(ctx,[[0,60],[W,62]],8,mix(wood,P.ink,0.4));line(ctx,[[0,H-36],[W,H-34]],8,mix(wood,P.ink,0.4));}
+function drawShed(ctx,W,H){const wood=mix('#4f4436',P.far,0.5);const b=path([[30,H],[30,140],[W/2,40],[W-30,140],[W-30,H]],{smooth:false,jit:1});fill(ctx,b,wood);
+  ctx.save();ctx.clip(b);for(let x=30;x<W;x+=26)line(ctx,[[x,0],[x,H]],2,P.ink,0.4);ctx.restore();ink(ctx,b,3);const d=box(W/2-50,H-170,100,170,1);fill(ctx,d,mix(wood,P.ink,0.4));ink(ctx,d,2.5);}
+function drawRoad(ctx,W,H){// packed earth and gravel; two worn wheel tracks; a puddle or two with the sky in them
+  ctx.fillStyle=mix('#4c4338',P.skyBot,0.45);ctx.fillRect(0,0,W,H);
+  for(let i=0;i<1400;i++){ctx.fillStyle=R()<0.5?hexA(P.ink,rr(0.15,0.4)):hexA(P.paper,rr(0.05,0.14));ctx.beginPath();ctx.arc(rr(0,W),rr(0,H),rr(1,3.4),0,TAU);ctx.fill();}
+  for(const y of [H*0.3,H*0.42,H*0.68,H*0.8]){ctx.fillStyle=hexA(P.ink,0.16);ctx.fillRect(0,y-10,W,20);line(ctx,[[0,y-11],[W,y-11]],2,P.ink,0.22);}
+  for(let i=0;i<2;i++){const x=rr(150,W-150),y=rr(H*0.25,H*0.85);const pd=path(ell(x,y,rr(50,90),rr(16,26),14,0.15));fill(ctx,pd,mix(P.glass,P.skyBot,0.5));ctx.save();ctx.clip(pd);ctx.globalAlpha=0.3;ctx.fillStyle=P.paper;ctx.fillRect(x-30,y-20,6,40);ctx.restore();ink(ctx,pd,2,mix(P.ink,P.glass,0.3));}}
+function drawWalk(ctx,W,H){// the sidewalk: flagstones
+  ctx.fillStyle=mix(P.stoneDark,P.ink,0.3);ctx.fillRect(0,0,W,H);const rows=2,rh=H/rows;
+  for(let r=0;r<rows;r++){let x=0;const y=r*rh;while(x<W-40){let w=rr(150,260);if(x+w>W-60)w=W-x;const s=box(x+3,y+3,w-6,rh-6,1.2);fill(ctx,s,mix(mix(P.stone,P.stoneDark,rr(0,0.4)),P.skyBot,0.25));if(R()<0.3)crack(ctx,x+rr(10,w-10),y+5,rh*0.7,Math.PI/2+rr(-0.5,0.5),1.6);mottle(ctx,s,P.ink,0.08,3,20,[x,y,w,rh]);ink(ctx,s,2);x+=w;}}}
+function drawCurb(ctx,W,H){ctx.fillStyle=mix(mix(P.stone,P.stoneDark,0.3),P.skyBot,0.2);ctx.fillRect(0,0,W,H);for(let x=0;x<W;x+=256)line(ctx,[[x,0],[x,H]],2,P.ink,0.6);ctx.fillStyle=hexA(P.paper,0.2);ctx.fillRect(0,0,W,4);ctx.fillStyle=hexA(P.ink,0.5);ctx.fillRect(0,H-6,W,6);}
+function drawSideWall(ctx,W,H){// 720 x 970: the brick side over the lot, up to the cornice (the mansard is drawn on the front)
+  const brick=mix(BRICK,P.ink,0.35);const wl=box(0,0,W,H,1);bricks(ctx,wl,brick,[0,0,W,H]);shade(ctx,wl,0,0,W,0,0.5);
+  for(const top of [60,320,640])for(const cx of [200,520])stWin(ctx,cx,top,90,170,{});ink(ctx,wl,3);}
+function drawSky(ctx,W,H){const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,P.skyTop);g.addColorStop(0.62,mix(P.skyTop,P.skyBot,0.55));g.addColorStop(1,P.skyBot);ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  for(let i=0;i<220;i++){const y=rr(0,H*0.6);dot(ctx,rr(0,W),y,rr(0.5,1.6),hexA(P.paper,rr(0.25,0.8)*(1-y/(H*0.7))));}}
+function drawSkyline(ctx,W,H){// the town behind: roofs and chimneys, a few lit windows
+  const shapes=[];let x=-20;
+  while(x<W){const w=rr(70,200),h=rr(140,400),top=H-h,k=R();let pts;
+    if(k<0.4)pts=[[x,H],[x,top],[x+w/2,top-rr(40,110)],[x+w,top],[x+w,H]];
+    else if(k<0.7)pts=[[x,H],[x,top],[x+w,top],[x+w,H]];
+    else pts=[[x,H],[x,top+24],[x+14,top],[x+w-14,top],[x+w,top+24],[x+w,H]];
+    shapes.push({pts,x,w,top});if(R()<0.6){const cx=x+w*rr(0.15,0.75),ch=rr(30,80);shapes.push({pts:[[cx,top+14],[cx,top-ch],[cx+18,top-ch],[cx+18,top+14]],chim:true});}
+    x+=w*rr(0.7,0.98);}
+  const paths=shapes.map(s=>path(s.pts,{smooth:false,jit:1.5}));ctx.save();ctx.strokeStyle=mix(P.far,P.ink,0.55);ctx.lineWidth=6;ctx.lineJoin='round';for(const p of paths)ctx.stroke(p);ctx.restore();
+  for(const p of paths)fill(ctx,p,P.far);
+  for(const s of shapes){if(s.chim)continue;const n=(s.w/40|0);for(let i=0;i<n;i++)for(let j=0;j<4;j++)if(R()<0.12){const wx=s.x+12+i*36,wy=s.top+30+j*48;if(wy<H-20){ctx.fillStyle=hexA(P.glowDim,rr(0.5,0.95));ctx.fillRect(wx,wy,12,18);}}}}
+function drawMoon(ctx,W,H){const m=path(ell(W/2,H/2,W*0.4,W*0.4,30,0.008));fill(ctx,m,'#efe4c4');hatch(ctx,m,{ang:0.7,gap:9,a:0.2,clip2:box(0,0,W*0.42,H,0)});ink(ctx,m,5);}
+function drawMat(ctx,W,H){const b=box(6,6,W-12,H-12,1.5);fill(ctx,b,'#7a5a34');ctx.save();ctx.clip(b);for(let i=0;i<900;i++){ctx.strokeStyle=R()<0.5?hexA(P.ink,0.3):hexA(P.paper,0.12);ctx.lineWidth=1.4;const x=rr(0,W),y=rr(0,H);ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+rr(-3,3),y+rr(4,8));ctx.stroke();}ctx.restore();
+  ctx.save();ctx.strokeStyle=hexA(P.ink,0.5);ctx.lineWidth=10;ctx.strokeRect(26,22,W-52,H-44);ctx.restore();ink(ctx,b,3);}
+
+/* ================= THE OPENING: the evening train, and a cab to Union Street =================
+   A wooden railway coach of the period: plush seats, mahogany panels, a brass luggage rack, a clerestory roof, roller
+   blinds. Outside, the dark countryside and the telegraph line along the track. Then a hired cab (a closed
+   four-wheeler, a horse and a cabman) from the Union Depot to the door. The details are typical of 1910, not drawn
+   from a particular coach or cab. */
+function drawCarWall(ctx,W,H){// 800 x 600 = 8 x 6 units: one bay of the coach, two windows (cut out: the country shows through)
+  const mah=mix('#5a2a1c',P.ink,0.15),mahL=mix(mah,P.paper,0.12),brass=P.brass,WX=[200,600],WT=250,WB=440,WW=170;
+  ctx.fillStyle=mah;ctx.fillRect(0,0,W,H);
+  // the clerestory: a dark band of small windows under the roof
+  ctx.fillStyle=mix(P.woodDark,P.ink,0.4);ctx.fillRect(0,0,W,78);for(let x=40;x<W;x+=120){const g=box(x,22,80,34,1);fill(ctx,g,mix(P.glass,P.skyBot,0.4));ink(ctx,g,2);}
+  const cor=box(0,76,W,20,1);fill(ctx,cor,mahL);ink(ctx,cor,2);
+  // the luggage rack: two brass rails with netting between, on brackets
+  ctx.save();ctx.strokeStyle=hexA(P.paper,0.25);ctx.lineWidth=1.2;for(let x=0;x<W;x+=12){ctx.beginPath();ctx.moveTo(x,150);ctx.lineTo(x+10,186);ctx.stroke();ctx.beginPath();ctx.moveTo(x+10,150);ctx.lineTo(x,186);ctx.stroke();}ctx.restore();
+  line(ctx,[[0,150],[W,150]],6,brass);line(ctx,[[0,188],[W,188]],5,brass);for(const x of [100,400,700]){line(ctx,[[x,120],[x,190]],5,brass);dot(ctx,x,120,5,brass);}
+  // panels: upper (between rack and windows) and lower (under the sills)
+  const panel2=(x,y,w,h)=>{const o=box(x,y,w,h,1);fill(ctx,o,mah);const i=box(x+10,y+10,w-20,h-20,1);fill(ctx,i,mix(mah,P.ink,0.2));line(ctx,[[x+10,y+h-10],[x+10,y+10],[x+w-10,y+10]],2,P.paper,0.12);ink(ctx,i,1.8);ink(ctx,o,2);};
+  for(let x=10;x<W;x+=196)panel2(x,470,180,120);
+  // pilasters between the windows, with a brass coat hook
+  for(const x of [0,400,800]){const p=box(x-34,200,68,280,1);fill(ctx,p,mahL);ctx.save();ctx.clip(p);ctx.strokeStyle=hexA(P.ink,0.35);ctx.lineWidth=2;for(const dx of [-14,0,14]){ctx.beginPath();ctx.moveTo(x+dx,214);ctx.lineTo(x+dx,466);ctx.stroke();}ctx.restore();ink(ctx,p,2);
+    curl(ctx,x,300,0.6,10,4,brass);dot(ctx,x,288,5,brass);}
+  // the windows: frame, sill, roller blind half down
+  for(const cx of WX){const fr=box(cx-WW/2-16,WT-16,WW+32,WB-WT+32,1);fill(ctx,fr,mahL);ink(ctx,fr,2.5);
+    const sill=box(cx-WW/2-24,WB+8,WW+48,18,1);fill(ctx,sill,mahL);ink(ctx,sill,2);dot(ctx,cx,WB+4,5,brass);}
+  // warm light from the ceiling lamps, falling down the wall
+  const g=ctx.createLinearGradient(0,80,0,H);g.addColorStop(0,hexA(P.glow,0.22));g.addColorStop(0.5,hexA(P.glow,0.06));g.addColorStop(1,hexA(P.ink,0.35));ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  // cut the glass out, then hang the blinds back in
+  ctx.save();ctx.globalCompositeOperation='destination-out';ctx.fillStyle='#000';for(const cx of WX)ctx.fillRect(cx-WW/2,WT,WW,WB-WT);ctx.restore();
+  for(const cx of WX){const bl=box(cx-WW/2,WT,WW,46,1);fill(ctx,bl,mix(P.paper,'#b49a62',0.5));shade(ctx,bl,0,WT,0,WT+46,0.3);line(ctx,[[cx-WW/2,WT+46],[cx+WW/2,WT+46]],4,P.woodDark);line(ctx,[[cx-10,WT+46],[cx-10,WT+58],[cx+10,WT+58],[cx+10,WT+46]],2.5,P.woodDark);ink(ctx,bl,2);
+    line(ctx,[[cx-WW/2,(WT+WB)/2+30],[cx+WW/2,(WT+WB)/2+30]],5,mahL);}}
+function drawCountry(ctx,W,H){// 2048 x 512, tiles across: night sky, far hills, a river with the moon in it, spruce, a lit farmhouse
+  const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,P.skyTop);g.addColorStop(0.55,mix(P.skyTop,P.skyBot,0.7));g.addColorStop(1,P.skyBot);ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  for(let i=0;i<160;i++){const y=rr(0,H*0.45);dot(ctx,rr(0,W),y,rr(0.6,1.6),hexA(P.paper,rr(0.2,0.7)));}
+  const ridge=(base,amp,n1,n2,ph,c)=>{const pts=[[0,H]];for(let x=0;x<=W;x+=16)pts.push([x,base+Math.sin(x/W*TAU*n1+ph)*amp+Math.sin(x/W*TAU*n2+ph*2)*amp*0.35]);pts.push([W,H]);const p=path(pts,{smooth:false});fill(ctx,p,c);return p;};
+  ridge(250,34,2,5,0.4,mix(P.far,P.skyBot,0.35));
+  const river=box(0,330,W,50,0);fill(ctx,river,mix(P.skyBot,P.far,0.3));for(let i=0;i<40;i++){const x=rr(0,W);line(ctx,[[x,340+rr(0,32)],[x+rr(20,60),340+rr(0,32)]],2,P.paper,rr(0.1,0.3));}
+  const near=ridge(372,10,3,7,1.3,mix(P.far,P.ink,0.45));
+  const spruce=(x,y,h,c)=>{for(const ox of [0,-W,W]){const X=x+ox;if(X<-60||X>W+60)continue;const pts=[[X,y-h]];for(let k=1;k<=5;k++){const yy=y-h+k*h/5.2,w=k*h*0.075;pts.push([X+w,yy],[X+w*0.45,yy-h*0.03]);}pts.push([X+h*0.07,y],[X-h*0.07,y]);for(let k=5;k>=1;k--){const yy=y-h+k*h/5.2,w=k*h*0.075;pts.push([X-w*0.45,yy-h*0.03],[X-w,yy]);}fill(ctx,path(pts,{smooth:false}),c);}};
+  for(let i=0;i<46;i++)spruce(rr(0,W),rr(372,400),rr(40,110),mix(P.far,P.ink,rr(0.5,0.75)));
+  for(const fx of [520,1500]){const hs=path([[fx,384],[fx,330],[fx+40,300],[fx+80,330],[fx+80,384]],{smooth:false});fill(ctx,hs,mix(P.far,P.ink,0.4));ctx.fillStyle=hexA(P.glow,0.9);ctx.fillRect(fx+16,344,12,14);ctx.fillRect(fx+50,344,12,14);
+    const gl=ctx.createRadialGradient(fx+40,350,2,fx+40,350,60);gl.addColorStop(0,hexA(P.glow,0.25));gl.addColorStop(1,hexA(P.glow,0));ctx.fillStyle=gl;ctx.fillRect(fx-30,290,140,120);}
+  ctx.fillStyle=mix(P.far,P.ink,0.7);ctx.fillRect(0,400,W,H-400);}
+function drawTrackPoles(ctx,W,H){// 1024 x 512, transparent: one pole of the telegraph line beside the track, and its wires
+  const c=mix(P.far,P.ink,0.6);for(const[y,s] of [[96,26],[124,30],[150,30]])line(ctx,[[0,y],[W*0.25,y+s*0.8],[W*0.5,y],[W*0.75,y+s*0.8],[W,y]],2.5,c);
+  const post=path([[500,H],[506,40],[518,40],[524,H]],{smooth:false});fill(ctx,post,c);for(const y of [92,146]){const a=box(452,y,120,10,1);fill(ctx,a,c);}
+  for(const x of [462,492,532,562])dot(ctx,x,90,5,c);}
+function drawCarFloor(ctx,W,H){// 1024 x 256: boards along the coach, a red runner down the aisle (lower half = nearer us)
+  ctx.fillStyle=mix(P.woodDark,P.ink,0.2);ctx.fillRect(0,0,W,H);for(let y=0;y<H;y+=16){line(ctx,[[0,y],[W,y]],1.5,P.ink,0.5);}
+  const run=box(-10,120,W+20,96,0);fill(ctx,run,mix(P.rug,P.ink,0.15));ctx.save();ctx.clip(run);ctx.strokeStyle=hexA(P.brass,0.5);ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(0,132);ctx.lineTo(W,132);ctx.moveTo(0,204);ctx.lineTo(W,204);ctx.stroke();ctx.restore();}
+function drawSeatBack(ctx,W,H){// 300 x 300 at 200 px a unit: a plush seat seen side-on, facing right; its back on the left
+  const plush=mix('#3b5a3e',P.ink,0.1),frame=mix('#5a2a1c',P.ink,0.2);
+  const back=path([[44,36],[92,30],[100,60],[84,190],[44,196],[34,120]],{jit:0.8});fill(ctx,back,plush);ctx.save();ctx.clip(back);for(let y=60;y<190;y+=34)dot(ctx,66,y,4,mix(plush,P.ink,0.5));ctx.restore();shade(ctx,back,100,0,34,0,0.4);ink(ctx,back,3);
+  const cush=path([[60,170],[262,168],[276,190],[264,206],[60,208]],{jit:0.8});fill(ctx,cush,plush);shade(ctx,cush,0,170,0,206,0.35);ink(ctx,cush,3);
+  const rail=box(28,26,22,186,1);fill(ctx,rail,frame);ink(ctx,rail,2.5);
+  for(const x of [80,240]){line(ctx,[[x,208],[x-6,H-6]],8,mix(P.boot,P.ink,0.2));}line(ctx,[[60,262],[246,262]],5,mix(P.boot,P.ink,0.2));}
+function drawSeatEnd(ctx,W,H){// 300 x 230 at 200 px a unit: the carved end of the seat on the aisle side, with its armrest
+  const wd=mix('#5a2a1c',P.paper,0.06);
+  const p=path([[30,H],[30,70],[40,46],[200,40],[252,46],[270,66],[258,86],[236,80],[226,96],[232,H]],{jit:0.8});fill(ctx,p,wd);shade(ctx,p,270,0,30,0,0.35);
+  const ov=path(ell(130,150,62,42,20,0.01));fill(ctx,ov,mix(wd,P.ink,0.22));line(ctx,[[90,150],[170,150]],2,P.paper,0.15);ink(ctx,ov,2);
+  curl(ctx,252,64,0,13,4,mix(wd,P.ink,0.5));const arm=box(38,40,200,14,1);fill(ctx,arm,mix(wd,P.paper,0.12));ink(ctx,arm,2);ink(ctx,p,3.5);
+  const foot=box(22,H-16,220,16,1);fill(ctx,foot,P.boot);ink(ctx,foot,2);}
+// the cab: a closed four-wheeler, side-on, facing right. 860 x 440 at 100 px a unit; the door's middle is x 210.
+function drawCab(ctx,W,H){const body=mix('#2c1b20',P.skyBot,0.2),line2=mix(P.brass,P.skyBot,0.3),blk=mix(P.boot,P.skyBot,0.15);
+  for(const[x0,x1,y] of [[70,250,322],[380,500,340]]){const sp=path(ell((x0+x1)/2,y,(x1-x0)/2,10,16,0.02));fill(ctx,sp,blk);ink(ctx,sp,2);}
+  // the shafts, out to the horse's collar
+  for(const[y0,y1,a] of [[300,236,1],[288,224,0.5]])line(ctx,[[480,y0],[700,y1-6],[846,y1]],a>0.6?9:7,mix('#4a3626',P.skyBot,0.3),a);
+  // the box: the cabman's seat, its leather apron in front, the footboard
+  const seat=box(360,166,150,22,1);fill(ctx,seat,blk);ink(ctx,seat,2.5);
+  const apron=path([[492,168],[534,170],[548,240],[528,318],[486,320]],{jit:0.8});fill(ctx,apron,blk);hatch(ctx,apron,{ang:1.4,gap:10,a:0.2});ink(ctx,apron,3);
+  line(ctx,[[470,322],[560,312]],7,blk);
+  // the body
+  const b=path([[54,112],[322,108],[346,128],[350,300],[330,338],[86,342],[58,318],[46,200]],{jit:1});fill(ctx,b,body);shade(ctx,b,350,0,46,0,0.35);
+  ctx.save();ctx.clip(b);ctx.strokeStyle=line2;ctx.lineWidth=2.5;ctx.strokeRect(70,128,264,198);ctx.restore();
+  const fw=path([[330,134],[346,136],[348,270],[330,272]],{smooth:false});fill(ctx,fw,mix(P.glass,P.skyBot,0.5));ink(ctx,fw,2);
+  const d=box(150,124,120,206,1);ink(ctx,d,2.5);const w=box(164,138,92,84,1);fill(ctx,w,mix(P.glass,P.skyBot,0.45));ctx.save();ctx.clip(w);ctx.strokeStyle=hexA(P.paper,0.2);ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(240,138);ctx.lineTo(176,222);ctx.stroke();ctx.restore();ink(ctx,w,2);
+  dot(ctx,262,252,6,P.brass);const qw=box(80,140,52,74,1);fill(ctx,qw,mix(P.glass,P.skyBot,0.45));ink(ctx,qw,2);
+  const roof=box(46,100,292,14,1);fill(ctx,roof,blk);ink(ctx,roof,2.5);ink(ctx,b,4);
+  // the step, and the lamp at the front corner
+  const st=box(176,346,70,10,1);fill(ctx,st,blk);ink(ctx,st,2);line(ctx,[[210,330],[210,348]],3,blk);
+  const lp=box(338,124,28,40,1);const lg=ctx.createLinearGradient(0,124,0,164);lg.addColorStop(0,mix(P.glow,P.paper,0.4));lg.addColorStop(1,P.glow);ctx.fillStyle=lg;ctx.fill(lp);ink(ctx,lp,2.5,P.boot);const lc=path([[334,124],[352,108],[370,124]],{smooth:false});fill(ctx,lc,P.boot);}
+function drawCabWheel(ctx,W,H){const c=W/2,r=W/2-6,blk=mix(P.boot,P.skyBot,0.15);
+  ctx.save();ctx.strokeStyle=blk;ctx.lineWidth=r*0.16;ctx.beginPath();ctx.arc(c,c,r-r*0.08,0,TAU);ctx.stroke();ctx.restore();
+  for(let i=0;i<12;i++){const a=i/12*TAU;line(ctx,[[c+Math.cos(a)*r*0.16,c+Math.sin(a)*r*0.16],[c+Math.cos(a)*r*0.86,c+Math.sin(a)*r*0.86]],Math.max(3,r*0.07),mix('#5c3b24',P.skyBot,0.3));}
+  dot(ctx,c,c,r*0.2,blk);dot(ctx,c,c,r*0.08,P.brass);ctx.save();ctx.strokeStyle=P.ink;ctx.lineWidth=3;ctx.beginPath();ctx.arc(c,c,r,0,TAU);ctx.stroke();ctx.beginPath();ctx.arc(c,c,r*0.76,0,TAU);ctx.stroke();ctx.restore();}
+function drawCabman(ctx,W,H){// 180 x 250: seated on the box, facing right, in a caped coat and a bowler, reins in hand
+  const coat=mix('#3e4636',P.skyBot,0.25),skin=mix(P.skin,P.glowDim,0.15);
+  const body=path([[40,100],[112,92],[134,150],[130,236],[34,240],[26,160]],{jit:0.8});cel(ctx,body,coat,{s:7});ink(ctx,body,3.5);
+  const cape=path([[34,96],[118,88],[146,140],[110,160],[30,158]],{jit:0.8});cel(ctx,cape,mix(coat,P.ink,0.15),{s:6});ink(ctx,cape,3);
+  const arm=path([[110,120],[160,150],[168,166],[154,170],[104,146]],{jit:0.6});cel(ctx,arm,coat,{s:5});ink(ctx,arm,2.5);dot(ctx,166,166,9,skin);
+  const head=path([[66,40],[108,38],[120,62],[128,72],[116,78],[112,94],[74,96],[60,70]],{jit:0.6});fill(ctx,head,skin);ink(ctx,head,3);
+  line(ctx,[[104,82],[124,84]],5,mix(P.ink,'#6b5a44',0.3));dot(ctx,104,60,3.5,P.ink);
+  const scarf=box(64,88,56,14,1);fill(ctx,scarf,mix(P.scarfB,P.skyBot,0.2));ink(ctx,scarf,2);
+  const crown=path([[64,44],[66,14],[86,6],[108,14],[112,44]],{jit:0.5});fill(ctx,crown,P.hat);ink(ctx,crown,2.5);const brim=path(ell(88,44,38,7,14,0.02));fill(ctx,brim,P.hat);ink(ctx,brim,2.5);
+  line(ctx,[[150,0],[160,176]],3,P.boot);}
+// the horse: a dark bay in harness, side-on, facing right. Body 420 x 240, neck and head 240 x 250, legs 80 x 175.
+function drawHorseBody(ctx,W,H){const bay=mix('#5b3320',P.skyBot,0.25),blk=mix(P.boot,P.skyBot,0.1);
+  const tail=path([[40,70],[18,120],[12,200],[30,214],[40,150],[54,96]],{jit:1});fill(ctx,tail,blk);hatch(ctx,tail,{ang:1.3,gap:6,a:0.3,c:P.paper});ink(ctx,tail,2.5);
+  const b=path([[44,80],[70,46],[150,52],[250,56],[310,34],[360,56],[384,100],[376,150],[340,176],[250,186],[150,182],[90,176],[54,140]],{jit:1});cel(ctx,b,bay,{s:10});
+  flecks(ctx,b,[40,30,350,160],60);ink(ctx,b,4.5);
+  // harness: collar and hames, the saddle pad and girth, the traces, the breeching round the quarters
+  const col=path([[318,36],[352,46],[376,100],[366,160],[344,164],[350,108],[330,62]],{jit:0.6});fill(ctx,col,blk);line(ctx,[[340,48],[362,110],[352,154]],4,P.brass);ink(ctx,col,2.5);
+  const pad=path([[196,46],[250,46],[256,92],[190,92]],{jit:0.6});fill(ctx,pad,blk);ink(ctx,pad,2);line(ctx,[[222,92],[226,184]],10,blk);dot(ctx,222,56,6,P.brass);
+  line(ctx,[[348,120],[250,120],[120,118]],5,blk);line(ctx,[[60,96],[100,150],[180,160]],6,blk);}
+function drawHorseNeck(ctx,W,H){const bay=mix('#5b3320',P.skyBot,0.25),blk=mix(P.boot,P.skyBot,0.1);
+  const n=path([[20,230],[30,150],[90,70],[150,36],[186,30],[224,82],[230,104],[214,118],[176,110],[140,120],[96,176],[80,236]],{jit:1});cel(ctx,n,bay,{s:8});ink(ctx,n,4);
+  const mane=path([[26,156],[86,64],[146,30],[150,44],[96,84],[40,170]],{jit:1.5});fill(ctx,mane,blk);ink(ctx,mane,2);
+  const ear=path([[150,36],[156,6],[170,32]],{smooth:false});fill(ctx,ear,bay);ink(ctx,ear,2.5);
+  // the bridle: a blinker over the eye, the noseband, the bit
+  const bl=path(ell(178,64,18,14,12,0.02));fill(ctx,bl,blk);dot(ctx,180,64,4,P.brass);ink(ctx,bl,2);
+  line(ctx,[[160,40],[176,96],[212,104]],4,blk);line(ctx,[[198,88],[222,94]],4,blk);dot(ctx,212,104,5,P.brass);dot(ctx,222,98,3,P.ink);}
+function drawHorseLeg(hind){return(ctx,W,H)=>{const bay=mix('#5b3320',P.skyBot,0.25),blk=mix(P.boot,P.skyBot,0.1);
+  const pts=hind?[[14,4],[66,4],[64,60],[52,92],[48,148],[30,148],[30,96],[22,52]]:[[18,4],[62,4],[56,70],[50,148],[30,148],[26,76]];
+  const l=path(pts,{jit:0.6});cel(ctx,l,bay,{s:5});ink(ctx,l,3);
+  const fet=path([[28,140],[52,140],[56,156],[26,156]],{smooth:false});fill(ctx,fet,mix(bay,P.ink,0.3));ink(ctx,fet,2);const hoof=path([[24,156],[58,156],[62,172],[20,172]],{smooth:false});fill(ctx,hoof,blk);ink(ctx,hoof,2.5);}}
+
 /* ================= EXHIBITS: the facts ================= */
 const ROOMS=[
   {name:'The Gesner Museum',x0:-20,x1:-10,wp:0,sign:'THE GESNER MUSEUM · 1842',win:560,peel:840},
@@ -622,17 +862,26 @@ const BASE_ROOMS=[
 const AREAS={
   museum:{id:'museum',x0:-20,x1:20,parts:[-10,0,10],rooms:ROOMS,gas:[-19.1,-10.4,-6.3,-0.42,5.5,9.45]},
   office:{id:'office',x0:60,x1:90,parts:[70,80],rooms:OFFICE_ROOMS,gas:[60.9,69.55,74.8,80.45,89.1]},
-  basement:{id:'basement',x0:120,x1:140,parts:[130],rooms:BASE_ROOMS,gas:[120.9,126.7,132.6,139.1]}};
+  basement:{id:'basement',x0:120,x1:140,parts:[130],rooms:BASE_ROOMS,gas:[120.9,126.7,132.6,139.1]},
+  // outdoors: no walls or gas sconces; a camera set further back and higher, so the building fits; a thinner, bluer fog
+  street:{id:'street',x0:170,x1:230,parts:[],rooms:[{name:'Union Street',x0:170,x1:230}],gas:[],outdoor:true,
+    cam:{h:8.6,back:21,look:7.4,ahead:2,m:14},fog:[32,95,mix(P.far,P.skyBot,0.4)]},
+  // the evening train, for the opening only (no doors lead here)
+  train:{id:'train',x0:258,x1:282,parts:[],rooms:[{name:'The evening train',x0:258,x1:282}],gas:[],outdoor:true,
+    cam:{h:2.7,back:6.4,look:1.25,ahead:0.4,m:6},fog:[20,60,P.fog]}};
 let AREA=AREAS.museum;
 // where each door leads, and where the Archivist steps out
+const F72_DOOR=190+550/80;// the museum's front door on Union Street (the facade's left edge + the door bay)
 const DOORS={
+  'to-street':{from:'museum',at:[-5,4.1],labelY:1.4,name:'the front door',verb:'Go out to Union Street',to:['street',F72_DOOR,-3.3],face:'front'},
+  'to-museum':{from:'street',at:[F72_DOOR,-4.0],labelY:5.2,name:'the museum',verb:'Go in: the museum',to:['museum',-5,3.2],face:'back'},
   'to-offices':{from:'museum',at:[-2,-4.0],name:'the CURATOR door (stairs up)',to:['office',72.5,-3.5]},
   'to-galleries':{from:'office',at:[72.5,-4.0],name:'the stairs down to the galleries',to:['museum',-2,-3.5]},
   'to-stacks':{from:'office',at:[77.5,-4.0],name:'the STACKS door (basement)',to:['basement',135,-3.5]},
   'to-upstairs':{from:'basement',at:[135,-4.0],name:'the stairs up to the offices',to:['office',77.5,-3.5]}};
 // everything else you can walk up to and use (exhibits are in EXHIBITS)
 const THINGS=[
-  ...Object.entries(DOORS).map(([id,d])=>({id,kind:'door',area:d.from,at:d.at,labelY:4.6,verb:'Go through: '+d.name,door:d})),
+  ...Object.entries(DOORS).map(([id,d])=>({id,kind:'door',area:d.from,at:d.at,labelY:d.labelY??4.6,verb:d.verb||'Go through: '+d.name,door:d})),
   {id:'harrow',kind:'talk',area:'office',at:[67.6,-1.4],labelY:3.2,verb:'Talk to Mr. Harrow'},
   {id:'mydesk',kind:'desk',area:'office',at:[84,-1.3],labelY:2.6,verb:'Sit at your desk'},
   {id:'shelf-a-f',kind:'shelf',area:'basement',at:[122.4,-2.9],labelY:4.4,verb:'Look at shelf A – F',shelf:'a-f'},
@@ -646,7 +895,7 @@ const vp=document.getElementById('vp'),canvas=document.getElementById('c');
 try{renderer=new THREE.WebGLRenderer({canvas,antialias:true});}catch(e){document.getElementById('loading').textContent='This sample needs WebGL to run.';return;}
 renderer.outputEncoding=THREE.sRGBEncoding;renderer.setPixelRatio(Math.min(2,window.devicePixelRatio||1));
 const scene=new THREE.Scene();scene.background=new THREE.Color(0x07070a);scene.fog=new THREE.Fog(new THREE.Color(P.fog).convertSRGBToLinear(),16,42);
-const camera=new THREE.PerspectiveCamera(40,16/9,0.1,120);
+const camera=new THREE.PerspectiveCamera(40,16/9,0.1,220);// far enough for the street's sky when the camera looks up
 function S(tex,ppu,ax,ay,o={}){const{w,h}=tex.userData,gw=w/ppu,gh=h/ppu,geo=new THREE.PlaneGeometry(gw,gh);geo.translate(gw/2-ax/ppu,ay/ppu-gh/2,0);
   const mat=new THREE.MeshBasicMaterial({map:tex,transparent:!o.opaque,alphaTest:o.opaque||o.add?0:0.05,side:THREE.DoubleSide,fog:o.fog!==false,depthWrite:!o.add,opacity:o.opacity??1});if(o.add)mat.blending=THREE.AdditiveBlending;
   const m=new THREE.Mesh(geo,mat),g=new THREE.Group();g.add(m);g.art=m;g.mat=mat;if(o.order!=null)m.renderOrder=o.order;return g;}
@@ -678,7 +927,7 @@ function build(){
   TX.upperArm=T(90,126,drawUpperArm(true),{border:5,cut:{b:112}});TX.upperArmPlain=T(90,126,drawUpperArm(false),{border:5,cut:{b:112}});TX.forearm=T(100,140,drawForearm(false),{border:5,cut:{t:18}});TX.forearmGrip=T(100,140,drawForearm(true),{border:5,cut:{t:18}});TX.scarf=T(230,100,drawScarf,{border:5});TX.case=T(200,170,drawCase,{border:5});
   TX.attBody=T(260,260,drawAttBody);TX.attHead=T(200,214,drawAttHead,{cut:{b:186}});TX.attEyes=T(80,24,drawAttEyes,{border:0});TX.attArm=T(124,70,drawAttArm,{border:4});
   TX.floor=T(1024,512,drawFloor,{border:0,repeat:[8,2]});TX.cut=T(512,90,drawCut,{border:0,repeat:[10,1]});
-  Object.values(AREAS).forEach((a,ai)=>a.rooms.forEach((r,i)=>{r.wallTex=T(1000,650,drawBackWall(r),{border:0,seed:500+ai*10+i});r.signTex=T(1000,110,drawSign(r.sign,54),{border:4,seed:800+ai*10+i});}));
+  Object.values(AREAS).filter(a=>!a.outdoor).forEach((a,ai)=>a.rooms.forEach((r,i)=>{r.wallTex=T(1000,650,drawBackWall(r),{border:0,seed:500+ai*10+i});r.signTex=T(1000,110,drawSign(r.sign,54),{border:4,seed:800+ai*10+i});}));
   TX.stoneFloor=T(1024,512,drawStoneFloor,{border:0,repeat:[6,2]});
   TX.partD=T(1000,650,drawPartition(true),{border:4,seed:700});TX.poche=T(128,128,drawPoche,{border:0,grain:false,repeat:[1,1]});TX.partE=T(1000,650,drawPartition(false),{border:4,seed:701});
   TX.vMin=T(300,260,drawVitrine('minerals'));TX.vIns=T(300,260,drawVitrine('insects'));TX.vTri=T(300,260,drawVitrine('trilobites'));
@@ -694,7 +943,7 @@ function build(){
 
   /* every area: floor, cut face, walls, partitions, gas light */
   W.gas=[];
-  for(const a of Object.values(AREAS)){const w=a.x1-a.x0,cx=(a.x0+a.x1)/2;
+  for(const a of Object.values(AREAS)){const w=a.x1-a.x0,cx=(a.x0+a.x1)/2;if(a.outdoor){(a.id==='train'?buildTrain:buildStreet)(a);continue;}
     const fl=plane(a.id==='basement'?TX.stoneFloor:TX.floor,w,10,{order:-10});fl.rotation.x=-Math.PI/2;fl.position.x=cx;scene.add(fl);
     const cut=plane(TX.cut,w+0.4,0.7,{});cut.position.set(cx,-0.35,5);scene.add(cut);
     for(const r of a.rooms){const wl=plane(r.wallTex,10,6.5,{});wl.position.set((r.x0+r.x1)/2,3.25,-5);scene.add(wl);
@@ -719,6 +968,8 @@ function build(){
   W.attHead=new THREE.Group();W.attHead.position.set(0,(260-62)/190,-0.004);W.att.add(W.attHead);const ah=S(TX.attHead,190,100,205);W.attHead.add(ah);ah.art.userData.ex=ex('attendant');PICK.push(ah.art);
   W.attEyes=S(TX.attEyes,190,40,12);W.attEyes.position.set(0,(205-116)/190,0.004);W.attHead.add(W.attEyes);
   W.attArm=S(TX.attArm,190,104,14);W.attArm.position.set((200-130)/190,(260-134)/190,0.01);W.att.add(W.attArm);
+  // the way out: a doormat at the open front of the hall (the street door is on the side we look in from)
+  TX.mat=T(300,110,drawMat,{border:0});const mat=plane(TX.mat,2.6,0.95,{order:-8,alpha:true});mat.rotation.x=-Math.PI/2;mat.position.set(-5,0.014,4.25);mat.userData.ex=thing('to-street');PICK.push(mat);scene.add(mat);
   put(TX.notice,110,130,160,-8.2,3.4,-4.94,ex('notice'));put(TX.bench,110,150,120,-8.2,0,-4.55);solid(-8.2,-4.6,1.4,0.35);
   put(TX.lectern,100,70,260,-2.2,0,-0.9,ex('book'));solid(-2.2,-0.9,0.45,0.35);
   put(TX.clock,100,60,150,-3.6,4.0,-4.93);W.pend=S(TX.pend,100,20,0);W.pend.position.set(-3.6,4.15,-4.92);scene.add(W.pend);
@@ -760,6 +1011,41 @@ function build(){
   for(const g of W.gas)g.mat.color=col(P.glow);W.lampGlow.mat.color=col(P.glow);
   scene.traverse(o=>{if(o.isMesh&&o.material.blending===THREE.AdditiveBlending&&o.material.map===TX.glow&&!W.gas.some(g=>g.art===o))o.material.color=col(P.glow);});
 }
+
+/* Union Street, outside No. 72 (x 170..230). The museum's front is the "back wall" at z = -5: the sidewalk runs in
+   front of it (z -5..-2.6), then the curb and the road. The open lot to the right of the museum is fenced. */
+function buildStreet(a){const cx=(a.x0+a.x1)/2,w=a.x1-a.x0,F=190;// F: the museum's left edge
+  TX.facade72=T(1100,1300,drawFacade72,{border:7,seed:1206});TX.frontDoor=T(260,420,drawFrontDoor,{border:5,seed:1207});
+  TX.nbr=[0,1,2].map(v=>T(v?1000:1050,v?900:1000,drawNeighbour(v),{border:7,seed:1210+v}));
+  TX.pole=T(200,1400,drawPole,{border:4,seed:1220});TX.fence=T(1140,150,drawFence,{border:4,seed:1221});TX.shed=T(500,360,drawShed,{border:5,seed:1222});
+  TX.road=T(1024,512,drawRoad,{border:0,repeat:[w/10,1]});TX.walk=T(1024,256,drawWalk,{border:0,repeat:[w/5,1]});TX.curb=T(1024,34,drawCurb,{border:0,repeat:[w/7,1]});
+  TX.sideWall=T(720,970,drawSideWall,{border:0,seed:1223});TX.sky=T(512,1024,drawSky,{border:0,grain:false});TX.skyline=T(2048,700,drawSkyline,{border:4,seed:1224});TX.moon=T(200,200,drawMoon,{border:5});
+  const sky=plane(TX.sky,280,130,{fog:false,order:-20});sky.position.set(cx,45,-75);scene.add(sky);
+  const moon=S(TX.moon,34,100,100,{fog:false});moon.position.set(cx+16,27,-70);scene.add(moon);
+  const sk=S(TX.skyline,38,1024,700);sk.position.set(cx,0,-30);scene.add(sk);
+  const road=plane(TX.road,w,7.6,{order:-10});road.rotation.x=-Math.PI/2;road.position.set(cx,0,1.2);scene.add(road);
+  const walk=plane(TX.walk,w,2.4,{order:-10});walk.rotation.x=-Math.PI/2;walk.position.set(cx,0.004,-3.8);scene.add(walk);
+  const curb=plane(TX.curb,w,0.24,{order:-9});curb.rotation.x=-Math.PI/2;curb.position.set(cx,0.008,-2.6);scene.add(curb);
+  const lot=plane(TX.road,16,12,{order:-11});lot.rotation.x=-Math.PI/2;lot.position.set(211,-0.01,-11);scene.add(lot);
+  const cut=plane(TX.cut,w+0.4,0.7,{});cut.position.set(cx,-0.35,5);scene.add(cut);
+  // the buildings: the museum, its side wall over the lot, the neighbours
+  put(TX.facade72,80,0,1300,F,0,-4.99);
+  const sw=plane(TX.sideWall,9,12.1,{});sw.rotation.y=Math.PI/2;sw.position.set(F+1050/80-0.03,12.1/2,-9.5);scene.add(sw);
+  put(TX.frontDoor,80,130,420,F+550/80,0,-4.96,thing('to-museum'));
+  put(TX.nbr[0],80,0,1000,F-1050/80,0,-5.0);put(TX.nbr[1],80,0,900,F-1050/80-1000/80,0,-5.02);put(TX.nbr[2],80,0,900,218,0,-5.02);
+  put(TX.fence,80,0,150,F+1100/80,0,-4.75);put(TX.shed,80,250,360,212,0,-13);
+  // telegraph poles at the curb, as in the photo, and their wires (sagging between the poles)
+  const POLES=[188.4,206.2],PZ=-2.4,TOP=14;// at the road edge of the curb, so the sidewalk is clearfor(const x of POLES){put(TX.pole,100,100,1400,x,0,PZ);solid(x,PZ,0.14,0.14);}
+  const wm=new THREE.LineBasicMaterial({color:col(mix(P.ink,P.skyBot,0.3))});
+  for(const[dx,y] of [[-0.63,TOP-1.28],[-0.21,TOP-1.28],[0.21,TOP-1.28],[0.63,TOP-1.28],[-0.21,TOP-2.18],[0.21,TOP-2.18]]){
+    const xs=[a.x0-2,...POLES,a.x1+2],pts=[];for(let k=0;k<xs.length-1;k++){const x0=xs[k]+dx,x1=xs[k+1]+dx,sag=0.02*(x1-x0);for(let u=0;u<=1;u+=0.05)pts.push(new THREE.Vector3(lerp(x0,x1,u),y-sag*4*u*(1-u),PZ-0.02));}
+    scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),wm));}
+  // light: the lamp by the door, the lit windows, a pool on the sidewalk
+  const glow=(x,y,z,s,o)=>{const g=S(TX.glow,256/s,128,128,{add:true,fog:false,opacity:o});g.position.set(x,y,z);scene.add(g);W.gas.push(g);return g;};
+  glow(F+408/80,(1300-955)/80,-4.9,2.2,0.75);glow(F+550/80,(1300-905)/80,-4.92,2.6,0.35);
+  for(const i of [1,3,4])glow(F+BAYS[i]/80,(1300-1060)/80,-4.93,3.4,0.32);glow(F+BAYS[4]/80,(1300-700)/80,-4.93,2.8,0.25);
+  const pool=plane(TX.glow,7,3.6,{add:true,opacity:0.3,order:-5});pool.rotation.x=-Math.PI/2;pool.position.set(F+480/80,0.012,-3.4);scene.add(pool);
+  buildCab();}
 
 /* ---------- rig ---------- */
 const RIG={};
@@ -824,6 +1110,7 @@ window.addEventListener('keydown',e=>{const k=e.key.toLowerCase();if(paused()||d
   if(e.target.id==='menubtn')return;
   if(DLG.open){if(k==='arrowleft'){e.preventDefault();dlgBack();return;}if(k==='arrowright'){e.preventDefault();dlgNext();return;}
     if((k==='e'||k==='enter'||k===' ')&&!(document.activeElement&&document.activeElement.closest('.dlg-choices,.dlg-nav'))){e.preventDefault();dlgNext();}return;}
+  if(CUT.on)return;
   if(cardOpen){if(k==='escape'||k==='e'||k==='enter'||k===' '){e.preventDefault();closeCard();}return;}
   if(['arrowup','arrowdown','arrowleft','arrowright','w','a','s','d'].includes(k)){keys[k]=true;ME.target=[];ME.pending=null;e.preventDefault();}
   if((k==='e'||k==='enter'||k===' ')&&near&&document.activeElement&&!/INPUT|TEXTAREA/.test(document.activeElement.tagName)){if(document.activeElement.tagName==='BUTTON'&&document.activeElement.closest('.cat'))return;e.preventDefault();interact(near);}});
@@ -852,7 +1139,7 @@ const newGame=()=>({v:1,stage:'arrive',have:[],carrying:[],desk:{}});
 let G=(()=>{try{return Object.assign(newGame(),JSON.parse(localStorage.getItem(SAVE_KEY))||{});}catch(e){return newGame();}})();
 function persist(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(G));}catch(e){}}
 const STAGE=()=>window.STORY.stages[G.stage]||{};
-const busy=()=>!!(cardOpen||DLG.open||FADE.on||document.body.dataset.overlay);
+const busy=()=>!!(cardOpen||DLG.open||FADE.on||document.body.dataset.overlay||CUT.on);
 function setStage(s){G.stage=s;persist();placeHarrow();renderObj();}
 const ACT=()=>window.Activities;
 function boxName(id){const b=ACT()?.BOXES[id];return b?`${b.maker.split(',')[0]} ${b.year}`:id;}
@@ -865,12 +1152,14 @@ function renderObj(){
   if(el.dataset.h!==h){el.innerHTML=h;el.dataset.h=h;}}
 
 /* areas and doors */
-const camX=x=>clamp(x,AREA.x0+3.8,AREA.x1-3.8);
-function snapCamera(){camPos.set(camX(ME.x),4.8,ME.z+10.6);camLook.set(camX(ME.x),2.3,ME.z-1.9);}
-function enterArea(id){AREA=AREAS[id];GRID=null;near=null;ME.target=[];ME.pending=null;renderObj();}
+const CAM0={h:4.8,back:10.6,look:2.3,ahead:1.9,m:3.8},CAMV=()=>AREA.cam||CAM0;
+const camX=x=>clamp(x,AREA.x0+CAMV().m,AREA.x1-CAMV().m);
+function snapCamera(){const c=CAMV();camPos.set(camX(ME.x),c.h,ME.z+c.back);camLook.set(camX(ME.x),c.look,ME.z-c.ahead);}
+function enterArea(id){AREA=AREAS[id];GRID=null;near=null;ME.target=[];ME.pending=null;
+  const f=AREA.fog||[16,42,P.fog];scene.fog.near=f[0];scene.fog.far=f[1];scene.fog.color.copy(col(f[2]));renderObj();}
 const FADE={on:false};
 function fade(mid,done){FADE.on=true;ui.fade.classList.add('on');setTimeout(()=>{mid&&mid();setTimeout(()=>{ui.fade.classList.remove('on');setTimeout(()=>{FADE.on=false;done&&done();},160);},80);},170);}
-function useDoor(d){stopWalking();fade(()=>{enterArea(d.to[0]);ME.x=d.to[1];ME.z=d.to[2];ME.view={mode:'front',facing:1};ME.flip=null;snapCamera();const s=window.STORY.onEnter?.(G.stage,d.to[0]);if(s)setStage(s);});}
+function useDoor(d){stopWalking();fade(()=>{enterArea(d.to[0]);ME.x=d.to[1];ME.z=d.to[2];ME.view={mode:d.face==='back'?'back':'front',facing:1};ME.flip=null;snapCamera();const s=window.STORY.onEnter?.(G.stage,d.to[0]);if(s)setStage(s);});}
 function stopWalking(){ME.target=[];ME.pending=null;for(const k in keys)keys[k]=false;}
 
 /* Mr. Harrow stands in his office, or beside your desk while you work through your first stack */
@@ -880,9 +1169,9 @@ function placeHarrow(){if(!W.har)return;const where=STAGE().harrow||'home',[x,z]
 const FACES={};function faceURL(who){if(FACES[who])return FACES[who];const sp=SPEAKERS[who],src=TX[sp.face]?.image;if(!src)return'';const c=document.createElement('canvas');c.width=c.height=96;const x=c.getContext('2d');x.fillStyle='#2a2c33';x.fillRect(0,0,96,96);const[a,b,w,h]=sp.crop;x.drawImage(src,a,b,w,h,0,0,96,96);return FACES[who]=c.toDataURL();}
 
 /* dialogue */
-const SPEAKERS={harrow:{name:'Mr. Harrow · the Curator',face:'harHead',crop:[22,40,156,156]},attendant:{name:'The attendant',face:'attHead',crop:[34,22,132,132]},you:{name:'You',face:'headF',crop:[40,36,170,170]}};
+const SPEAKERS={narrator:{name:'',face:null},conductor:{name:'The conductor',face:null},harrow:{name:'Mr. Harrow · the Curator',face:'harHead',crop:[22,40,156,156]},attendant:{name:'The attendant',face:'attHead',crop:[34,22,132,132]},you:{name:'You',face:'headF',crop:[40,36,170,170]}};
 const DLG={open:false,lines:[],i:0,reply:null,end:null,who:null};
-function say(lines,end){if(!lines||!lines.length){end&&end();return;}stopWalking();if(cardOpen)closeCard();DLG.open=true;DLG.lines=lines;DLG.i=0;DLG.reply=null;DLG.end=end;faceFront();showLine();}
+function say(lines,end){if(!lines||!lines.length){end&&end();return;}stopWalking();if(cardOpen)closeCard();DLG.open=true;DLG.lines=lines;DLG.i=0;DLG.reply=null;DLG.end=end;if(!CUT.lockView)faceFront();showLine();}
 function showLine(){const L=DLG.lines[DLG.i];if(!L)return endDlg();
   if(L.do){ui.dlg.hidden=true;return DO[L.do](L,()=>{DLG.i++;showLine();});}renderLine(L);}
 function card(L){
@@ -891,7 +1180,7 @@ function card(L){
   if(L.card==='rq'){const c=ACT()?.caseById(L.case);return c?`<div class="dlg-card rq"><div class="rq-tag">Your research question</div><p>${esc(c.rq.text)}</p></div>`:'';}
   if(L.card==='slip'){const c=ACT()?.caseById(L.case);return c?`<div class="dlg-card"><div class="rq-tag">Request slip · fetch these boxes from the stacks</div><ol>${c.fetch.map(b=>`<li>${esc(ACT().BOXES[b].maker)} · ${esc(ACT().BOXES[b].year)}</li>`).join('')}</ol></div>`:'';}
   return'';}
-function renderLine(L){const sp=SPEAKERS[L.who]||SPEAKERS.you;DLG.who=L.who;
+function renderLine(L){const sp=SPEAKERS[L.who]||SPEAKERS.you;DLG.who=L.who;ui.dlg.classList.toggle('noface',!sp.face);ui.dlg.classList.toggle('narr',L.who==='narrator');
   const fc=ui.dlgFace.getContext('2d'),src=TX[sp.face]?.image;fc.fillStyle='#2a2c33';fc.fillRect(0,0,96,96);if(src){const[x,y,w,h]=sp.crop;fc.drawImage(src,x,y,w,h,0,0,96,96);}
   ui.dlgWho.textContent=sp.name;ui.dlgText.textContent=DLG.reply?DLG.reply.text:L.text;
   ui.dlgCard.innerHTML=DLG.reply?'':card(L);ui.dlgCard.hidden=!ui.dlgCard.innerHTML;
@@ -922,6 +1211,97 @@ const DO={
   toDesk:(L,next)=>fade(()=>{setStage(L.stage);enterArea('office');ME.x=84.6;ME.z=0.2;ME.view={mode:'front',facing:1};ME.flip=null;snapCamera();},next),
 };
 function talk(who){const lines=window.STORY.talk[who]?.(G.stage);say(lines);}
+/* The evening train (area 'train', x 258..282): one coach, three bays long. The back wall has its windows cut out; behind
+   them the country and the telegraph poles slide past (their textures scroll while CUT.train is on). The seats are
+   side-on: a plush back and cushion behind you, the carved end on the aisle in front of you, which hides your legs. */
+function buildTrain(a){const cx=(a.x0+a.x1)/2,w=a.x1-a.x0;
+  TX.carWall=T(800,600,drawCarWall,{border:0,seed:1300});TX.country=T(2048,512,drawCountry,{border:0,grain:false,repeat:[1,1],seed:1303});TX.trackPoles=T(1024,512,drawTrackPoles,{border:0,grain:false,repeat:[2,1]});
+  TX.carFloor=T(1024,256,drawCarFloor,{border:0,repeat:[w/8,1]});TX.seatBack=T(300,300,drawSeatBack,{border:5,seed:1301});TX.seatEnd=T(300,230,drawSeatEnd,{border:5,seed:1302});
+  const country=plane(TX.country,36,9,{fog:false,order:-20});country.position.set(cx,3.3,-7);scene.add(country);
+  const poles=plane(TX.trackPoles,18,9,{alpha:true,fog:false,order:-19});poles.position.set(cx,0.6,-4.2);scene.add(poles);
+  for(let x=a.x0+4;x<a.x1;x+=8){const wl=plane(TX.carWall,8,6,{alpha:true});wl.position.set(x,3,-2.3);scene.add(wl);
+    const g=S(TX.glow,256/3,128,128,{add:true,fog:false,opacity:0.45});g.position.set(x,5.5,-1.6);scene.add(g);W.gas.push(g);}
+  const fl=plane(TX.carFloor,w,4.6,{order:-10});fl.rotation.x=-Math.PI/2;fl.position.set(cx,0,0);scene.add(fl);
+  const cut=plane(TX.cut,w+0.4,0.7,{});cut.position.set(cx,-0.35,2.3);scene.add(cut);
+  for(let x=a.x0+0.4;x<a.x1-1;x+=2.0){put(TX.seatBack,200,30,300,x,0,-1.3);put(TX.seatEnd,200,30,230,x,0,-0.2);}}
+const SEAT_X=258.4+2.0*4+0.72;// where you sit: the fifth seat
+/* The cab: one group, built once, hidden until the opening. Its origin is on the road under the cab door. */
+function buildCab(){TX.cab=T(860,440,drawCab,{border:6,seed:1310});TX.wheelR=T(196,196,drawCabWheel,{border:4,seed:1311});TX.wheelF=T(144,144,drawCabWheel,{border:4,seed:1312});
+  TX.cabman=T(180,250,drawCabman,{border:5,seed:1313});TX.horse=T(420,240,drawHorseBody,{border:6,seed:1314});TX.horseNeck=T(240,250,drawHorseNeck,{border:5,seed:1315});
+  TX.legFr=T(80,175,drawHorseLeg(false),{border:4,seed:1316});TX.legHi=T(80,175,drawHorseLeg(true),{border:4,seed:1317});
+  const g=new THREE.Group();g.visible=false;scene.add(g);const C={g,x:150,z:-1.0,v:0,d:0,goal:null,leave:false,wheels:[],legs:[]};W.cabS=C;
+  const add=(tex,ppu,ax,ay,x,y,z,tint)=>{const s=S(tex,ppu,ax,ay);s.position.set(x,y,z);if(tint)s.mat.color.setScalar(tint);g.add(s);return s;};
+  for(const[tex,x,r] of [[TX.wheelR,-0.8,0.92],[TX.wheelF,2.3,0.66]])for(const z of [-0.34,0.05]){const c=tex.userData.w/2;C.wheels.push({s:add(tex,100,c,c,x+(z<0?0.08:0),r,z,z<0?0.5:0),r});}
+  add(TX.cab,100,210,440,0,0,0);
+  const HX=3.55;// the horse's rump, just ahead of the cabman's apron
+  for(const[tex,x,z,o,t] of [[TX.legHi,1.02,-0.08,0.5,0.55],[TX.legFr,3.28,-0.08,0.75,0.55],[TX.legHi,0.9,0.02,0,0],[TX.legFr,3.16,0.02,0.25,0]])C.legs.push({s:add(tex,100,40,6,HX+x,1.72,z,t),o:o*TAU});
+  C.body=add(TX.horse,100,0,240,HX,0.62,-0.03);
+  C.neck=add(TX.horseNeck,100,40,220,HX+3.34,2.2,-0.02);
+  C.man=add(TX.cabman,100,90,250,2.25,2.62,-0.05);
+  const lamp=S(TX.glow,256/1.6,128,128,{add:true,fog:false,opacity:0.7});lamp.position.set(1.42,2.98,0.06);g.add(lamp);W.gas.push(lamp);
+  C.reins=new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(),new THREE.Vector3()]),new THREE.LineBasicMaterial({color:col(P.boot)}));g.add(C.reins);}
+function cabTick(dt){const C=W.cabS;if(!C||!C.g.visible)return;
+  if(C.goal!=null){const rem=C.goal-C.x,want=Math.min(4,Math.sqrt(2*1.1*Math.max(0,rem)));C.v=Math.min(want,C.v+1.3*dt);if(rem<0.03){C.x=C.goal;C.v=0;C.goal=null;}}
+  else if(C.leave){C.v=Math.min(4,C.v+1.1*dt);if(C.x>240)C.g.visible=false;}
+  C.x+=C.v*dt;C.d+=C.v*dt;C.g.position.set(C.x,0,C.z);
+  for(const w of C.wheels)w.s.rotation.z=-C.d/w.r;
+  // a walk: four beats, one leg at a time; the head nods twice a stride; standing, it shifts its head now and then
+  const ph=C.d/1.6*TAU,amp=Math.min(1,C.v/1.2);
+  for(const l of C.legs)l.s.rotation.z=Math.sin(ph+l.o)*0.36*amp;
+  C.body.position.y=0.62+Math.abs(Math.sin(ph*2))*0.025*amp;C.neck.rotation.z=Math.sin(ph*2)*0.05*amp+(1-amp)*Math.sin(TM*0.8)*0.04;
+  C.man.position.y=2.62+Math.abs(Math.sin(ph*2))*0.02*amp;
+  const n=C.neck,dx=(212-40)/100,dy=(220-104)/100,cs=Math.cos(n.rotation.z),sn=Math.sin(n.rotation.z);
+  const pa=C.reins.geometry.attributes.position;pa.setXYZ(0,3.0,C.man.position.y+0.82,-0.04);pa.setXYZ(1,n.position.x+dx*cs-dy*sn,n.position.y+dx*sn+dy*cs,-0.04);pa.needsUpdate=true;}
+
+/* ================= THE OPENING =================
+   Played once, at the start of a new game (stage 'arrive', until G.opening is set). The train (narration from
+   STORY.opening.train), a fade, the cab to Union Street, the walk to the door, the camera rising up the building with the
+   title, one line at the door. Then the game. Skip ends it at the door. Waits run on CUT.t, which only moves while the
+   game is not paused, so pausing holds the opening. */
+const CUT={on:false,t:0,waits:[],cam:null,skip:false,lockView:false,hideMe:false,train:false,say:null,fadeRej:null};
+function cutWait(s){return new Promise((res,rej)=>CUT.waits.push({at:CUT.t+s,res,rej}));}
+function cutUntil(fn,max=30){const t0=CUT.t;return new Promise((res,rej)=>CUT.waits.push({fn:()=>fn()||CUT.t-t0>max,res,rej}));}
+function cutSay(lines){return new Promise((res,rej)=>{CUT.say=rej;say(lines,()=>{CUT.say=null;res();});});}
+function cutFade(mid){return new Promise((res,rej)=>{CUT.fadeRej=rej;fade(()=>{if(!CUT.skip)mid();},()=>{CUT.fadeRej=null;res();});});}
+function cutTick(dt){CUT.t+=dt;if(CUT.train){TX.country.offset.x+=dt*0.012;TX.trackPoles.offset.x+=dt*0.34;}cabTick(dt);
+  for(const w of CUT.waits.slice())if(w.fn?w.fn():CUT.t>=w.at){CUT.waits.splice(CUT.waits.indexOf(w),1);w.res();}}
+async function runOpening(){
+  CUT.on=true;CUT.skip=false;CUT.t=0;CUT.waits=[];CUT.lockView=true;document.body.classList.add('cutscene');document.getElementById('skipbtn').hidden=false;
+  const C=W.cabS,O=window.STORY.opening;
+  try{
+    await cutFade(()=>{enterArea('train');ME.x=SEAT_X;ME.z=-0.75;ME.sink=0.52;ME.view={mode:'side',facing:1};ME.flip=null;ME.target=[];CUT.train=true;snapCamera();});
+    await cutWait(2.4);
+    await cutSay(O.train);
+    await cutWait(0.5);
+    // Union Street: a cab from the depot. You ride inside (hidden); the camera follows the cab.
+    await cutFade(()=>{CUT.train=false;ME.sink=0;CUT.hideMe=true;enterArea('street');Object.assign(C,{x:158,v:0,d:0,goal:F72_DOOR,leave:false});C.g.visible=true;ME.x=C.x;ME.z=1.2;snapCamera();});// (the rider's z sets the camera back far enough to see the wheels)
+    await cutUntil(()=>{ME.x=C.x;return C.goal==null;},25);
+    await cutWait(1.1);
+    // you step down on the curb side, behind the cab, and it drives off
+    ME.x=F72_DOOR+0.4;ME.z=-2.2;ME.view={mode:'front',facing:1};CUT.hideMe=false;
+    await cutWait(0.6);C.leave=true;
+    await cutWait(1.8);routeTo(F72_DOOR,-3.5);
+    await cutUntil(()=>!ME.target.length,8);
+    // the camera rises up the front of No. 72, and the title
+    CUT.cam={pos:[F72_DOOR,6.8,8.5],look:[F72_DOOR,12.2,-5]};
+    await cutWait(1.8);document.getElementById('optitle').hidden=false;
+    await cutWait(3.6);document.getElementById('optitle').hidden=true;CUT.cam=null;
+    await cutWait(1.2);CUT.cam={pos:[F72_DOOR+1.2,3.4,6.2],look:[F72_DOOR,2.2,-4.6]};// close in for your line at the door
+    await cutWait(1.4);
+    await cutSay(O.door);CUT.cam=null;
+  }catch(e){if(e!=='skip')console.error(e);}
+  finishOpening();}
+function skipOpening(){if(!CUT.on||CUT.skip)return;CUT.skip=true;for(const w of CUT.waits.splice(0))w.rej('skip');
+  if(CUT.say){const r=CUT.say;CUT.say=null;DLG.end=null;endDlg();r('skip');}
+  if(CUT.fadeRej){const r=CUT.fadeRej;CUT.fadeRej=null;r('skip');}}
+function finishOpening(){const skipped=CUT.skip;
+  const done=()=>{Object.assign(CUT,{on:false,train:false,cam:null,lockView:false,hideMe:false,waits:[],say:null,fadeRej:null});ME.sink=0;W.cabS.g.visible=false;W.cabS.goal=null;W.cabS.leave=false;
+    document.getElementById('optitle').hidden=true;document.getElementById('skipbtn').hidden=true;document.body.classList.remove('cutscene');
+    if(skipped||AREA.id!=='street'){enterArea('street');ME.x=F72_DOOR;ME.z=-3.5;ME.view={mode:'front',facing:1};ME.flip=null;ME.target=[];snapCamera();}
+    G.opening=true;persist();renderObj();vp.focus({preventScroll:true});};
+  if(skipped)fade(done);else done();}
+
+
 
 /* the desk and the shelves open the paper activities (js/desk/) over the museum */
 function useDesk(){const st=STAGE();
@@ -941,7 +1321,8 @@ function progress(){const st=STAGE();
 
 /* the quest marker: the pointing hand over the next thing to use (STORY.stages[...].goal), or over the door that
    leads toward it. Off the side of the screen, it points along the edge. */
-const DOOR_TOWARD={museum:{office:'to-offices',basement:'to-offices'},office:{museum:'to-galleries',basement:'to-stacks'},basement:{office:'to-upstairs',museum:'to-upstairs'}};
+const DOOR_TOWARD={museum:{office:'to-offices',basement:'to-offices',street:'to-street'},office:{museum:'to-galleries',basement:'to-stacks',street:'to-galleries'},
+  basement:{office:'to-upstairs',museum:'to-upstairs',street:'to-upstairs'},street:{museum:'to-museum',office:'to-museum',basement:'to-museum'}};
 function questGoal(){const st=STAGE(),A=ACT();let id=st.goal;if(!id)return null;
   if(id==='shelf'){if(!A)return null;let box=null;if(st.fetch)box=A.caseById(st.fetch).fetch.find(b=>!G.have.includes(b));else if(st.file&&G.carrying.length)box=A.SOURCES[G.carrying[0]].box;if(!box)return null;id='shelf-'+A.shelfOf(box).id;}
   const t=EXHIBITS.concat(THINGS).find(e=>e.id===id);if(!t)return null;return t.area===AREA.id?t:thing(DOOR_TOWARD[AREA.id][t.area]);}
@@ -974,7 +1355,8 @@ const v3=new THREE.Vector3();let last=performance.now(),TM=0,hintT=0;const camPo
 function step(dt){
   TM+=dt;
   let ix=0,iz=0;
-  if(!busy()){ix=(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0);iz=(keys.s||keys.arrowdown?1:0)-(keys.w||keys.arrowup?1:0);
+  // in the opening you can't steer, but you still walk where the scene sends you (ME.target)
+  if(!busy()||(CUT.on&&!DLG.open&&!FADE.on)){if(!CUT.on){ix=(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0);iz=(keys.s||keys.arrowdown?1:0)-(keys.w||keys.arrowup?1:0);}
     if(!ix&&!iz&&ME.target.length){const[tx,tz]=ME.target[0];const dx=tx-ME.x,dz=tz-ME.z,d=Math.hypot(dx,dz);
       if(d<0.12){ME.target.shift();if(!ME.target.length&&ME.pending){const p=ME.pending;ME.pending=null;interact(p);}}else{ix=dx/d;iz=dz/d;}}}
   const len=Math.hypot(ix,iz);let moved=0;
@@ -983,7 +1365,7 @@ function step(dt){
     if(ME.target.length){if(moved<sp*0.25){ME.stuck+=dt;if(ME.stuck>0.35){const p=ME.pending;ME.target=[];ME.pending=null;if(p&&Math.hypot(p.at[0]-ME.x,p.at[1]-ME.z)<2.4)interact(p);}}else ME.stuck=0;}
     if(!ME.flip&&moved>sp*0.35){const want=wantView(ME.x-ox,ME.z-oz);if(want.mode!==ME.view.mode||want.facing!==ME.view.facing)ME.flip={from:ME.view,to:want,u:0};}}
   ME.amp=lerp(ME.amp,moved>0.0005?1:0,1-Math.exp(-12*dt));
-  ME.idle=moved>0.0005?0:(ME.idle||0)+dt;if(ME.idle>2.6&&!cardOpen)faceFront();
+  ME.idle=moved>0.0005?0:(ME.idle||0)+dt;if(ME.idle>2.6&&!cardOpen&&!CUT.lockView)faceFront();
   if(ME.flip){ME.flip.u+=dt/0.18;if(ME.flip.u>=1){ME.view=ME.flip.to;ME.flip=null;}}
   // nearest exhibit
   near=null;let best=2.0;for(const e of EXHIBITS.concat(THINGS)){if(e.area!==AREA.id)continue;const d=Math.hypot(e.at[0]-ME.x,e.at[1]-ME.z);if(d<best){best=d;near=e;}}
@@ -1003,7 +1385,9 @@ function pose(){
     // seen from the front or back, a swinging arm shows as a slight sway and a shortening as it comes toward us
     s.n1=0.06+0.03*sw;s.f1=0.08-0.04*sw;s.n2=0.04;s.f2=0.14+0.08*Math.abs(sw);s.fsN=1-0.06*Math.max(0,-sw);s.fsF=1-0.12*Math.max(0,sw);
   }
-  RIG.root.position.set(ME.x,s.y,ME.z);RIG.root.rotation.y=rot;RIG.root.rotation.z=s.waddle;
+  // seated on the train, the whole figure sinks behind the seat end (ME.sink) and rocks with the coach
+  RIG.root.position.set(ME.x,s.y-(ME.sink||0),ME.z);RIG.root.rotation.y=rot;RIG.root.rotation.z=s.waddle+(CUT.train?Math.sin(TM*1.7)*0.012:0);
+  RIG.root.visible=!CUT.hideMe;RIG.shadow.visible=!CUT.hideMe&&!ME.sink;
   RIG.body.scale.set(0.82/Math.sqrt(s.sy),0.82*s.sy,0.82);RIG.torso.rotation.z=-s.lean;
   if(RIG.mode==='side'){RIG.legN.rotation.z=s.legN;RIG.legF.rotation.z=s.legF;RIG.legN.position.y=0;RIG.legF.position.y=0;}else{RIG.legN.rotation.z=0;RIG.legF.rotation.z=0;RIG.legN.position.y=s.liftN;RIG.legF.position.y=s.liftF;}
   const o=RIG.out,side=RIG.mode==='side';
@@ -1034,11 +1418,12 @@ function world(){
   const pa=W.motePts.geometry.attributes.position;for(let i=0;i<W.motes.N;i++){const[x,y,z,ph,sp]=W.motes.seed[i];pa.array[i*3]=x+Math.sin(TM*0.3*sp+ph)*0.5;pa.array[i*3+1]=(y+TM*0.08*sp)%6.5;pa.array[i*3+2]=z+Math.cos(TM*0.25*sp+ph)*0.4;}pa.needsUpdate=true;
 }
 function placeCamera(dt){
-  const cx=camX(ME.x);const tp=new THREE.Vector3(cx,4.8,ME.z+10.6),tl=new THREE.Vector3(cx,2.3,ME.z-1.9);
-  const k=1-Math.exp(-4*dt);camPos.lerp(tp,k);camLook.lerp(tl,k);
+  const cx=camX(ME.x),cv_=CAMV();const tp=new THREE.Vector3(cx,cv_.h,ME.z+cv_.back),tl=new THREE.Vector3(cx,cv_.look,ME.z-cv_.ahead);
+  if(CUT.cam){tp.set(...CUT.cam.pos);tl.set(...CUT.cam.look);}// the opening can take the camera (a slow glide)
+  const k=1-Math.exp(-(CUT.cam?1.1:4)*dt);camPos.lerp(tp,k);camLook.lerp(tl,k);
   drag.yaw+=(drag.ty-drag.yaw)*0.12;drag.pitch+=(drag.tp-drag.pitch)*0.12;if(!drag.on){drag.ty*=0.93;drag.tp*=0.93;}
   const dx=camPos.x-camLook.x,dz=camPos.z-camLook.z,c=Math.cos(drag.yaw),s=Math.sin(drag.yaw);
-  camera.position.set(camLook.x+dx*c-dz*s,camPos.y+drag.pitch*Math.hypot(dx,dz),camLook.z+dx*s+dz*c);camera.lookAt(camLook);
+  camera.position.set(camLook.x+dx*c-dz*s,camPos.y+drag.pitch*Math.hypot(dx,dz)+(CUT.train?Math.sin(TM*8.3)*0.01+Math.sin(TM*1.7)*0.02:0),camLook.z+dx*s+dz*c);camera.lookAt(camLook);
 }
 function hud(){
   ui.room.textContent=roomAt(ME.x).name;ui.obj.hidden=DLG.open||!!document.body.dataset.overlay;
@@ -1048,7 +1433,7 @@ function hud(){
     const touch=matchMedia('(pointer: coarse)').matches;const html=(touch?'Tap: ':'<kbd>E</kbd>')+(e.verb?esc(e.verb):e.talk?'Talk to the attendant':esc(e.name));if(ui.prompt.dataset.h!==html){ui.prompt.innerHTML=html;ui.prompt.dataset.h=html;}}
   else ui.prompt.hidden=true;
 }
-function frame(now){const dt=Math.min(0.05,(now-last)/1000);last=now;if(paused()){requestAnimationFrame(frame);return;}step(dt);pose();world();placeCamera(dt);if(document.body.dataset.overlay!=='desk')renderer.render(scene,camera);hud();
+function frame(now){const dt=Math.min(0.05,(now-last)/1000);last=now;if(paused()){requestAnimationFrame(frame);return;}step(dt);if(CUT.on)cutTick(dt);pose();world();placeCamera(dt);if(document.body.dataset.overlay!=='desk')renderer.render(scene,camera);hud();
   if(ME.dist>3&&!hintT){hintT=1;document.getElementById('keyhint').style.opacity='0';}requestAnimationFrame(frame);}
 function resize(){const w=vp.clientWidth,h=vp.clientHeight;if(!w||!h)return;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();
   if(paused())renderer.render(scene,camera);} /* setSize clears the canvas, and frame() draws nothing while a menu is up */
@@ -1067,7 +1452,8 @@ function showTitle(){
   cont.hidden=!can;document.getElementById('newgame').classList.toggle('big',!can);document.getElementById('continue-where').textContent=can&&objText()?'To do: '+objText():'';
   document.getElementById('titlemenu').hidden=false;document.getElementById('titleconfirm').hidden=true;
   menuBtn().hidden=true;titleScreen.hidden=false;(can?cont:document.getElementById('newgame')).focus();}
-function startPlay(){titleScreen.hidden=true;menuBtn().hidden=false;playedThisVisit=true;last=performance.now();vp.focus({preventScroll:true});}
+function startPlay(){titleScreen.hidden=true;menuBtn().hidden=false;playedThisVisit=true;last=performance.now();vp.focus({preventScroll:true});
+  if(G.stage==='arrive'&&!G.opening&&!CUT.on)runOpening();}// a new game opens on the train
 function openPause(){
   if(paused()||document.body.dataset.overlay)return;haltPlayer();
   const t=objText();document.getElementById('pause-obj').innerHTML=t?'<b>To do</b>'+esc(t):'';
@@ -1080,7 +1466,7 @@ function setupMenus(){
     $('titlemenu').hidden=true;$('titleconfirm').hidden=false;$('newgame-no').focus();};
   $('newgame-no').onclick=()=>{$('titleconfirm').hidden=true;$('titlemenu').hidden=false;$('newgame').focus();};
   $('newgame-yes').onclick=()=>{try{localStorage.removeItem(SAVE_KEY);sessionStorage.setItem(BEGIN_KEY,'1');}catch(e){}location.reload();};
-  menuBtn().onclick=openPause;
+  menuBtn().onclick=openPause;$('skipbtn').onclick=e=>{e.stopPropagation();skipOpening();};
   $('to-title').onclick=showTitle;
   pauseMenu.addEventListener('close',()=>{last=performance.now();if(titleScreen.hidden)vp.focus({preventScroll:true});});}
 async function boot(){
@@ -1091,9 +1477,10 @@ async function boot(){
   ui.marker=window.HAND.make(vp,'quest',130);
   setupMenus();
   document.getElementById('loading').hidden=true;
+  if(G.stage==='arrive'){enterArea('street');ME.x=183.5;ME.z=-3.4;ME.view={mode:'side',facing:1};}// a new game starts outside
   snapCamera();pose();world();placeCamera(1);renderer.render(scene,camera);
   if(sessionStorage.getItem(BEGIN_KEY)){sessionStorage.removeItem(BEGIN_KEY);startPlay();}else showTitle();
-  window.museum={tick:(n=60,dt=1/60)=>{for(let i=0;i<n;i++){step(dt);pose();}return[ME.x,ME.z];},keys,go:(x,z,area)=>{if(area)enterArea(area);ME.x=x;ME.z=z;snapCamera();},area:()=>AREA.id,say:l=>say(l),stage:st=>{if(st)setStage(st);return G.stage;},game:()=>G,open:id=>interact(EXHIBITS.concat(THINGS).find(e=>e.id===id)),close:closeCard,walk:routeTo,me:ME,
+  window.museum={tick:(n=60,dt=1/60)=>{for(let i=0;i<n;i++){step(dt);if(CUT.on)cutTick(dt);pose();}return[ME.x,ME.z];},opening:runOpening,skip:skipOpening,cut:CUT,keys,go:(x,z,area)=>{if(area)enterArea(area);ME.x=x;ME.z=z;snapCamera();},area:()=>AREA.id,say:l=>say(l),stage:st=>{if(st)setStage(st);return G.stage;},game:()=>G,open:id=>interact(EXHIBITS.concat(THINGS).find(e=>e.id===id)),close:closeCard,walk:routeTo,me:ME,
     frame:(w=960,h=540,cam)=>{renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();pose();world();placeCamera(1);if(cam){camera.position.set(cam[0],cam[1],cam[2]);camera.lookAt(cam[3],cam[4],cam[5]);}renderer.render(scene,camera);const d=canvas.toDataURL('image/jpeg',0.85);resize();return d;}};
   requestAnimationFrame(frame);
 }

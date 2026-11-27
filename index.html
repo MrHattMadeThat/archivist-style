@@ -54,6 +54,7 @@ body{font-family:var(--f-body);font-size:17px;line-height:1.5;overscroll-behavio
   <div class="hud right" id="keyhint" aria-hidden="true">WASD or arrows to walk &middot; E to examine &middot; or tap the floor</div>
   <div class="obj" id="obj" aria-live="polite"></div>
   <div class="prompt" id="prompt" hidden></div>
+  <button class="menubtn skipbtn" id="skipbtn" type="button" hidden>Skip the opening &#9654;&#9654;</button>
   <button class="menubtn" id="menubtn" type="button" aria-haspopup="dialog" aria-keyshortcuts="Escape" hidden>&#10074;&#10074; Pause <kbd>Esc</kbd></button>
   <div class="dlg" id="dlg" role="dialog" aria-live="polite" tabindex="-1" hidden>
     <canvas class="dlg-face" id="dlgface" width="96" height="96" aria-hidden="true"></canvas>
@@ -74,6 +75,8 @@ body{font-family:var(--f-body);font-size:17px;line-height:1.5;overscroll-behavio
 
 <div class="overlays" id="overlays"></div>
 <div class="fade" id="fade" aria-hidden="true"></div>
+<!-- the title over No. 72 at the end of the opening -->
+<div class="optitle" id="optitle" aria-hidden="true" hidden><div class="title-card"><small>Saint John, N.B. &middot; 1910</small><h1>72 Union Street</h1><p class="title-sub">The Archivist</p></div></div>
 <!-- the start menu: the only way to begin again is New game here -->
 <section class="title" id="title" aria-labelledby="title-name" hidden>
   <div class="title-card">

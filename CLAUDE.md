@@ -104,10 +104,59 @@ Read `README.md` first. This file is for agents working in the repo.
 - Testing: clear `localStorage['archivist:save-v1']` for a fresh game, and set `sessionStorage['archivist:begin']='1'`
   before a reload to skip the start menu.
 
+## Union Street, outside No. 72 (2026-11-26)
+
+- **The building is 72 Union Street, not Douglas Avenue.** The user asked about the NBM's Douglas Avenue building; it
+  opened in 1934 (finished c. 1932), so in 1910 the museum was at 72 Union Street (the Society bought it in 1906).
+  The user chose to keep 1910 and Union Street.
+- **Drawn from one photo**: New Brunswick Museum 13305, "Natural History Society Building, Union Street, Saint John,
+  1900-1910" (shown small on the Catherine Murdoch page of womenandmuseum.com). It shows: four storeys (three brick over
+  a stone base, then a mansard with three pairs of dormers), a cornice under the roof, two arched ground-floor
+  openings, telegraph poles with crossarms, a lower darker building on the left, an open lot on the right.
+  **Guesses** (the photo is small and sepia): colours, the sign board's wording, the lamp by the door, the "72" in the
+  fanlight, the neighbours, the flagstone sidewalk and the earth road. Replace them if a better source turns up.
+- Area `street` in `AREAS` (x 170..230), `outdoor: true`: `buildStreet()` builds it instead of the room loop. Areas
+  may now carry `cam` ({h, back, look, ahead, m}: camera height, distance, look height, clamp margin) and `fog`
+  ([near, far, colour]); `enterArea()` applies the fog. The facade is drawn at 80 px a unit (`F72_DOOR` = the door's x).
+- Doors: `to-museum` (the front door, its own clickable cut-out `drawFrontDoor`) and `to-street` (a doormat at the open
+  front of the Entrance Hall: in the cutaway the street door is on the side we look in from). Doors may set `verb`,
+  `labelY` and `face` ('back' = arrive facing into the room).
+- **A new game (stage `arrive`) starts on the street**, left of the museum; the To do and the pointing hand lead to the
+  door. Other stages still load inside the museum.
+- The telegraph poles stand at the road edge of the curb (z -2.4) so they don't block the sidewalk.
+
+## The opening (2026-11-27)
+
+- The user asked for a real opening, not a cold open in the street: the train with some exposition, then arriving at
+  the museum. **Order**: the evening train (narration: the job, the Society since 1862, Gesner 1842 → the Society 1890,
+  Union Street 1906, what an archivist does), the conductor ("Saint John! Union Depot!"), a fade to Union Street, a
+  hired cab pulls up at No. 72, you step down behind it and it drives off, you walk to the door, the camera rises up
+  the building with the title card (`#optitle`), one line at the door in close-up, then play.
+- **History checked**: trains into Saint John in 1910 used the Union Depot (1884, Station Street; CPR from 1889).
+  Saint John had electric streetcars from 1893 (the Saint John Railway Co., 1897-1917) and trolleys ran on Dock
+  Street, but no source found puts a line **on Union Street**, so the arrival is by horse-drawn cab and there are no
+  tracks. Coach, cab, horse and cabman are typical of the period, not drawn from a particular one.
+- All the words are in `STORY.opening` (`js/story.js`): narrator lines (`who: 'narrator'`, no face, italic) and the
+  conductor (no face). New speakers in `SPEAKERS` with `face: null` get the `.noface` dialogue box.
+- **How it runs** (world.js, "THE OPENING"): `runOpening()` is an async script over `CUT` (`cutWait`, `cutUntil`,
+  `cutSay`, `cutFade`). Waits run on `CUT.t`, advanced by `cutTick()` from `frame()` only when not paused, so Pause
+  holds it. `CUT.cam` takes the camera (slow glide); `CUT.lockView` stops the turn-to-face-us; `CUT.hideMe` hides you
+  (riding in the cab, the camera follows `ME.x` = the cab); `ME.sink` sits you down on the train. While `CUT.on`,
+  `busy()` is true, keys only drive dialogue, and `ME.target` walks still run.
+- Plays once per new game: `startPlay()` runs it when stage is `arrive` and `G.opening` is unset; the end (or **Skip
+  the opening**, top left) sets `G.opening` and leaves you at the museum door. Main menu → Continue mid-opening
+  resumes it; it never starts twice.
+- Area `train` (x 258..282, `buildTrain`): window holes in the wall texture (cut with an OPAQUE fill: a translucent
+  `destination-out` only half-cuts), the country and the telegraph line scroll behind (`TX.country`, `TX.trackPoles`
+  offsets). Seats are drawn at 200 px a unit to match the character. The cab is `W.cabS` (`buildCab`, `cabTick`: a
+  four-beat walk, wheels turning by distance, reins as a line).
+- Testing: the browser pane is often hidden, which stalls `requestAnimationFrame`; shim it with `setTimeout` after
+  load (see the trap above). `museum.opening()`, `museum.skip()`, `museum.cut` are test hooks.
+
 ## Arrival (`arrival.html`)
 
 - `window.stage.set(t)`, `style(key)`, `play(bool)`, `frame(t)`.
-- Known mismatch: the exterior is still a grand temple facade. The real Union Street building was a bought building, not one built as a museum, so the exterior needs a redo for Saint John.
+- Known mismatch: the exterior is still a grand temple facade (the real exterior is now Union Street in `index.html`). The real Union Street building was a bought building, not one built as a museum, so the exterior needs a redo for Saint John.
 
 ## Local preview
 

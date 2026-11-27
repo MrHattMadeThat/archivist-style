@@ -16,7 +16,7 @@
   // stage: { obj (the To do note), goal (what the pointing hand marks: a thing's id, or 'shelf' for the right
   // shelf), case/fetch/file (which case), harrow ('home' | 'desk' | 'stacks'), next }
   const stages = {
-    arrive: { obj: 'Talk to the attendant at the front desk.', goal: 'attendant' },
+    arrive: { obj: (area) => (area === 'street' ? 'Go into the museum: the door under the lamp.' : 'Talk to the attendant at the front desk.'), goal: 'attendant' },
     upstairs: { obj: 'Go through the door marked CURATOR, behind the visitors’ book.', goal: 'harrow' },
     meet: { obj: (area) => (area === 'office' ? 'Talk to Mr. Harrow. His office is on the left.' : 'Go up to the offices: the door marked CURATOR.'), goal: 'harrow' },
     sample: { obj: 'Sit at your desk. Mr. Harrow will show you how the job is done.', goal: 'mydesk', case: 'c0', harrow: 'desk', next: 'sampleFile' },
@@ -155,5 +155,25 @@
   // walking through a door can move the story on
   const onEnter = (stage, area) => (stage === 'upstairs' && area === 'office' ? 'meet' : null);
 
-  window.STORY = { stages, talk: { harrow, attendant }, afterCase, afterFetch, afterFile, deskIdle, onEnter };
+  // ------------------------------------------------------------------ the opening (js/world.js runs it, once per new game)
+  // On the evening train, then a cab to Union Street. Facts: the Society was founded in 1862; Gesner's museum opened
+  // in 1842 and his collection came to the Society in 1890; the Society bought the Union Street building in 1906.
+  // Trains into Saint John stopped at the Union Depot (1884, Station Street). Narrator lines are spoken to the player.
+  const N = (text) => ({ who: 'narrator', text });
+  const opening = {
+    train: [
+      N('An evening in 1910. The train is nearly at Saint John, New Brunswick.'),
+      N('A new job is waiting for you there. You are going to be the archivist of a museum.'),
+      N('The museum belongs to the Natural History Society of New Brunswick. Since 1862, its members have collected the province’s rocks, fossils, plants and animals.'),
+      N('Some of the collection is even older. Dr. Abraham Gesner opened a museum in Saint John in 1842, and in 1890 his collection came to the Society.'),
+      N('In 1906 the Society bought its own building, on Union Street. Its galleries are full of specimens, and its cellar is full of papers.'),
+      N('An archivist looks after papers: letters, diaries, books and maps. People write in with questions about the past, and the archivist finds the answers in the papers.'),
+      N('But a paper can only answer a question if you know what kind of paper it is. You are about to find out how.'),
+      { who: 'conductor', text: 'Saint John! Union Depot! All out for Saint John!' },
+    ],
+    // at the door, after the cab has gone and the title has shown
+    door: [Y('Number 72 Union Street. The lamp is lit, so somebody is expecting me.')],
+  };
+
+  window.STORY = { stages, talk: { harrow, attendant }, afterCase, afterFetch, afterFile, deskIdle, onEnter, opening };
 })();
