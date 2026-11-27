@@ -261,7 +261,8 @@ Read `README.md` first. This file is for agents working in the repo.
   volume. `MuseumAudio.drive('cab_roll', level)` holds the wheels loop at a level that follows the cab's speed; 0 stops it.
 - **Footsteps**: `wood_0..3` / `stone_0..3`, left foot 0|1, right foot 2|3. The stacks' box pick-up is `box`.
 - **Voices**: `muted.voices` (saved in `archivist:audio-v1`) is separate from the slider, so switching back on restores
-  the level. `spoken()` in voice-worker.js: 1906 -> nineteen oh six, 1860s -> eighteen sixties, 1897-1917 -> ... to ...,
+  the level. The cast in `js/audio.js` enables Game Sound Kit's read-aloud rules: 1906 -> nineteen oh six,
+  1860s -> eighteen sixties, 1897-1917 -> ... to ...,
   c. 1910 -> about, St./Mr./Mrs./No. -> Saint/Mister/Missus/Number, · -> a comma. Screen text is unchanged.
 - **Testing**: browsers cache WAVs hard; fetch each changed file with `{cache: 'reload'}` before reloading. To see what
   plays, wrap `AudioBufferSourceNode.prototype.start` and log `buffer.duration`. Nobody has listened to the 2026-11-27

@@ -65,32 +65,32 @@
   }
 
   const scores = ['street', 'train', 'entrance', 'gesner', 'fossils', 'birds', 'office', 'stacks', 'bench_keys'];
-  let worker, utterance = 0, nextChunk = 0;
-  const speaking = new Set();
+  const cast = {
+    narrator:  { f0: 147, rate: 1.02, female: 0.45, breathiness: 0.20, tension: 0.43 },
+    conductor: { f0: 125, rate: 1.12, female: 0.05, breathiness: 0.08, tension: 0.68 },
+    harrow:    { f0: 102, rate: 0.97, female: 0.03, breathiness: 0.18, tension: 0.46 },
+    attendant: { f0: 190, rate: 1.04, female: 0.95, breathiness: 0.17, tension: 0.52 },
+    you:       { f0: 156, rate: 1.09, female: 0.49, breathiness: 0.14, tension: 0.50 }
+  };
+  let dialogue;
+
   function stopVoice() {
-    utterance++;
-    worker?.postMessage({id: utterance});
-    for (const node of speaking) node.stop();
-    speaking.clear();
-    nextChunk = 0;
+    dialogue?.stop();
   }
+
   function speak(who, text) {
-    stopVoice();
-    if (!context || !levels.voices || muted.voices || !text || document.hidden || !window.Worker) return;
-    if (!worker) {
-      worker = new Worker('js/voice-worker.js');
-      worker.onmessage = ({data}) => {
-        if (data.id !== utterance || document.hidden) return;
-        const buffer = context.createBuffer(1, data.audio.length, data.sr);
-        buffer.copyToChannel(data.audio, 0);
-        const at = Math.max(nextChunk, context.currentTime + (nextChunk ? 0.01 : 0.12));
-        const { node } = source(buffer, 'voices', 1.6, 1, false, at);
-        speaking.add(node);
-        node.addEventListener('ended', () => speaking.delete(node));
-        nextChunk = at + buffer.duration;
-      };
+    if (!context || !levels.voices || muted.voices || !text || document.hidden) {
+      stopVoice();
+      return;
     }
-    worker.postMessage({id: utterance, who, text});
+    dialogue ??= window.GameSoundDialogue?.createPlayer({
+      context, destination: buses.voices, volume: 1.6, readAloud: true,
+      onError: error => console.warn('Dialogue synthesis failed', error)
+    });
+    const { f0, rate, female, breathiness, tension } = Object.hasOwn(cast, who) ? cast[who] : cast.you;
+    dialogue?.speak(text, {
+      f0, rate, body: { female, child: 0 }, source: { breathiness, tension }
+    });
   }
 
   function mix() {

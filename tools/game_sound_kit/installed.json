@@ -1,0 +1,15 @@
+{
+  "version": "0.1.1",
+  "profile": "web",
+  "files": {
+    "audio/voice/CHIMERA-LICENSE.txt": "0b8d6e0649e7b2068a8300cafb9ebded80d9a0fe99e699b96538ba0a8c5236b1",
+    "audio/voice/CMUDICT-LICENSE.txt": "bd4ce8e44170a5f9f481310ca85c51de3c4f851a65e679b40e603b143bd3542a",
+    "audio/voice/cmudict.txt": "cac51a2d86b7312240d4c16b52d9c606a6989d8e03ced24615b2b573510a01af",
+    "audio/voice/dialogue-worker.js": "9e1f3a724680223a45dadf7e0a57aa63539809916cd1cd4f3cfe0d36892bdccd",
+    "audio/voice/dialogue.js": "c94ea01cae6a422bb894ed64e4de6f23c7d16f6f4270f65013dc410b0ea7c340",
+    "audio/voice/game-voice.js": "901db2454519310daa3db395edc43f33aaa83de9818285c886087e33c56e6ff8",
+    "audio/voice/game_voice_wasm.wasm": "d6195b7c60e94217abcac9277df0b9d68112d739a0032dc2885feef80ecd7e03",
+    "tools/game_sound_kit/render.mjs": "ea486888a0c6b91953090e22fd7fba2de633592fa08e070d707647eabe460956"
+  },
+  "browserDirectory": "audio/voice"
+}

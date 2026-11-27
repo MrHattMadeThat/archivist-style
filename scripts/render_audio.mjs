@@ -10,7 +10,7 @@
 // box, a celesta, a harp, and Franklin's glass armonica for the deep-time room. Slow, quiet, made to read over.
 // Every loop is rendered twice and the second pass is kept, so reverb tails from the end ring into the start and
 // the loop has no seam.
-import fs from 'node:fs';
+import { seeded, writeWav } from '../tools/game_sound_kit/render.mjs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
@@ -21,7 +21,6 @@ const SR = 24000;
 const TAU = Math.PI * 2;
 
 /* ------------------------------------------------------------------ basics */
-function seeded(a) { return () => { a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 let R = seeded(1910);
 const reseed = n => { R = seeded(n); };
 const rand = (a = 0, b = 1) => a + (b - a) * R();
@@ -584,12 +583,7 @@ function write(name, data, { rms = 0.14, peak = 0.89, win = 0 } = {}) {
     for (let i = 0; i < data.length; i++) { const v = data[i] * g; data[i] = Math.abs(v) < 0.6 ? v : Math.sign(v) * (0.6 + 0.3 * Math.tanh((Math.abs(v) - 0.6) / 0.3)); }
     g = 1; p = 0.9;
   }
-  const buf = Buffer.alloc(44 + data.length * 2);
-  buf.write('RIFF', 0); buf.writeUInt32LE(36 + data.length * 2, 4); buf.write('WAVE', 8); buf.write('fmt ', 12);
-  buf.writeUInt32LE(16, 16); buf.writeUInt16LE(1, 20); buf.writeUInt16LE(1, 22); buf.writeUInt32LE(SR, 24); buf.writeUInt32LE(SR * 2, 28);
-  buf.writeUInt16LE(2, 32); buf.writeUInt16LE(16, 34); buf.write('data', 36); buf.writeUInt32LE(data.length * 2, 40);
-  for (let i = 0; i < data.length; i++) buf.writeInt16LE(Math.max(-32767, Math.min(32767, Math.round(data[i] * g * 32767))), 44 + i * 2);
-  fs.writeFileSync(path.join(OUT, name + '.wav'), buf);
+  writeWav(path.join(OUT, name + '.wav'), [data], SR, { gain: g });
   console.log(name.padEnd(14), (data.length / SR).toFixed(2).padStart(6) + ' s', 'peak', (p * g).toFixed(2), 'gain', g.toFixed(2));
 }
 
