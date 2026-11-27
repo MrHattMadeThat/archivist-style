@@ -1284,6 +1284,9 @@ const camera=new THREE.PerspectiveCamera(40,16/9,0.1,220);// far enough for the 
 function S(tex,ppu,ax,ay,o={}){const{w,h}=tex.userData,gw=w/ppu,gh=h/ppu,geo=new THREE.PlaneGeometry(gw,gh);geo.translate(gw/2-ax/ppu,ay/ppu-gh/2,0);
   const mat=new THREE.MeshBasicMaterial({map:tex,transparent:!o.opaque,alphaTest:o.opaque||o.add?0:0.05,side:THREE.DoubleSide,fog:o.fog!==false,depthWrite:!o.add,opacity:o.opacity??1});if(o.add)mat.blending=THREE.AdditiveBlending;
   const m=new THREE.Mesh(geo,mat),g=new THREE.Group();g.add(m);g.art=m;g.mat=mat;if(o.order!=null)m.renderOrder=o.order;return g;}
+// A soft, see-through effect (fog, smoke) must not write depth: a nearly invisible puff that happened to be drawn first
+// would block whatever is behind it and drawn later, and parts of the horse or a building would vanish. Draw it last.
+function haze(s){s.mat.depthWrite=false;s.mat.alphaTest=0;s.mat.needsUpdate=true;s.art.renderOrder=10;return s;}
 function plane(tex,w,h,o={}){const mat=new THREE.MeshBasicMaterial({map:tex,transparent:!!o.add||!!o.alpha,side:THREE.DoubleSide,fog:o.fog!==false,depthWrite:!o.add,opacity:o.opacity??1});if(o.add)mat.blending=THREE.AdditiveBlending;const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),mat);if(o.order!=null)m.renderOrder=o.order;return m;}
 const col=h=>new THREE.Color(h).convertSRGBToLinear();
 const TX={},W={},BOXES=[],PICK=[];
@@ -1800,7 +1803,7 @@ function buildLine(a){const cx=(a.x0+a.x1)/2,w=a.x1-a.x0;
   C.rod=new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(),new THREE.Vector3()]),new THREE.LineBasicMaterial({color:col(mix(P.brass,P.ink,0.4))}));g.add(C.rod);
   const lamp=S(TX.glow,256/5,128,128,{add:true,fog:false,opacity:0.95});lamp.position.set(24.5+6.7,0.18+3.06,0.1);g.add(lamp);W.gas.push(lamp);
   for(let x=1;x<20;x+=2.4){const wg=S(TX.glow,256/2.2,128,128,{add:true,fog:false,opacity:0.3});wg.position.set(x,2.3,0.08);g.add(wg);}
-  for(let i=0;i<28;i++){const p=S(TX.puff,90,64,64);p.visible=false;scene.add(p);C.puffs.push({s:p,age:9});}}
+  for(let i=0;i<28;i++){const p=haze(S(TX.puff,90,64,64));p.visible=false;scene.add(p);C.puffs.push({s:p,age:9});}}
 function lineTick(dt){const C=W.trainOut;if(!C||!C.g.visible)return;C.x+=C.v*dt;C.d+=C.v*dt;C.g.position.set(C.x,0,0);
   for(const w of C.wheels)w.s.rotation.z=-C.d/w.r;
   const a=-C.d/0.8,pin=x=>new THREE.Vector3(x+0.42*Math.cos(a),0.98+0.42*Math.sin(a),0.12),pa=C.rod.geometry.attributes.position,p0=pin(26.6),p1=pin(28.2);pa.setXYZ(0,p0.x,p0.y,p0.z);pa.setXYZ(1,p1.x,p1.y,p1.z);pa.needsUpdate=true;
@@ -2054,7 +2057,7 @@ function buildTitle(){
   TX.comet=T(900,300,drawComet,{border:0,grain:false});
   // the comet hangs over the open lot beside No. 72, in front of the far roofs, where the sky is clear
   const c=S(TX.comet,58,792,96,{add:true,fog:false,opacity:0.9});c.position.set(219,14.5,-24);c.rotation.z=-0.26;c.visible=false;scene.add(c);W.titleComet=c;
-  W.titleFog=[];for(let i=0;i<8;i++){const s=S(TX.puff,26,64,64,{opacity:0.16});s.position.set(rr(164,236),rr(0.6,1.8),rr(-1.5,4));s.scale.setScalar(rr(3,5.5));s.visible=false;scene.add(s);W.titleFog.push({s,v:rr(0.25,0.6)});}}
+  W.titleFog=[];for(let i=0;i<8;i++){const s=haze(S(TX.puff,26,64,64,{opacity:0.16}));s.position.set(rr(164,236),rr(0.6,1.8),rr(-1.5,4));s.scale.setScalar(rr(3,5.5));s.visible=false;scene.add(s);W.titleFog.push({s,v:rr(0.25,0.6)});}}
 function enterTitle(){if(TITLE.on)return;TITLE.on=true;TITLE.saved={area:AREA.id,x:ME.x,z:ME.z,view:ME.view};TITLE.t=0;TITLE.cabAt=7;TITLE.walkAt=2.5;
   enterArea('street');document.body.classList.add('at-title');W.titleComet.visible=true;for(const f of W.titleFog)f.s.visible=true;
   const c=titleCam(0);camPos.set(...c.pos);camLook.set(...c.look);applyTime();}
@@ -2148,7 +2151,8 @@ async function boot(){
     const board=document.getElementById('newgame');
     board.textContent='Board the train';board.focus();
   }
-  window.museum={tick:(n=60,dt=1/60)=>{for(let i=0;i<n;i++){step(dt);if(CUT.on)cutTick(dt);pose();}return[ME.x,ME.z];},opening:runOpening,skip:skipOpening,cut:CUT,cab:()=>W.cabS,train:()=>W.trainOut,cast:()=>({gage:W.gage,hanlon:W.hanlon,folk:W.folk}),title:TITLE,night:()=>isNight(),keys,go:(x,z,area)=>{if(area)enterArea(area);ME.x=x;ME.z=z;snapCamera();},area:()=>AREA.id,say:l=>say(l),stage:st=>{if(st)setStage(st);return G.stage;},game:()=>G,open:id=>interact(EXHIBITS.concat(THINGS).find(e=>e.id===id)),close:closeCard,walk:routeTo,me:ME,
+  window.museum={tick:(n=60,dt=1/60)=>{for(let i=0;i<n;i++){step(dt);if(CUT.on)cutTick(dt);pose();}return[ME.x,ME.z];},opening:runOpening,skip:skipOpening,cut:CUT,cab:()=>W.cabS,train:()=>W.trainOut,cast:()=>({gage:W.gage,hanlon:W.hanlon,folk:W.folk}),title:TITLE,fx:()=>({fog:W.titleFog,smoke:W.trainOut.puffs,cab:W.cabS}),// (test hook: the title's fog, the train's smoke, the cab)
+    night:()=>isNight(),keys,go:(x,z,area)=>{if(area)enterArea(area);ME.x=x;ME.z=z;snapCamera();},area:()=>AREA.id,say:l=>say(l),stage:st=>{if(st)setStage(st);return G.stage;},game:()=>G,open:id=>interact(EXHIBITS.concat(THINGS).find(e=>e.id===id)),close:closeCard,walk:routeTo,me:ME,
     frame:(w=960,h=540,cam)=>{renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();pose();world();placeCamera(1);if(cam){camera.position.set(cam[0],cam[1],cam[2]);camera.lookAt(cam[3],cam[4],cam[5]);}renderer.render(scene,camera);const d=canvas.toDataURL('image/jpeg',0.85);resize();return d;}};
   requestAnimationFrame(frame);
 }

@@ -139,6 +139,12 @@ Read `README.md` first. This file is for agents working in the repo.
   class `menu`) points at the chosen button; arrow keys move, hover focuses. `root.pointHand()` places the hand
   directly (focus events do not fire while the window lacks focus, as in a hidden preview pane). Esc backs out of
   Credits and the New game question. `body.at-title` hides the HUD, the prompt, the To do and the dialogue box.
+- **Trap (fixed 2026-11-28): soft see-through sprites must not write depth.** The title's fog puffs and the train's
+  smoke used the normal sprite material, which writes depth wherever a pixel passes `alphaTest`. A nearly invisible
+  puff drawn first (draw order follows each sprite's anchor, and wide sprites are anchored at a corner) then blocked
+  whatever was behind it and drawn later: parts of the horse and the building beside No. 72 vanished. `haze(sprite)`
+  turns depth writing off and draws it last (`renderOrder` 10). Use it for any new fog, smoke, steam or mist. Measured:
+  6,321 wrongly darkened pixels in one title shot before, a few edge pixels after.
 - **Options** (`#options`, a `<dialog>`): sound sliders, the read-aloud switch with the voice slider, and the controls.
   Opened from the title (`#title-options`) or the pause menu (`#pause-options`); `audio.js` binds its sliders and the
   switch by their data attributes, so they are the only ones now. `paused()` is true while it is open.
