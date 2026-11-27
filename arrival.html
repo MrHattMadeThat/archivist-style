@@ -111,6 +111,7 @@ h2{font-family:var(--f-display);font-weight:400;font-size:28px;margin:0;letter-s
       <button class="btn" id="play" type="button" aria-label="Pause">&#10074;&#10074; <span>Pause</span></button>
       <button class="btn" id="restart" type="button">&#8634; From the top</button>
       <div class="scrub"><input id="scrub" type="range" min="0" max="26" step="0.01" value="0" aria-label="Scene time"><span class="time" id="time">0.0 s</span></div>
+      <button class="btn" id="sound" type="button" aria-pressed="false">Sound off</button>
       <button class="btn" id="twos" type="button" aria-pressed="false" title="Animate the puppets at 12 drawings a second, like stop motion">On twos</button>
     </div>
     <p class="hint">Drag to peek around the set &middot; Space plays and pauses</p>
@@ -147,6 +148,7 @@ h2{font-family:var(--f-display);font-weight:400;font-size:28px;margin:0;letter-s
 </main>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="js/audio.js"></script>
 <script>
 'use strict';
 (function(){
@@ -1063,13 +1065,25 @@ for(let f=0;f<4;f++){const id=gx.createImageData(320,180);for(let i=0;i<id.data.
 const ui={play:document.getElementById('play'),restart:document.getElementById('restart'),scrub:document.getElementById('scrub'),time:document.getElementById('time'),twos:document.getElementById('twos'),beat:document.getElementById('beat'),chip:document.getElementById('chip'),fade:document.getElementById('fade'),title:document.getElementById('titlecard'),specs:document.getElementById('specs')};
 const reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 let T0=reduce?19.3:0,playing=!reduce,twos=false,scrubbing=false;
-function setPlaying(p){playing=p;ui.play.innerHTML=p?'&#10074;&#10074; <span>Pause</span>':'&#9654; <span>Play</span>';ui.play.setAttribute('aria-label',p?'Pause':'Play');}
+const soundButton=document.getElementById('sound');
+let soundOn=false,soundChosen=false;
+function syncSound(){MuseumAudio.scene(soundOn && playing && !scrubbing?'street':'');}
+function setSound(on){soundOn=on;soundButton.setAttribute('aria-pressed',String(on));soundButton.textContent=on?'Sound on':'Sound off';syncSound();}
+soundButton.onclick=()=>{soundChosen=true;setSound(!soundOn);};
+const soundBeats=[
+  [2.2,'wood_0',.36,.65],[5.2,'creak',.45,1.18],[5.9,'wood_1',.56,.76],
+  [9.5,'wood_0',.65,.78],[10.5,'stone_0'],[11.1,'stone_1'],[11.7,'stone_0'],
+  [12.3,'stone_1'],[13.4,'stone_0'],[14.0,'stone_1'],[14.6,'stone_0'],
+  [16.75,'wood_0',.65],[17.0,'wood_1',.6],[17.25,'wood_0',.58],
+  [17.4,'creak',.58,.82],[22.15,'wood_0',.75,.65],[23,'title_phrase',.58]
+];
+function setPlaying(p){playing=p;syncSound();ui.play.innerHTML=p?'&#10074;&#10074; <span>Pause</span>':'&#9654; <span>Play</span>';ui.play.setAttribute('aria-label',p?'Pause':'Play');}
 setPlaying(playing);
-ui.play.onclick=()=>setPlaying(!playing);
-ui.restart.onclick=()=>{T0=0;setPlaying(true);};
+ui.play.onclick=()=>{if(!playing&&!soundChosen)setSound(true);setPlaying(!playing);};
+ui.restart.onclick=()=>{if(!soundChosen)setSound(true);T0=0;setPlaying(true);};
 ui.twos.onclick=()=>{twos=!twos;ui.twos.setAttribute('aria-pressed',String(twos));};
-ui.scrub.addEventListener('input',()=>{T0=parseFloat(ui.scrub.value);scrubbing=true;});
-ui.scrub.addEventListener('change',()=>{scrubbing=false;});
+ui.scrub.addEventListener('input',()=>{T0=parseFloat(ui.scrub.value);scrubbing=true;syncSound();});
+ui.scrub.addEventListener('change',()=>{scrubbing=false;syncSound();});
 window.addEventListener('keydown',e=>{if(e.code==='Space'&&!/INPUT|BUTTON|TEXTAREA/.test(document.activeElement.tagName)){e.preventDefault();setPlaying(!playing);}});
 Object.entries(PALETTES).forEach(([k,p])=>{const b=document.createElement('button');b.className='spec';b.type='button';b.dataset.k=k;b.setAttribute('aria-pressed',String(k===styleKey));
   b.innerHTML=`<span class="no"><span>${p.no}</span><span class="state">${k===styleKey?'On view':''}</span></span><span class="name">${p.label}</span><p class="desc"><b style="font-weight:400;text-decoration:underline">${p.lean}.</b> ${p.desc}</p><span class="swatches">${[p.skyBot,p.stone,p.coat,p.taxi,p.glow,p.paper].map(c=>`<i style="background:${c}"></i>`).join('')}</span>`;
@@ -1085,7 +1099,12 @@ new ResizeObserver(resize).observe(vp);
 let last=performance.now(),gf=0,lastBeat='';
 function frame(now){
   const dt=Math.min(0.05,(now-last)/1000);last=now;
-  if(playing&&!scrubbing)T0=(T0+dt)%DUR;
+  if(playing&&!scrubbing){
+    const previous=T0;T0=(T0+dt)%DUR;
+    if(soundOn)for(const [beat,name,volume,rate] of soundBeats){
+      if(beat>previous && beat<=T0)MuseumAudio.play(name,volume,rate);
+    }
+  }
   const t=T0,tq=twos?Math.floor(t*12)/12:t;
   update(t,tq);placeCamera(t);renderer.render(scene,camera);
   if(!scrubbing)ui.scrub.value=t.toFixed(2);ui.time.textContent=t.toFixed(1)+' s';

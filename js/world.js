@@ -1333,7 +1333,14 @@ const STRIDE=1.9;
 function cabTick(dt){const C=W.cabS;if(!C||!C.g.visible)return;
   if(C.goal!=null){const rem=C.goal-C.x,want=Math.min(3.4,Math.sqrt(2*0.9*Math.max(0,rem)));C.v=Math.min(want,C.v+1.1*dt);if(rem<0.03){C.x=C.goal;C.v=0;C.goal=null;}}
   else if(C.leave){C.v=Math.min(3.4,C.v+0.9*dt);if(C.x>242)C.g.visible=false;}
-  C.x+=C.v*dt;C.d+=C.v*dt;C.g.position.set(C.x,0,C.z);
+  const halfStride=Math.floor(2*C.d/STRIDE);
+  C.x+=C.v*dt;C.d+=C.v*dt;
+  const hoof=Math.floor(2*C.d/STRIDE);
+  if(!CUT.skip && hoof!==halfStride){
+    const distance=CUT.hideMe?0:Math.abs(C.x-ME.x);
+    MuseumAudio.play('hoof',0.58/(1+distance*0.18),hoof%2?1.08:0.89);
+  }
+  C.g.position.set(C.x,0,C.z);
   for(const w of C.wheels)w.s.rotation.z=-C.d/w.r;
   C.amp=lerp(C.amp||0,Math.min(1,C.v/1.0),1-Math.exp(-6*dt));const amp=C.amp,cyc=C.d/STRIDE;
   for(const l of C.legs){const ph=((cyc+l.o/TAU)%1+1)%1,A=l.fore?0.3:0.26;let up,fold=0;
@@ -1360,7 +1367,7 @@ function cutFade(mid){return new Promise((res,rej)=>{CUT.fadeRej=rej;fade(()=>{i
 function cutTick(dt){CUT.t+=dt;if(CUT.train){TX.country.offset.x+=dt*0.012;TX.trackPoles.offset.x+=dt*0.34;}cabTick(dt);
   for(const w of CUT.waits.slice())if(w.fn?w.fn():CUT.t>=w.at){CUT.waits.splice(CUT.waits.indexOf(w),1);w.res();}}
 async function runOpening(){
-  CUT.on=true;CUT.skip=false;CUT.t=0;CUT.waits=[];CUT.lockView=true;document.body.classList.add('cutscene');document.getElementById('skipbtn').hidden=false;
+  CUT.on=true;CUT.train=true;CUT.skip=false;CUT.t=0;CUT.waits=[];CUT.lockView=true;document.body.classList.add('cutscene');document.getElementById('skipbtn').hidden=false;
   const C=W.cabS,O=window.STORY.opening;
   try{
     await cutFade(()=>{enterArea('train');ME.x=SEAT_X;ME.z=-0.75;ME.sink=0.52;ME.view={mode:'side',facing:1};ME.flip=null;ME.target=[];CUT.train=true;snapCamera();});
@@ -1372,13 +1379,13 @@ async function runOpening(){
     await cutUntil(()=>{ME.x=C.x;return C.goal==null;},25);
     await cutWait(1.1);
     // you step down on the curb side, behind the cab, and it drives off
-    ME.x=F72_DOOR+0.4;ME.z=-2.2;ME.view={mode:'front',facing:1};CUT.hideMe=false;
+    ME.x=F72_DOOR+0.4;ME.z=-2.2;ME.view={mode:'front',facing:1};CUT.hideMe=false;MuseumAudio.play('stone_1',0.52,0.85);
     await cutWait(0.6);C.leave=true;
     await cutWait(1.8);routeTo(F72_DOOR,-3.5);
     await cutUntil(()=>!ME.target.length,8);
     // the camera rises up the front of No. 72, and the title
     CUT.cam={pos:[F72_DOOR,6.8,8.5],look:[F72_DOOR,12.2,-5]};
-    await cutWait(1.8);document.getElementById('optitle').hidden=false;
+    await cutWait(1.8);document.getElementById('optitle').hidden=false;MuseumAudio.play('title_phrase',0.58);
     await cutWait(3.6);document.getElementById('optitle').hidden=true;CUT.cam=null;
     await cutWait(1.2);CUT.cam={pos:[F72_DOOR+1.2,3.4,6.2],look:[F72_DOOR,2.2,-4.6]};// close in for your line at the door
     await cutWait(1.4);
@@ -1535,6 +1542,7 @@ function hud(){
 function audioScene(){
   if(paused())return '';
   if(document.body.dataset.overlay==='desk')return 'desk';
+  if(CUT.train && !CUT.skip)return 'train';
   if(AREA.id==='museum')return roomAt(ME.x).score;
   return AREA.id==='basement'?'stacks':AREA.id;
 }
@@ -1554,6 +1562,7 @@ const hasSave=()=>{try{return localStorage.getItem(SAVE_KEY)!==null;}catch(e){re
 const menuBtn=()=>document.getElementById('menubtn');
 function haltPlayer(){stopWalking();drag.on=false;}
 function showTitle(){
+  document.getElementById('newgame').textContent='New game';
   haltPlayer();if(pauseMenu.open)pauseMenu.close();
   const can=playedThisVisit||hasSave(),cont=document.getElementById('continue');
   cont.hidden=!can;document.getElementById('newgame').classList.toggle('big',!can);document.getElementById('continue-where').textContent=can&&objText()?'To do: '+objText():'';
@@ -1586,7 +1595,13 @@ async function boot(){
   document.getElementById('loading').hidden=true;
   if(G.stage==='arrive'){enterArea('street');ME.x=183.5;ME.z=-3.4;ME.view={mode:'side',facing:1};}// a new game starts outside
   snapCamera();pose();world();placeCamera(1);renderer.render(scene,camera);
-  if(sessionStorage.getItem(BEGIN_KEY)){sessionStorage.removeItem(BEGIN_KEY);startPlay();}else showTitle();
+  showTitle();
+  if(sessionStorage.getItem(BEGIN_KEY)){
+    sessionStorage.removeItem(BEGIN_KEY);
+    // The reload cleared browser audio activation. Board from a gesture in this document.
+    const board=document.getElementById('newgame');
+    board.textContent='Board the train';board.focus();
+  }
   window.museum={tick:(n=60,dt=1/60)=>{for(let i=0;i<n;i++){step(dt);if(CUT.on)cutTick(dt);pose();}return[ME.x,ME.z];},opening:runOpening,skip:skipOpening,cut:CUT,cab:()=>W.cabS,keys,go:(x,z,area)=>{if(area)enterArea(area);ME.x=x;ME.z=z;snapCamera();},area:()=>AREA.id,say:l=>say(l),stage:st=>{if(st)setStage(st);return G.stage;},game:()=>G,open:id=>interact(EXHIBITS.concat(THINGS).find(e=>e.id===id)),close:closeCard,walk:routeTo,me:ME,
     frame:(w=960,h=540,cam)=>{renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();pose();world();placeCamera(1);if(cam){camera.position.set(cam[0],cam[1],cam[2]);camera.lookAt(cam[3],cam[4],cam[5]);}renderer.render(scene,camera);const d=canvas.toDataURL('image/jpeg',0.85);resize();return d;}};
   requestAnimationFrame(frame);

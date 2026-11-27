@@ -11,7 +11,7 @@
 
   let context, scene = '', revision = 0;
   const buses = {}, buffers = new Map(), loops = new Map();
-  const effects = ['wood_0', 'wood_1', 'stone_0', 'stone_1', 'creak', 'whoosh', 'stamp'];
+  const effects = ['wood_0', 'wood_1', 'stone_0', 'stone_1', 'creak', 'whoosh', 'stamp', 'hoof', 'title_phrase'];
   function load(name) {
     if (!buffers.has(name)) {
       buffers.set(name, fetch('audio/' + name + '.wav')
@@ -94,11 +94,12 @@
     buses.master.gain.setTargetAtTime(active ? levels.master ** 2 : 0, context.currentTime, 0.015);
     if (!active) stopVoice();
     const score = scene === 'desk' ? 'bench_keys' : scene;
-    for (const name of ['room', ...scores]) {
-      const ambience = name === 'room';
-      const wanted = ambience ? scene !== 'street' && scene !== 'train' : name === score;
+    for (const name of ['room', 'rail_wheels', ...scores]) {
+      const bed = scene === 'train' ? 'rail_wheels' : scene === 'street' ? null : 'room';
+      const ambience = name === 'room' || name === 'rail_wheels';
+      const wanted = ambience ? name === bed : name === score;
       const bus = ambience ? 'effects' : 'music';
-      const volume = ambience ? 0.25 : 0.23;
+      const volume = ambience ? 0.27 : 0.48;
       if (active && wanted && !loops.has(name)) {
         load(name).then(buffer => {
           if (buffer && current === revision) loops.set(name, source(buffer, bus, volume, 1, true));
@@ -139,7 +140,7 @@
       if (!context || context.state !== 'running' || !scene || document.hidden) return;
       const current = revision;
       const buffer = await load(name);
-      if (buffer && current === revision) source(buffer, 'effects', volume, rate, false);
+      if (buffer && current === revision) source(buffer, name === 'title_phrase' ? 'music' : 'effects', volume, rate, false);
     }
   };
 })();
