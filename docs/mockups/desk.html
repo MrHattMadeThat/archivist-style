@@ -1,0 +1,870 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Archivist Desk Redesign</title>
+<!-- A clickable mockup of the redesigned source desk (docs/DESK_REDESIGN.md). Not the game: nothing here is saved,
+     and the desk code in js/desk/ is unchanged. The toolbar above the frame picks a task and a screen size; the desk
+     inside the frame lays itself out by the frame's size (container queries), as the real desk would. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IM+Fell+English+SC&family=IM+Fell+English:ital@0;1&family=Special+Elite&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
+<script src="../../js/hand.js"></script>
+<style>
+:root{color-scheme:dark;
+  --night:#0b0e15; --night2:#141a26; --brass:#d1a14b; --brass2:#e6b85e; --amber:#ffb34b;
+  --card:#e2dac6; --sheet:#efe8d6; --pale:#f8f3e6; --ink:#151820; --soft:#4f4a40; --red:#9c3a27; --blue:#33607f; --green:#46622f;
+  --manila:#cdbb8c; --baize:#22372a;
+  --f-read:"Source Serif 4",Georgia,"Times New Roman",serif;
+  --f-title:"IM Fell English SC","IM Fell English",Georgia,serif;
+  --f-old:"IM Fell English",Georgia,serif;
+  --f-type:"Special Elite","Courier New",monospace;
+  --grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .28 0 0 0 0 .18 0 0 0 .09 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#05060a;color:var(--card);font-family:var(--f-read)}
+button{font:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+
+/* ---------------------------------------------------------------- the mockup's own toolbar (not part of the design) */
+.mock{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;padding:8px 14px;background:#1b1d24;border-bottom:1px solid #333;font:13px/1.3 system-ui,sans-serif;color:#cfd3dc}
+.mock b{font-weight:600;color:#fff}
+.mock .grp{display:flex;gap:4px;align-items:center}
+.mock button{font:12.5px system-ui,sans-serif;background:#2b2e38;color:#e4e6ec;border:1px solid #444a58;border-radius:4px;padding:4px 9px}
+.mock button[aria-pressed=true]{background:#d1a14b;color:#111;border-color:#d1a14b}
+.mock .note{color:#9aa0ad;margin-left:auto}
+.stage{position:absolute;top:var(--bar,46px);left:0;right:0;bottom:0;overflow:hidden}
+.frame{position:absolute;left:50%;top:50%;container:desk / size;overflow:hidden;transform-origin:center;box-shadow:0 0 0 1px #3a3f4c,0 10px 40px rgba(0,0,0,.6)}
+.sizetag{position:absolute;right:8px;bottom:6px;z-index:90;font:11px system-ui,sans-serif;color:rgba(255,255,255,.45);pointer-events:none}
+
+/* ---------------------------------------------------------------- the desk: under the gas lamp */
+.desk{position:absolute;inset:0;display:grid;grid-template-rows:auto auto minmax(0,1fr);color:var(--ink);font-size:17px;line-height:1.45;
+  background:
+    radial-gradient(ellipse 62% 75% at 38% 58%,rgba(255,179,75,.20),rgba(255,179,75,0) 70%),
+    radial-gradient(ellipse 120% 110% at 45% 55%,rgba(11,14,21,0) 45%,rgba(11,14,21,.88) 100%),
+    repeating-linear-gradient(90deg,rgba(0,0,0,.13) 0 2px,rgba(0,0,0,0) 2px 118px),
+    repeating-linear-gradient(90deg,rgba(255,220,170,.035) 0 1px,rgba(0,0,0,0) 1px 37px),
+    linear-gradient(#3e2818,#21150b)}
+.desk.arrive{animation:arrive .15s ease-out}
+@keyframes arrive{from{opacity:0}to{opacity:1}}
+
+/* the top bar: where you are, how far along, the way out */
+.bar{display:flex;align-items:center;gap:16px;padding:7px 16px;background:rgba(8,10,14,.62);border-bottom:1px solid rgba(226,218,198,.12);color:var(--card)}
+.case{display:flex;flex-direction:column;line-height:1.1;min-width:0}
+.case small{font-family:var(--f-type);font-size:13px;color:#b9ae92}
+.case-title{font-family:var(--f-title);font-size:21px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.progress{display:flex;gap:6px;margin:0 auto;padding:0;list-style:none}
+.pg{display:flex;align-items:center;gap:6px;padding:3px 10px 3px 4px;background:rgba(226,218,198,.08);border:1.5px solid rgba(226,218,198,.25);color:#cfc5aa;font-size:14px;white-space:nowrap}
+.pg-n{display:grid;place-items:center;width:22px;height:22px;border-radius:50%;border:1.5px solid currentColor;font-family:var(--f-type);font-size:13px}
+.pg.done .pg-n{border-color:transparent;color:var(--ink)}
+.pg.gold .pg-n{background:var(--brass)}.pg.silver .pg-n{background:#b8bcc4}.pg.red .pg-n{background:#c4573f;color:#fff}
+.pg.now{background:var(--card);border-color:var(--brass);color:var(--ink);font-weight:600;box-shadow:0 0 0 2px rgba(209,161,75,.35)}
+.pg.later{opacity:.6}
+.leave{display:flex;flex-direction:column;align-items:flex-end;background:var(--card);color:var(--ink);border:2px solid var(--ink);padding:5px 14px;font-family:var(--f-type);font-size:15px;line-height:1.1;box-shadow:3px 3px 0 rgba(0,0,0,.5)}
+.leave small{font-family:var(--f-read);font-size:12px;color:var(--soft)}
+
+/* the research question: a slip pinned across the top */
+.rqwrap{position:relative;margin:10px auto 0;width:fit-content;max-width:calc(100% - 32px)}
+.rqwrap.waiting{visibility:hidden}
+.rq{position:relative;padding:9px 26px 9px 26px;text-align:center;background:var(--pale) var(--grain);box-shadow:4px 4px 0 rgba(0,0,0,.45);border-top:6px solid var(--red);
+  clip-path:polygon(0 0,40% 2px,72% 0,100% 1px,100% 100%,55% calc(100% - 2px),20% 100%,0 calc(100% - 1px))}
+.rq-label{display:block;font-family:var(--f-type);font-size:13px;color:var(--red)}
+.rq-text{margin:1px 0 0;font-size:21px;line-height:1.35;font-weight:600}
+.rq-word{background:none;border:0;padding:0 1px;color:inherit;font:inherit;font-weight:600;border-bottom:2px dotted rgba(21,24,32,.35)}
+.rq-word:hover{background:rgba(255,179,75,.45)}
+.mk.on{background:linear-gradient(transparent 58%,rgba(255,179,75,.8) 58%);padding:0 2px}
+.mk-tag{display:inline-block;vertical-align:.18em;margin-left:4px;padding:0 6px;font-family:var(--f-type);font-size:12px;font-weight:400;line-height:1.5;color:var(--pale);background:var(--red);border-radius:2px}
+.rq.settle{animation:settle .15s ease-out}
+/* the brass pin, pushed in once the question is up */
+.pin{position:absolute;left:calc(50% - 10px);top:-8px;width:20px;height:20px;border-radius:50%;z-index:3;pointer-events:none;
+  background:radial-gradient(circle at 34% 30%,#fff2c8 0 12%,#e2b45a 32%,#9a6a26 76%,#5c3c12);box-shadow:2px 3px 0 rgba(0,0,0,.5),inset -2px -2px 3px rgba(0,0,0,.3)}
+.pin.drop{animation:pindrop .32s cubic-bezier(.3,0,.4,1) both}
+@keyframes pindrop{0%{transform:translate(-14px,-60px) scale(2);opacity:0}70%{transform:translate(0,2px) scale(.9);opacity:1}100%{transform:none;opacity:1}}
+.rqwrap.thunk{animation:slipin .12s ease-out}
+@keyframes slipin{from{opacity:0}to{opacity:1}}
+.rqwrap.thunk .rq{animation:thunk .22s ease-out .24s}
+@keyframes thunk{0%,100%{transform:none}40%{transform:translateY(3px) rotate(-.3deg)}}
+
+/* the question first: big, in the middle, glowing until the student has read it */
+.rqstage{position:absolute;inset:0;z-index:28;display:grid;place-items:center;padding:20px;background:rgba(5,6,9,.66)}
+.rqbig{position:relative;width:min(940px,100%);text-align:center;background:var(--pale) var(--grain);padding:clamp(16px,3.4cqh,34px) clamp(20px,4cqw,52px);border-top:8px solid var(--red);
+  animation:bigglow 1.2s ease-in-out infinite}
+@keyframes bigglow{0%,100%{box-shadow:6px 7px 0 rgba(0,0,0,.6),0 0 0 0 rgba(255,179,75,.95),0 0 24px rgba(255,179,75,.3)}50%{box-shadow:6px 7px 0 rgba(0,0,0,.6),0 0 0 16px rgba(255,179,75,0),0 0 70px rgba(255,179,75,.65)}}
+.rqbig-label{margin:0;font-weight:400;font-family:var(--f-title);font-size:clamp(34px,min(6.6cqw,10cqh),76px);line-height:1;color:var(--red);
+  background:linear-gradient(100deg,var(--red) 38%,#ffc35e 50%,var(--red) 62%) 0 0/260% 100%;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:gleam 1.8s linear infinite}
+@keyframes gleam{from{background-position:100% 0}to{background-position:0 0}}
+.rqbig .rq-text{margin:clamp(8px,2cqh,18px) 0 clamp(8px,1.6cqh,14px);font-size:clamp(22px,min(3.7cqw,5.6cqh),42px);line-height:1.3}
+.rqbig .mk-tag{font-size:.42em}
+.rqbig .rq-word{border-bottom-width:3px}
+.rqbig-ask{margin:0;font-size:clamp(17px,min(2.3cqw,3.6cqh),25px)}
+.rqbig-ask b{font-family:var(--f-type);font-weight:400;background:var(--red);color:var(--pale);padding:0 9px;border-radius:2px}
+.rqbig-ask.ok{font-size:clamp(30px,6cqh,52px);font-weight:700;color:var(--green);line-height:1}
+.rqbig-msg{margin:10px auto 0;max-width:34em;text-align:left;font-size:17px;line-height:1.35;background:#f8ebcf;border-left:4px solid var(--amber);padding:5px 10px}
+@keyframes settle{from{transform:translateY(-6px)}to{transform:none}}
+
+/* the two areas: the paper you read, the card you work on */
+.main{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:18px;padding:12px 16px 14px;min-height:0}
+.reading{display:flex;flex-direction:column;min-height:0;min-width:0}
+.card{display:flex;flex-direction:column;min-height:0;position:relative}
+.card>.cardpaper{flex:1}
+
+/* folder tabs: the papers for this task, sticking out from under the sheet */
+.folders{flex:none;display:flex;align-items:flex-end;gap:4px;padding:0 18px 0 10px;min-height:40px;max-width:752px;width:100%;margin:0 auto}
+.ftab{position:relative;display:flex;flex-direction:column;align-items:flex-start;text-align:left;max-width:46%;min-width:0;background:var(--manila) var(--grain);color:var(--ink);border:0;padding:5px 14px 7px;line-height:1.2;
+  clip-path:polygon(8px 0,calc(100% - 8px) 0,100% 100%,0 100%);margin-bottom:-1px}
+.ftab .who{font-family:var(--f-type);font-size:13px;color:var(--soft)}
+.ftab .what{font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.ftab.on{background-color:var(--sheet);padding-bottom:9px}
+.ftab .tick{position:absolute;top:4px;right:10px;font-size:13px;color:var(--green);font-weight:700}
+.others{margin-left:auto;margin-bottom:5px;background:rgba(8,10,14,.55);color:var(--card);border:1.5px solid rgba(226,218,198,.35);padding:4px 12px;font-family:var(--f-type);font-size:14px;white-space:nowrap}
+.drawer{position:absolute;z-index:20;width:300px;background:var(--card) var(--grain);color:var(--ink);padding:10px 12px;box-shadow:5px 6px 0 rgba(0,0,0,.55);border:2px solid var(--ink)}
+.drawer h4{margin:0 0 6px;font-family:var(--f-type);font-weight:400;font-size:13px;color:var(--red)}
+.drawer button{display:block;width:100%;text-align:left;background:var(--pale);border:1.5px solid rgba(21,24,32,.4);padding:6px 9px;font-size:15px;line-height:1.25;margin-top:5px}
+.drawer .stampmini{display:inline-block;margin-top:3px;font-family:var(--f-type);font-size:12px;color:var(--red);border:1.5px solid currentColor;padding:0 5px;transform:rotate(-2deg)}
+
+/* the green baize blotter under the paper, with the lamp light on it */
+.blotter{flex:1;min-height:0;position:relative;background:radial-gradient(ellipse 70% 60% at 50% 30%,rgba(255,179,75,.14),transparent 70%),var(--baize);
+  box-shadow:inset 0 0 0 9px #2a1b10,inset 0 0 0 10px rgba(0,0,0,.5),inset 0 0 40px rgba(0,0,0,.45);padding:12px 14px 0;display:flex;flex-direction:column}
+.scroll{flex:1;min-height:0;overflow:auto;padding:0 8px 18px 4px;scrollbar-color:#8a6a48 transparent}
+.sheetwrap{max-width:720px;margin:0 auto;filter:drop-shadow(1.5px 0 0 var(--pale)) drop-shadow(-1.5px 0 0 var(--pale)) drop-shadow(0 1.5px 0 var(--pale)) drop-shadow(0 -1.5px 0 var(--pale)) drop-shadow(5px 6px 0 rgba(0,0,0,.45))}
+.sheet{container:sheet / inline-size;position:relative;background:var(--sheet) var(--grain);padding:18px 26px 16px;
+  clip-path:polygon(0 3px,22% 0,61% 2px,100% 0,calc(100% - 2px) 40%,100% 100%,64% calc(100% - 3px),28% 100%,0 calc(100% - 2px),2px 55%)}
+.sheet-title{margin:0 0 10px;font-family:var(--f-title);font-weight:400;font-size:28px;line-height:1.1;padding-right:150px}
+.sheet.stamped .sheet-title{min-height:64px}
+.tagbox{margin:0 0 12px;border:1.5px solid var(--ink);background:var(--pale);padding:6px 10px;display:grid;gap:4px}
+.tagrow{display:grid;grid-template-columns:108px 1fr;gap:10px;align-items:baseline}
+.tagrow dt{font-family:var(--f-type);font-size:13px;color:var(--red)}
+.tagrow dd{margin:0;font-size:16.5px;line-height:1.35}
+@container sheet (max-width:520px){
+  .sheet{padding:14px 16px 14px}
+  .sheet-title{font-size:24px;padding-right:0}
+  .sheet.stamped .sheet-title{padding-right:140px}
+  .tagrow{grid-template-columns:1fr;gap:0}
+  .tagrow+.tagrow{border-top:1px dashed rgba(21,24,32,.25);padding-top:3px}
+}
+.readin{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:0 0 12px}
+.readin>span{font-family:var(--f-type);font-size:13px;color:var(--soft)}
+.seg{display:inline-flex;flex-wrap:wrap;border:1.5px solid var(--ink);border-radius:15px;overflow:hidden}
+.seg button{background:transparent;border:0;border-right:1.5px solid var(--ink);padding:3px 12px;font-size:14px;color:var(--ink)}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed=true]{background:var(--ink);color:var(--pale)}
+.body p{margin:0 0 11px;font-size:18px;line-height:1.55}
+.body.old p{font-family:var(--f-old);font-size:18px}
+.line{border-radius:2px;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+.pointing .line{cursor:pointer;background:linear-gradient(transparent calc(100% - 2px),rgba(51,96,127,.35) calc(100% - 2px)) no-repeat;background-size:100% 100%}
+.pointing .line:hover,.pointing .line:focus-visible{background:rgba(255,179,75,.45);outline:none}
+.line.chosen{background:rgba(255,179,75,.62)!important;text-decoration:underline 3px var(--red);text-underline-offset:4px}
+.pencil{display:flex;gap:8px;align-items:center;margin:-4px 0 10px;font-family:var(--f-old);font-style:italic;font-size:16.5px;color:var(--blue)}
+.pencil svg{flex:none}
+.zone{outline:3px dashed var(--red);outline-offset:4px}
+.credit{font-size:13.5px;color:var(--soft);border-top:1px dashed rgba(21,24,32,.35);padding-top:6px;margin:4px 0 0}
+.scan img{display:block;width:100%;height:auto;border:1px solid rgba(0,0,0,.3);margin-bottom:8px}
+.ink{position:absolute;right:18px;top:12px;display:flex;flex-direction:column;align-items:center;padding:4px 12px;border:4px double currentColor;transform:rotate(-8deg);font-family:var(--f-type);opacity:.88;pointer-events:none;background:rgba(239,232,214,.6)}
+.ink b{font-size:23px;letter-spacing:.1em;font-weight:400}
+.ink small{font-size:12px}
+.ink.primary{color:var(--red)}.ink.secondary{color:var(--blue)}
+.ink.fresh{animation:slam .15s ease-out}
+@keyframes slam{from{transform:rotate(-8deg) scale(1.3);opacity:0}to{transform:rotate(-8deg) scale(1);opacity:.88}}
+.readonlybar{display:flex;gap:10px;align-items:center;justify-content:space-between;max-width:720px;margin:0 auto 8px;background:var(--card);padding:6px 10px;font-size:15px;box-shadow:3px 3px 0 rgba(0,0,0,.4)}
+.readonlybar button{background:var(--ink);color:var(--pale);border:0;padding:4px 10px;font-size:14px}
+
+/* the paperweight: no paper until the question is read */
+.weight{display:grid;place-items:center;height:100%}
+.weight .stone{width:120px;height:64px;margin:0 auto 10%;border-radius:50% 50% 44% 44%/60% 60% 40% 40%;background:radial-gradient(ellipse at 35% 30%,#7d8088,#3c3f47 60%,#24262c);box-shadow:0 10px 0 -4px rgba(0,0,0,.45),inset 0 -6px 10px rgba(0,0,0,.4)}
+
+/* the task: one of the Archivist's own index cards */
+.cardpaper{display:flex;flex-direction:column;min-height:0;max-height:100%;background:var(--sheet) var(--grain);
+  filter:drop-shadow(5px 6px 0 rgba(0,0,0,.45))}
+.card-head{display:flex;justify-content:space-between;gap:10px;align-items:baseline;padding:9px 16px 0 30px;font-family:var(--f-type);font-size:13px;color:var(--red)}
+.card-head .of{color:var(--soft)}
+.now{margin:4px 14px 0 30px;padding:0 0 9px;border-bottom:2px solid var(--red)}
+.now small{display:block;font-family:var(--f-type);font-size:13px;color:var(--soft)}
+.now p{margin:0;font-size:20px;font-weight:600;line-height:1.3}
+.now .arrow-up{display:none}
+.card-body{flex:1;min-height:0;overflow:auto;padding:10px 14px 12px 30px;display:flex;flex-direction:column;gap:9px;
+  background:linear-gradient(90deg,transparent 21px,rgba(156,58,39,.45) 21px 22.5px,transparent 22.5px),repeating-linear-gradient(180deg,transparent 0 27px,rgba(51,96,127,.16) 27px 28px)}
+.card-foot{display:flex;align-items:center;gap:10px;padding:10px 14px 12px 30px;border-top:1.5px dashed rgba(21,24,32,.3);background:rgba(226,218,198,.6)}
+.card-foot .go,.card-foot .next{margin-left:auto}
+.foot-why{font-size:14px;color:var(--soft);line-height:1.25}
+
+.done-line{display:flex;gap:8px;align-items:baseline;width:100%;text-align:left;background:transparent;border:0;border-left:4px solid var(--green);padding:3px 0 3px 9px;font-size:15.5px;color:var(--ink);line-height:1.35}
+.done-line .chk{flex:none;display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--green);color:#fff;font-size:13px}
+.done-line q{font-style:italic;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.done-line>span:nth-child(2){min-width:0}
+.done-line:hover .edit{text-decoration:underline}
+.done-line .edit{margin-left:auto;flex:none;font-family:var(--f-type);font-size:13px;color:var(--blue)}
+.stepnow{border-left:4px solid var(--amber);padding:2px 0 2px 10px;display:flex;flex-direction:column;gap:8px}
+.stepnow h3{margin:0;font-size:17px;line-height:1.3;display:flex;gap:8px;align-items:baseline}
+.stepnow h3 .n{flex:none;display:grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--red);color:var(--pale);font-family:var(--f-type);font-size:14px}
+.about{margin:0;font-size:15px;color:var(--soft)}
+.about b{color:var(--ink)}
+.pads{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pad{display:flex;flex-direction:column;gap:3px;align-items:flex-start;text-align:left;background:var(--pale);border:2.5px solid currentColor;padding:8px 10px;min-height:44px;box-shadow:3px 3px 0 rgba(0,0,0,.18)}
+.pad.primary{color:var(--red)}.pad.secondary{color:var(--blue)}
+.pad .nm{font-family:var(--f-type);font-size:17px;letter-spacing:.08em}
+.pad .means{color:var(--ink);font-size:14px;line-height:1.3}
+.pad[aria-pressed=true]{background:currentColor}
+.pad[aria-pressed=true] .nm,.pad[aria-pressed=true] .means{color:var(--pale)}
+@container desk (max-width:1199px){.pads{grid-template-columns:1fr}}
+.guide{margin:0;font-size:15px;line-height:1.35;background:rgba(255,179,75,.22);padding:6px 9px}
+.guide b{font-weight:600}
+.proof{border:2px dashed rgba(21,24,32,.45);padding:5px 10px;background:var(--pale);min-height:52px}
+.proof.filled{border-style:solid;border-color:var(--ink)}
+.proof.hinted{border-color:var(--red);background:#f7e3dc}
+.proof .lbl{font-family:var(--f-type);font-size:13px;color:var(--red)}
+.proof blockquote{margin:2px 0 0;font-size:15.5px;line-height:1.38}
+.proof .empty{margin:2px 0 0;font-size:15px;color:var(--soft)}
+.proof .hint{margin:2px 0 0;font-size:15px;color:#6b2516}
+.options{display:flex;flex-direction:column;gap:6px}
+.option{display:flex;gap:9px;align-items:baseline;text-align:left;background:var(--pale);border:1.5px solid rgba(21,24,32,.45);padding:7px 10px;font-size:15.5px;line-height:1.3;color:var(--ink);min-height:40px}
+.option b{font-family:var(--f-type);font-weight:400}
+.option[aria-pressed=true]{border:2.5px solid var(--ink);background:#fff6dc}
+.option.right{border-color:var(--green);background:#e3ead5}
+.msg{margin:0;padding:7px 10px;font-size:15.5px;line-height:1.38;border-left:4px solid}
+.msg.good{border-color:var(--green);background:#e3ead5}
+.msg.bad{border-color:var(--red);background:#f7e3dc}
+.msg.warn{border-color:var(--amber);background:#f8ebcf}
+.seal{display:flex;gap:8px;align-items:center;font-family:var(--f-type);font-size:14px}
+.seal i{width:18px;height:18px;border-radius:50%;background:var(--brass);box-shadow:inset -2px -2px 0 rgba(0,0,0,.25)}
+.seal.silver i{background:#b8bcc4}.seal.red i{background:#c4573f}
+.rule{display:grid;gap:6px}
+.rule div{background:var(--pale);border-top:4px solid;padding:5px 10px;font-size:15.5px;line-height:1.35}
+.rule .p{border-color:var(--red)}.rule .s{border-color:var(--blue)}
+.rule b{font-family:var(--f-type);font-weight:400}
+.rule .p b{color:var(--red)}.rule .s b{color:var(--blue)}
+.quiet{background:transparent;color:var(--ink);border:1.5px dashed rgba(21,24,32,.55);padding:8px 12px;font-family:var(--f-type);font-size:14px;min-height:40px}
+.quiet:disabled{opacity:.35;cursor:not-allowed}
+.go{background:var(--brass);color:var(--ink);border:2.5px solid var(--ink);padding:9px 24px;font-family:var(--f-type);font-size:18px;box-shadow:3px 3px 0 rgba(0,0,0,.4);min-height:44px}
+.go:hover:not(:disabled){background:var(--brass2)}
+.go:disabled{background:#d8cfb8;color:#6d675a;border-color:#8d8676;box-shadow:none;cursor:not-allowed}
+.next{animation:nextbeat 1.1s ease-in-out infinite}
+@keyframes nextbeat{0%,100%{box-shadow:3px 3px 0 rgba(0,0,0,.45),0 0 0 0 rgba(255,179,75,.75)}50%{box-shadow:3px 3px 0 rgba(0,0,0,.45),0 0 0 9px rgba(255,179,75,0)}}
+@media (prefers-reduced-motion:reduce){.next,.desk.arrive,.rq.settle,.ink.fresh,.rqbig,.rqbig-label,.pin.drop,.rqwrap.thunk,.rqwrap.thunk .rq{animation:none}}
+
+/* the lamp follows the work: what you need now is in full light, the rest a little darker */
+.desk[data-focus=rq] .rq{box-shadow:4px 4px 0 rgba(0,0,0,.45),0 0 0 3px var(--amber),0 0 34px rgba(255,179,75,.45)}
+.desk[data-focus=rq] .reading{filter:brightness(.7)}
+.desk[data-focus=paper] .blotter{box-shadow:inset 0 0 0 9px #2a1b10,inset 0 0 0 10px rgba(0,0,0,.5),inset 0 0 40px rgba(0,0,0,.45),0 0 0 3px rgba(255,179,75,.75),0 0 30px rgba(255,179,75,.25)}
+.desk[data-focus=paper] .rq,.desk[data-focus=card] .rq{filter:brightness(.9)}
+.desk[data-focus=card] .reading{filter:brightness(.88)}
+.desk[data-focus=card] .cardpaper{filter:drop-shadow(5px 6px 0 rgba(0,0,0,.45)) drop-shadow(0 0 14px rgba(255,179,75,.5))}
+
+/* the case letter that opens the desk */
+.veil{position:absolute;inset:0;z-index:30;background:rgba(5,6,9,.62);display:grid;place-items:center;padding:16px}
+.letter{width:min(620px,100%);max-height:100%;overflow:auto;background:var(--sheet) var(--grain);padding:20px 28px 22px;transform:rotate(.3deg);
+  filter:drop-shadow(1.5px 0 0 var(--pale)) drop-shadow(-1.5px 0 0 var(--pale)) drop-shadow(6px 7px 0 rgba(0,0,0,.6))}
+.letter .from{font-family:var(--f-type);font-size:14px;color:var(--red);margin-bottom:6px}
+.letter h2{margin:0 0 10px;font-family:var(--f-title);font-weight:400;font-size:30px;line-height:1.1}
+.letter p{margin:0 0 10px;font-size:18px}
+.letter .go{margin-top:6px}
+
+/* the idle hand: beside what to do next, never over its words */
+.handwrap{position:absolute;z-index:40;width:0;height:0;pointer-events:none;transform-origin:0 0}
+.hand{position:absolute;width:84px;height:auto}
+
+/* ---------------------------------------------------------------- fitting the screen */
+@container desk (max-width:1199px){
+  .main{grid-template-columns:minmax(0,1fr) 340px;gap:14px}
+}
+@container desk (max-width:959px){
+  .main{grid-template-columns:minmax(0,1fr) 318px;gap:12px;padding:10px 12px 12px}
+  .rqwrap{margin:8px auto 0;max-width:calc(100% - 24px)}
+  .bar{padding:6px 12px;gap:10px}
+  .pg .pg-w{display:none}
+  .pg{padding:3px 4px}
+  .pg.now .pg-w{display:inline}
+  .pg.now{padding-right:10px}
+  .blotter{padding:10px 8px 0}
+  .card-head,.now,.card-body,.card-foot{padding-left:26px}
+  .card-body{background:linear-gradient(90deg,transparent 17px,rgba(156,58,39,.45) 17px 18.5px,transparent 18.5px),repeating-linear-gradient(180deg,transparent 0 27px,rgba(51,96,127,.16) 27px 28px)}
+}
+@container desk (max-height:700px){
+  .rq-text{font-size:19px}
+  .rq{padding:6px 20px 7px}
+  .case small{display:none}
+  .now p{font-size:18.5px}
+}
+/* one column: the paper above, the task docked below */
+@container desk (max-width:799px){
+  .main{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) auto;gap:10px}
+  .card{max-height:42cqh}
+  .card>.cardpaper{flex:none}
+  .pads{grid-template-columns:1fr 1fr}
+  .now p{font-size:17.5px}
+  .now{padding-bottom:6px}
+  .card-head{padding-top:6px}
+  .rq-text{font-size:18px}
+  .card.tucked .card-body{display:none}
+  .now .arrow-left{display:none}.now .arrow-up{display:inline}
+  .tuck{display:inline-block!important}
+}
+.tuck{display:none;background:none;border:0;font-family:var(--f-type);font-size:13px;color:var(--blue);padding:0}
+</style>
+</head>
+<body>
+<div class="mock" id="mock">
+  <b>Desk mockup</b>
+  <span class="grp">Task: <button data-task="readq">1 · Read the question</button><button data-task="stamp">2 · Sort a paper</button><button data-task="compare">3 · Compare</button></span>
+  <span class="grp">Screen: <button data-size="fit">Fit this window</button><button data-size="1366x650">1366 × 650 lab PC</button><button data-size="1280x1024">1280 × 1024 square</button><button data-size="1024x768">1024 × 768</button><button data-size="820x615">1024 × 768 at 125 %</button><button data-size="640x700">narrow</button></span>
+  <span class="grp"><button id="replay">Open the desk again</button><button id="handnow">Show the idle hand</button></span>
+  <span class="note">Nothing is saved. A mockup, not the game.</span>
+</div>
+<div class="stage" id="stage"><div class="frame" id="frame"></div></div>
+
+<script>
+// ------------------------------------------------------------------ content (real, from js/desk/cases.js and sources.js)
+const RQ = {
+  text: 'What happened to the French on St. Croix Island in the winter of 1604–1605?', short: 'the 1604–05 question',
+  marks: [{ tag: 'WHEN', words: 'the winter of 1604–1605', hint: 'Look for a year, or a time.' }, { tag: 'WHERE', words: 'St. Croix Island', hint: 'Look for the name of a place.' }],
+  primary: 'Made by someone who was there: on St. Croix Island, in the winter of 1604–1605.',
+  secondary: 'Made later, by someone who was not there. They learned it from other sources.',
+};
+const DOCS = {
+  cider: {
+    who: 'Champlain', title: 'Frozen cider, melted snow, and the ice', look: 'old',
+    label: [['by', 'Made by', 'Samuel de Champlain, a mapmaker who sailed with de Mons in 1604'], ['when', 'When', 'Printed in Paris in 1613'],
+      ['what', 'What it is', 'Pages 55 and 56 of his book about his voyages'], ['words', 'Words', 'Easy words: retold simply for you, nothing added. His own words are in the other tabs.']],
+    versions: { plain: 'Easy words', en: 'English, 1878', fr: 'French, 1613', page: 'The 1613 pages' },
+    plain: [
+      'That winter all our drinks froze except the Spanish wine. The cider was handed out by the pound, like cheese. The storehouse had no cellar, and the wind through the cracks was colder than the air outside.',
+      'We had to drink very bad water and melted snow. There were no springs or streams on the island, and we could not get to the shore: the tide, which rises and falls about 5 m, pushed big pieces of ice up and down the river.',
+      'Grinding wheat in the hand mill wore us out. Most of us slept badly, we were short of firewood because of the ice, and we ate only salted meat and dried vegetables all winter. I think that food was part of the cause of the sickness.',
+      'You can’t really know this country until you spend a winter in it. In summer it is lovely: woods, fine land, lots of fish. But there are six months of winter here.',
+    ],
+    en: [
+      'During this winter, all our liquors froze, except the Spanish wine. Cider was dispensed by the pound. The cause of this loss was that there were no cellars to our storehouse, and that the air which entered by the cracks was sharper than that outside. We were obliged to use very bad water, and drink melted snow, as there were no springs nor brooks; for it was not possible to go to the main land in consequence of the great pieces of ice drifted by the tide, which varies three fathoms between low and high water.',
+      'Work on the hand-mill was very fatiguing, since the most of us, having slept poorly, and suffering from insufficiency of fuel, which we could not obtain on account of the ice, had scarcely any strength, and also because we ate only salt meat and vegetables during the winter, which produce bad blood. The latter circumstance was, in my opinion, a partial cause of these dreadful maladies.',
+      'It would be very difficult to ascertain the character of this region without spending a winter in it; for, on arriving here in summer, every thing is very agreeable, in consequence of the woods, fine country, and the many varieties of good fish which are found there. There are six months of winter in this country.',
+    ],
+    fr: [
+      'Durant cet yver nos boissons gelèrent toutes, horsmis le vin d’Espagne. On donnoit le cidre à la livre. La cause de ceste parte fut qu’il n’y avoit point de caves au magazin: & que l’air qui entroit par des fentes y estoit plus aspre que celuy de dehors. Nous estions contraints d’user de tresmauvaises eaux, & boire de la nege fondue, pour n’avoir ny fontaines ny ruisseaux: car il n’estoit pas possible d’aller en la grand terre, à cause des grandes glaces que le flus & reflus charioit, qui est de trois brasses de basse & haute mer.',
+      'Le travail du moulin à bras estoit fort pénible: d’autant que la plus part estans mal couchez, avec l’incommodité du chauffage que nous ne pouvions avoir à cause des glaces, n’avoient quasi point de force, & aussi qu’on ne mangeoit que chair salée & légumes durant l’yver, qui engendrent de mauvais sang: ce qui à mon opinion causoit en partie ces facheuses maladies.',
+      'Il estoit mal-aisé de recognoistre ce pays sans y avoir yverné, car y arrivant en été tout y est fort aggreable, à cause des bois, beaux pays & bonnes pescheries de poisson de plusieurs sortes que nous y trouvasmes. Il y a six mois d’yver en ce pays.',
+    ],
+    pages: ['../../sources/champlain-1613-p55.webp', '../../sources/champlain-1613-p56.webp'],
+    credit: 'Samuel de Champlain, Les Voyages (Paris, 1613), pages 55–56; English by C. P. Otis, 1878. Public domain.',
+  },
+  parkman: {
+    who: 'Parkman', title: 'A historian tells the story', look: 'old',
+    label: [['by', 'Made by', 'Francis Parkman, a writer of history in Boston'], ['when', 'When', 'Written in 1865'],
+      ['what', 'What it is', 'Part of chapter 3, “Acadia Occupied”, of his book Pioneers of France in the New World'], ['words', 'Words', 'Easy words: retold simply for you, nothing added. His own words are in the next tab.']],
+    versions: { plain: 'Easy words', orig: 'His own words' },
+    plain: [
+      'Champlain found a small island near the mouth of the river, fenced round with rocks. He named it St. Croix. Choosing this spot was very unlucky. It controlled the river and was easy to defend, but those were its only good points.',
+      'Before winter, the north end of the island was covered with buildings around a square. Champlain tried to make a garden, but nothing would grow in the sandy soil. Champlain showed all of this in plans and drawings in his little book of 1613.',
+      'Seventy-nine men stayed on the island for the winter. Ice swept past the island with the tide and often cut them off from wood and water on the mainland. Cider and wine froze in the barrels and were handed out by the pound.',
+      'Then scurvy broke out. Of the seventy-nine, thirty-five died before spring.',
+      'Spring came at last. On the sixteenth of June, Pontgravé arrived from France with forty men.',
+    ],
+    orig: [
+      'Near its mouth he found an islet, fenced round with rocks and shoals, and called it St. Croix, a name now borne by the river itself. With singular infelicity this spot was chosen as the site of the new colony. It commanded the river, and was well fitted for defence: these were its only merits…',
+      'Before the winter closed in, the northern end of the island was covered with buildings, surrounding a square… Adjacent there was an attempt at a garden, under the auspices of Champlain; but nothing would grow in the sandy soil… Such was the “Habitation de l’Isle Saincte-Croix,” as set forth by Champlain in quaint plans and drawings, in that musty little quarto of 1613…',
+      'Seventy-nine men remained at St. Croix… Ice in sheets, or broken masses, swept by their island with the ebbing and flowing tide, often debarring all access to the main, and cutting off their supplies of wood and water… Cider and wine froze in the casks, and were served out by the pound.',
+      'Soon the scurvy broke out, and raged with a fearful malignity. Of the seventy-nine, thirty-five died before spring, and many more were brought to the verge of death.',
+      'Spring came at last… Pontgrave, with forty men, cast anchor before their island on the sixteenth of June…',
+    ],
+    credit: 'Francis Parkman, Pioneers of France in the New World, chapter 3 (Boston, 1865). Public domain.',
+  },
+};
+const GENERIC = 'That line doesn’t prove it. Try the label at the top: who made it, and when?';
+const CASES = {
+  readq: { title: 'The first stack', from: 'Mr. Harrow, the Curator', intro: ['These papers are about St. Croix Island, where the French spent the winter of 1604–1605.', 'First read your research question. Then sort each paper: primary or secondary FOR THIS QUESTION. Prove every stamp.'],
+    progress: [['Question', 'now'], ['Sort', 'later'], ['Sort', 'later'], ['Ask', 'later']] },
+  stamp: { title: 'The first stack', from: 'Mr. Harrow, the Curator', intro: ['These papers are about St. Croix Island, where the French spent the winter of 1604–1605.', 'First read your research question. Then sort each paper: primary or secondary FOR THIS QUESTION. Prove every stamp.'],
+    progress: [['Question', 'gold'], ['Sort', 'gold'], ['Sort', 'now'], ['Ask', 'later']] },
+  compare: { title: 'A letter from a teacher', from: 'Miss Agnes Lyle, a schoolteacher in Saint John', intro: ['“Dear Sir or Madam, my class is studying the French on St. Croix Island. They have three questions, and they want PROOF, not guesses. Can you help?”', 'Same research question as your first stack. For each of her questions: pick the answer, then click the line that proves it.'],
+    progress: [['Question', 'gold'], ['Compare', 'now'], ['Ask', 'later'], ['Ask', 'later']] },
+};
+const STAMP = { doc: 'parkman', answer: 'secondary', look: 'The label at the top: WHEN.', shows: 'That it was written long after 1604–1605.',
+  proof: ['parkman@when', 'parkman#showed all of this in plans'],
+  near: { 'parkman@by': 'That says who he was. Does it show he was on the island in 1604? Look at WHEN.', 'parkman#Seventy-nine men': 'That is a fact about 1604, but anyone can repeat a fact. When was this written?', 'parkman#Of the seventy-nine': 'That is a fact about 1604, but anyone can repeat a fact. When was this written?' },
+  right: 'Secondary. Parkman wrote in 1865, about 260 years later. He even tells you where he read it: Champlain’s book of 1613.',
+  wrong: 'This one is secondary for your question. Parkman wrote it in 1865. He was not on the island in 1604.' };
+const COMPARE = {
+  ask: 'Why couldn’t the men get firewood and fresh water from the mainland? Champlain and Parkman both say. Find it in each.',
+  find: [{ doc: 'cider', proof: ['cider#we could not get to the shore', 'cider#short of firewood'], near: { 'cider#We had to drink': 'That says WHAT they drank. Find the line that says WHY they couldn’t reach the shore.' } },
+    { doc: 'parkman', proof: ['parkman#cut them off from wood and water'], near: { 'parkman#Cider and wine froze': 'That is about the drinks. Find what cut them off from the mainland.' } }],
+  verdict: 'What stopped them? Do the two papers agree?',
+  options: ['They agree: ice in the river cut them off.', 'They disagree: Parkman says the ships had gone.', 'They agree: de Mons ordered everyone inside.'], answer: 0,
+  look: 'Champlain’s frozen-cider pages, paragraph 2. Parkman, paragraph 3.', shows: 'What stopped them from reaching the shore, in each paper.',
+  right: 'Ice. And two sources agree: Champlain, who was there, and Parkman, who read Champlain.',
+};
+
+// lines: label lines are doc@k, sentences are doc#p.s
+const split = (p) => p.split(/(?<=[.!?…])\s+(?=[A-Z“])/);
+function textOf(key) {
+  const [doc, rest] = key.split(/[@#]/);
+  if (key.includes('@')) return DOCS[doc].label.find((r) => r[0] === rest)[2];
+  const [p, s] = rest.split('.').map(Number);
+  return split(DOCS[doc].plain[p])[s];
+}
+function matches(key, ref) {
+  if (!key) return false;
+  if (ref.includes('@')) return key === ref;
+  const [doc, phrase] = ref.split('#');
+  return key.startsWith(doc + '#') && textOf(key).includes(phrase);
+}
+const hits = (key, refs) => refs.some((r) => matches(key, r));
+const nearHint = (key, near) => { for (const [r, h] of Object.entries(near || {})) if (matches(key, r)) return h; return null; };
+const zoneOf = (ref) => { if (ref.includes('@')) return 'label'; const [doc, ph] = ref.split('#'); return DOCS[doc].plain.findIndex((p) => p.includes(ph)); };
+
+// ------------------------------------------------------------------ state
+let S;
+function reset(task) {
+  S = {
+    task, letter: true, settle: false, rqStage: task === 'readq' ? 'float' : 'pinned', pinDrop: false, other: false, reading: null, tucked: false, idle: 0, handOn: false,
+    shown: task === 'compare' ? 'cider' : task === 'stamp' ? 'parkman' : null, version: {}, zone: null,
+    marked: [], rqMsg: null,
+    pick: null, phase: 'choose', sel: null, tries: 0, hints: 0, wrongFirst: null, msg: null, tone: null, hint: null, fresh: false,
+    slot: { cider: null, parkman: null }, slotHint: {}, cstep: 0, done: false, grade: null,
+  };
+}
+
+// ------------------------------------------------------------------ tiny DOM helper
+function h(tag, attrs, ...kids) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (v == null || v === false) continue;
+    if (k.startsWith('on')) e.addEventListener(k.slice(2), v);
+    else if (k === 'class') e.className = v;
+    else e.setAttribute(k, v === true ? '' : v);
+  }
+  for (const k of kids.flat()) if (k != null && k !== false) e.append(k.nodeType ? k : String(k));
+  return e;
+}
+
+// ------------------------------------------------------------------ what to do now (one plain sentence)
+function nowLine() {
+  if (S.task === 'readq') {
+    if (S.marked.length >= RQ.marks.length) return ['Well done. Now you know what to look for.', 'Press Next.'];
+    return [`Click the words in your question that say ${RQ.marks[S.marked.length].tag}.`, 'The question is pinned at the top ↑'];
+  }
+  if (S.task === 'stamp') {
+    if (S.phase === 'done') return [S.grade === 'red' ? 'Fixed, and proven. Press Next.' : 'Proven! Press Next.', null];
+    if (!S.pick) return ['Read the label on the paper. Is it primary or secondary for your question?', null];
+    if (!S.sel) return ['Now prove it: click the line in the paper that shows it.', 'arrow'];
+    return ['Press Check.', null];
+  }
+  if (S.done) return [S.grade === 'red' ? 'Fixed, and proven. Press Next.' : 'Proven! Press Next.', null];
+  const f = COMPARE.find[S.cstep];
+  if (S.cstep < 2) return [`Find the answer in ${DOCS[f.doc].who}’s paper. Click the line that says it.`, 'arrow'];
+  if (S.pick == null) return ['Put them side by side. Do the two papers agree?', null];
+  return ['Press Check.', null];
+}
+function focusOf() {
+  if (S.letter) return '';
+  if (S.task === 'readq') return S.rqStage !== 'pinned' ? '' : 'card';
+  if (S.task === 'stamp') return S.phase === 'done' ? 'card' : !S.pick ? 'card' : !S.sel ? 'paper' : 'card';
+  return S.done ? 'card' : S.cstep < 2 ? 'paper' : 'card';
+}
+const pointing = () => (S.task === 'stamp' && S.pick && S.phase !== 'done') || (S.task === 'compare' && !S.done && S.cstep < 2);
+
+// ------------------------------------------------------------------ render
+const frame = document.getElementById('frame');
+function render() {
+  const keep = frame.querySelector('.scroll')?.scrollTop || 0;
+  const keepDoc = frame.querySelector('.scroll')?.dataset.doc;
+  const C = CASES[S.task];
+  const desk = h('div', { class: `desk${S.arriving ? ' arrive' : ''}`, 'data-focus': focusOf(), role: 'dialog', 'aria-label': `Your desk: ${C.title}` });
+  S.arriving = false;
+
+  // the bar
+  const prog = h('ol', { class: 'progress', 'aria-label': 'Your progress on this case' });
+  C.progress.forEach(([w, st], i) => {
+    let state = st;
+    if (st === 'now' && S.done) state = S.grade;
+    const seal = { gold: 'Proven first time', silver: 'Proven, with help', red: 'Fixed' }[state];
+    prog.append(h('li', { class: `pg ${seal ? 'done ' : ''}${state}`, title: seal ? `${w}: ${seal}. Click to look back.` : state === 'now' ? `${w}: you are here` : `${w}: still to do` },
+      h('span', { class: 'pg-n' }, seal ? '✓' : i + 1), h('span', { class: 'pg-w' }, w)));
+  });
+  desk.append(h('header', { class: 'bar' },
+    h('div', { class: 'case' }, h('small', null, 'Your desk'), h('span', { class: 'case-title' }, C.title)),
+    prog,
+    h('button', { class: 'leave', title: 'Back to the office. Your place is saved.' }, 'Leave the desk', h('small', null, 'your place is saved'))));
+
+  // the question, pinned across the top (hidden while it is still big in the middle)
+  desk.append(h('div', { class: `rqwrap${S.rqStage !== 'pinned' ? ' waiting' : ''}${S.pinDrop ? ' thunk' : ''}` },
+    h('section', { class: `rq${S.settle ? ' settle' : ''}` }, h('span', { class: 'rq-label' }, 'Your research question'), questionText(false)),
+    S.rqStage === 'pinned' ? h('span', { class: `pin${S.pinDrop ? ' drop' : ''}`, 'aria-hidden': 'true' }) : null));
+  S.settle = false;
+
+  const main = h('div', { class: 'main' });
+  main.append(renderReading(), renderCard());
+  desk.append(main);
+
+  if (S.letter) desk.append(renderLetter(C));
+  else if (S.task === 'readq' && S.rqStage !== 'pinned') desk.append(renderBigQuestion());
+  frame.replaceChildren(desk, h('div', { class: 'sizetag' }, `${frame.offsetWidth} × ${frame.offsetHeight}`));
+  const sc = frame.querySelector('.scroll');
+  if (sc && sc.dataset.doc === keepDoc) sc.scrollTop = keep;
+  if (S.handOn) placeHand();
+}
+
+// the question's words; while it is being read, every word can be clicked
+function questionText(clickable) {
+  const words = (s, idx) => s.split(/(\s+)/).filter(Boolean).map((w) => (clickable && w.trim()
+    ? h('button', { class: 'rq-word', onclick: () => clickWord(idx) }, w) : w));
+  const text = h('p', { class: 'rq-text' });
+  const spans = RQ.marks.map((m, i) => ({ m, i, at: RQ.text.indexOf(m.words) })).sort((a, b) => a.at - b.at);
+  let pos = 0;
+  for (const s of spans) {
+    text.append(...words(RQ.text.slice(pos, s.at), -1));
+    const on = S.marked.includes(s.m.tag);
+    text.append(h('span', { class: `mk${on ? ' on' : ''}`, 'data-tag': s.m.tag }, ...words(s.m.words, s.i), on ? h('span', { class: 'mk-tag' }, s.m.tag) : null));
+    pos = s.at + s.m.words.length;
+  }
+  text.append(...words(RQ.text.slice(pos), -1));
+  return text;
+}
+
+function renderBigQuestion() {
+  const want = RQ.marks[S.marked.length];
+  return h('div', { class: 'rqstage' }, h('section', { class: 'rqbig', role: 'dialog', 'aria-label': 'Your research question' },
+    h('h2', { class: 'rqbig-label' }, 'Your Research Question'),
+    questionText(!!want),
+    want ? h('p', { class: 'rqbig-ask' }, 'Click the words that say ', h('b', null, want.tag)) : h('p', { class: 'rqbig-ask ok', 'aria-label': 'Found them' }, '✓'),
+    S.rqMsg ? h('p', { class: 'rqbig-msg' }, S.rqMsg) : null));
+}
+
+// the big question flies up to its place at the top; then the pin goes in
+function flyUp() {
+  const big = frame.querySelector('.rqbig'), stage = frame.querySelector('.rqstage'), slip = frame.querySelector('.rq');
+  if (!big || !slip || matchMedia('(prefers-reduced-motion: reduce)').matches) return landed();
+  const fr = frame.getBoundingClientRect(), k = fr.width / frame.offsetWidth;
+  const b = big.getBoundingClientRect(), t = slip.getBoundingClientRect();
+  const sc = t.width / b.width, dx = (t.left - b.left) / k, dy = (t.top - b.top) / k;
+  big.style.animation = 'none';
+  big.style.transformOrigin = '0 0';
+  stage.animate([{ backgroundColor: 'rgba(5,6,9,.66)' }, { backgroundColor: 'rgba(5,6,9,0)' }], { duration: 650, fill: 'forwards' });
+  const end = `translate(${dx}px, ${dy}px) scale(${sc})`;
+  big.animate([{ transform: 'none', opacity: 1 }, { transform: end, opacity: 1, offset: 0.82 }, { transform: end, opacity: 0 }],
+    { duration: 650, easing: 'cubic-bezier(.55,0,.25,1)', fill: 'forwards' }).onfinish = landed;
+}
+function landed() { S.rqStage = 'pinned'; S.pinDrop = true; render(); S.pinDrop = false; }
+
+function renderReading() {
+  const r = h('div', { class: 'reading' });
+  if (S.task === 'readq') {
+    r.append(h('div', { class: 'blotter' }, h('div', { class: 'weight' }, h('div', { class: 'stone', 'aria-hidden': 'true' }))));
+    return r;
+  }
+  const docs = S.task === 'compare' ? ['cider', 'parkman'] : ['parkman'];
+  const others = S.task === 'stamp' ? ['cider'] : [];
+  const row = h('div', { class: 'folders', role: 'tablist', 'aria-label': 'Papers for this task' });
+  for (const id of docs) {
+    const proofIn = S.task === 'compare' ? !!S.slot[id] : S.sel?.startsWith(id);
+    row.append(h('button', { class: `ftab${S.shown === id && !S.reading ? ' on' : ''}`, role: 'tab', 'aria-selected': S.shown === id && !S.reading ? 'true' : 'false', title: proofIn ? 'Your proof is in this one' : null,
+      onclick: () => { S.shown = id; S.reading = null; render(); frame.querySelector('.scroll').scrollTop = 0; } },
+      h('span', { class: 'who' }, DOCS[id].who), h('span', { class: 'what' }, DOCS[id].title), proofIn ? h('span', { class: 'tick', 'aria-label': 'has your proof' }, '✓') : null));
+  }
+  if (others.length) {
+    const b = h('button', { class: 'others', 'aria-expanded': S.other ? 'true' : 'false', onclick: () => { S.other = !S.other; render(); } }, `Other papers (${others.length}) ▾`);
+    row.append(b);
+  }
+  if (S.other) {
+    const d = h('div', { class: 'drawer', style: 'right:24px;top:54px' }, h('h4', null, 'Papers you have already used'));
+    for (const id of others) d.append(h('button', { onclick: () => { S.reading = id; S.other = false; render(); } }, h('b', null, DOCS[id].title), h('br'), `${DOCS[id].who}`, h('br'), h('span', { class: 'stampmini' }, 'PRIMARY · the 1604–05 question')));
+    r.style.position = 'relative';
+    r.append(d);
+  }
+  const show = S.reading || S.shown;
+  const sc = h('div', { class: 'scroll', 'data-doc': show });
+  if (S.reading) sc.append(h('div', { class: 'readonlybar' }, h('span', null, 'You can read this paper. Your proof must come from the papers for this task.'),
+    h('button', { onclick: () => { S.reading = null; render(); } }, '← Back to your paper')));
+  sc.append(h('div', { class: 'sheetwrap' }, renderSheet(show, !S.reading)));
+  r.append(h('div', { class: 'blotter' }, row, sc));
+  return r;
+}
+
+function renderSheet(id, onTask) {
+  const d = DOCS[id];
+  const v = S.version[id] || 'plain';
+  const point = onTask && pointing() && v === 'plain';
+  const chosen = S.task === 'compare' ? Object.values(S.slot) : [S.sel];
+  const sheet = h('article', { class: `sheet${point ? ' pointing' : ''}` });
+  sheet.append(h('h2', { class: 'sheet-title' }, d.title));
+  const line = (key, t) => {
+    const on = chosen.includes(key);
+    const s = h('span', { class: `line${on ? ' chosen' : ''}`, 'data-key': key }, t);
+    if (point) {
+      s.tabIndex = 0; s.setAttribute('role', 'button'); s.title = 'Use this line as your proof';
+      s.addEventListener('click', () => pick(key));
+      s.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(key); } });
+    }
+    return s;
+  };
+  const tag = h('dl', { class: `tagbox${S.zone === `${id}:label` ? ' zone' : ''}` });
+  for (const [k, lbl, val] of d.label) tag.append(h('div', { class: 'tagrow' }, h('dt', null, lbl), h('dd', null, line(`${id}@${k}`, val))));
+  sheet.append(tag);
+  if (onTask && pointing() && v === 'plain') sheet.append(h('p', { class: 'pencil' }, '✎ Click any line, in the label or the words below, to use it as proof.'));
+  if (onTask && pointing() && v !== 'plain') sheet.append(h('p', { class: 'pencil' }, '✎ To choose your proof, go back to Easy words.'));
+  const vs = Object.keys(d.versions);
+  sheet.append(h('div', { class: 'readin' }, h('span', null, 'Read it in:'),
+    h('div', { class: 'seg', role: 'group', 'aria-label': 'Read it in' }, vs.map((k) => h('button', { 'aria-pressed': k === v ? 'true' : 'false', onclick: () => { S.version[id] = k; render(); } }, d.versions[k])))));
+  const body = h('div', { class: `body${v === 'plain' ? '' : ' old'}` });
+  if (v === 'plain') d.plain.forEach((p, i) => {
+    const para = h('p', { class: S.zone === `${id}:${i}` ? 'zone' : null });
+    split(p).forEach((t, j) => { para.append(line(`${id}#${i}.${j}`, t), ' '); });
+    body.append(para);
+  });
+  else if (v === 'page') body.append(h('div', { class: 'scan' }, d.pages.map((src) => h('img', { src, alt: 'A page of Champlain’s 1613 book' }))));
+  else d[v].forEach((p) => body.append(h('p', null, p)));
+  sheet.append(body, h('p', { class: 'credit' }, d.credit));
+  // the ink: the stamp this paper got, for this question
+  const ink = S.task === 'stamp' && id === 'parkman' && S.pick ? S.pick : S.reading === 'cider' && id === 'cider' ? 'primary' : null;
+  if (ink) sheet.classList.add('stamped');
+  if (ink) sheet.append(h('div', { class: `ink ${ink}${S.fresh ? ' fresh' : ''}` }, h('b', null, ink.toUpperCase()), h('small', null, 'for the 1604–05 question')));
+  S.fresh = false;
+  return sheet;
+}
+
+function renderCard() {
+  const card = h('aside', { class: `card${S.tucked ? ' tucked' : ''}`, 'aria-label': 'Your task' });
+  const paper = h('div', { class: 'cardpaper' });
+  const [kicker, of] = S.task === 'readq' ? ['Read the question', `Step ${Math.min(S.marked.length + 1, 2)} of 2`]
+    : S.task === 'stamp' ? ['Sort a paper · 2 of 2', `Step ${S.phase === 'done' ? 2 : S.pick ? 2 : 1} of 2`]
+      : ['Compare two papers', `Step ${Math.min(S.cstep + 1, 3)} of 3`];
+  paper.append(h('div', { class: 'card-head' }, h('span', null, kicker), h('span', { class: 'of' }, S.done || (S.task === 'readq' && S.marked.length >= 2) ? 'Done' : of),
+    h('button', { class: 'tuck', onclick: () => { S.tucked = !S.tucked; render(); } }, S.tucked ? 'Show the task ▴' : 'Hide to read ▾')));
+  const [now, sub] = nowLine();
+  paper.append(h('div', { class: 'now', 'aria-live': 'polite' }, h('small', null, 'Now'),
+    h('p', null, now, sub === 'arrow' ? h('span', { class: 'arrow-left' }, ' ←') : null, sub === 'arrow' ? h('span', { class: 'arrow-up' }, ' ↑') : null),
+    sub && sub !== 'arrow' ? h('small', null, sub) : null));
+  const body = h('div', { class: 'card-body' });
+  const foot = h('div', { class: 'card-foot' });
+  if (S.task === 'readq') cardReadq(body, foot);
+  else if (S.task === 'stamp') cardStamp(body, foot);
+  else cardCompare(body, foot);
+  paper.append(body, foot);
+  card.append(paper);
+  return card;
+}
+
+const doneLine = (label, quote, onclick) => h('button', { class: 'done-line', onclick, disabled: !onclick, title: onclick ? 'Change this' : null },
+  h('span', { class: 'chk' }, '✓'), h('span', null, label, quote ? h('q', null, quote) : null), onclick ? h('span', { class: 'edit' }, 'change') : null);
+const msg = (tone, ...lines) => h('div', { class: `msg ${tone}` }, ...lines.flat().map((l) => h('p', { style: 'margin:0' }, l)));
+const nextBtn = (label, to) => h('button', { class: 'go next', onclick: () => { const newCase = CASES[to].title !== CASES[S.task].title; reset(to); S.letter = newCase; setTask(to, true); } }, label);
+
+function cardReadq(body, foot) {
+  RQ.marks.forEach((m, i) => {
+    if (S.marked.includes(m.tag)) body.append(doneLine(`Found ${m.tag}: `, m.words));
+    else if (i === S.marked.length) body.append(h('section', { class: 'stepnow' }, h('p', { class: 'about' }, m.hint)));
+  });
+  if (S.rqMsg) body.append(msg('warn', S.rqMsg));
+  if (S.marked.length >= RQ.marks.length) {
+    body.append(h('div', { class: 'rule' }, h('p', { class: 'about', style: 'margin:0' }, 'So, for THIS question:'),
+      h('div', { class: 'p' }, h('b', null, 'PRIMARY '), RQ.primary), h('div', { class: 's' }, h('b', null, 'SECONDARY '), RQ.secondary)));
+    foot.append(nextBtn('Next →', 'stamp'));
+  } else foot.append(h('span', { class: 'foot-why' }, 'Click the words in the question at the top.'));
+}
+
+function cardStamp(body, foot) {
+  if (S.phase === 'done') {
+    body.append(h('div', { class: `seal ${S.grade}` }, h('i'), { gold: 'Proven first time', silver: 'Proven, with help', red: 'Fixed' }[S.grade]));
+    body.append(doneLine('Your stamp: SECONDARY, for the 1604–05 question', null));
+    body.append(doneLine('Your proof: ', textOf(S.sel)));
+    body.append(msg(S.grade === 'red' ? 'bad' : 'good', S.msg));
+    foot.append(nextBtn('Next →', 'compare'));
+    return;
+  }
+  if (S.pick && S.phase !== 'choose-again') {
+    body.append(doneLine(`Your stamp: ${S.pick.toUpperCase()}`, null, S.phase === 'choose' ? () => { S.pick = null; S.sel = null; render(); } : null));
+    const step = h('section', { class: 'stepnow' });
+    step.append(h('p', { class: 'guide' }, h('b', null, 'Where to look: '), STAMP.look, h('br'), h('b', null, 'Your proof should show: '), STAMP.shows));
+    step.append(proofBox('Your proof', S.sel, S.hint));
+    body.append(step);
+  } else {
+    const step = h('section', { class: 'stepnow' },
+      h('p', { class: 'about' }, 'Your question is about: ', h('b', null, 'the winter of 1604–1605 · St. Croix Island')));
+    const pads = h('div', { class: 'pads' });
+    for (const k of ['primary', 'secondary']) pads.append(h('button', { class: `pad ${k}`, 'aria-pressed': S.pick === k ? 'true' : 'false', onclick: () => { S.pick = k; S.fresh = true; render(); } },
+      h('span', { class: 'nm' }, k.toUpperCase()), h('span', { class: 'means' }, RQ[k])));
+    step.append(pads);
+    body.append(step);
+  }
+  if (S.msg) body.append(msg(S.tone, S.msg));
+  if (S.pick) foot.append(h('button', { class: 'quiet', disabled: S.hints >= 1, onclick: () => { S.hints++; S.zone = `parkman:label`; render(); } }, S.hints ? 'Hint shown' : 'Need a hint?'));
+  else foot.append(h('span', { class: 'foot-why' }, 'Choose a stamp first.'));
+  foot.append(h('button', { class: 'go', disabled: !(S.pick && S.sel), title: S.pick && S.sel ? null : 'Click a line in the paper first', onclick: checkStamp }, S.phase === 'fix' ? 'Check my proof' : 'Check'));
+}
+
+function proofBox(label, key, hint) {
+  if (key) return h('div', { class: 'proof filled' }, h('div', { class: 'lbl' }, key.includes('@') ? `${label} · from the label` : label), h('blockquote', null, `“${textOf(key)}”`));
+  return h('div', { class: `proof${hint ? ' hinted' : ''}` }, h('div', { class: 'lbl' }, label), h('p', { class: hint ? 'hint' : 'empty' }, hint || 'Click a line in the paper. It will appear here.'));
+}
+
+function cardCompare(body, foot) {
+  body.append(h('p', { class: 'about', style: 'font-size:16px;color:var(--ink)' }, COMPARE.ask));
+  COMPARE.find.forEach((f, i) => {
+    const who = DOCS[f.doc].who;
+    if (S.slot[f.doc] && S.cstep !== i) body.append(doneLine(`${who} says: `, textOf(S.slot[f.doc]), S.done ? null : () => { S.cstep = i; S.shown = f.doc; render(); }));
+    else if (S.cstep === i) {
+      const step = h('section', { class: 'stepnow' });
+      step.append(h('p', { class: 'guide' }, h('b', null, 'Where to look: '), i === 0 ? 'Champlain’s paper, paragraph 2.' : 'Parkman’s paper, paragraph 3.'));
+      step.append(proofBox(`${who} says`, S.slot[f.doc], S.slotHint[f.doc]));
+      body.append(step);
+    }
+  });
+  if (S.cstep >= 2 || S.done) {
+    const step = h('section', { class: S.done ? '' : 'stepnow' });
+    const opts = h('div', { class: 'options' });
+    COMPARE.options.forEach((o, i) => opts.append(h('button', { class: `option${S.done && i === COMPARE.answer ? ' right' : ''}`, 'aria-pressed': S.pick === i ? 'true' : 'false', disabled: S.done,
+      onclick: () => { S.pick = i; render(); } }, h('b', null, 'ABC'[i]), o)));
+    step.append(opts);
+    body.append(step);
+  }
+  if (S.done) body.prepend(h('div', { class: `seal ${S.grade}` }, h('i'), { gold: 'Proven first time', silver: 'Proven, with help', red: 'Fixed' }[S.grade]));
+  if (S.msg) body.append(msg(S.tone, S.msg));
+  if (S.done) { foot.append(nextBtn('Next →', 'readq')); return; }
+  foot.append(h('button', { class: 'quiet', disabled: S.hints >= 1, onclick: () => { S.hints++; const f = COMPARE.find[Math.min(S.cstep, 1)]; S.zone = `${f.doc}:${zoneOf(f.proof[0])}`; S.shown = f.doc; render(); } }, S.hints ? 'Hint shown' : 'Need a hint?'));
+  const ready = S.slot.cider && S.slot.parkman && S.pick != null;
+  foot.append(h('button', { class: 'go', disabled: !ready, onclick: checkCompare }, 'Check'));
+}
+
+function renderLetter(C) {
+  return h('div', { class: 'veil' }, h('section', { class: 'letter', role: 'dialog', 'aria-label': 'A letter' },
+    h('div', { class: 'from' }, `From ${C.from}`), h('h2', null, C.title), C.intro.map((p) => h('p', null, p)),
+    h('button', { class: 'go', onclick: () => { S.letter = false; S.settle = S.rqStage === 'pinned'; render(); } }, S.rqStage === 'pinned' ? 'To work' : 'Read your question')));
+}
+
+// ------------------------------------------------------------------ actions
+function clickWord(idx) {
+  const want = RQ.marks[S.marked.length];
+  if (idx >= 0 && RQ.marks[idx] === want) { S.marked.push(want.tag); S.rqMsg = null; }
+  else if (idx >= 0) S.rqMsg = `Those words are the ${RQ.marks[idx].tag}. First find the ${want.tag}.`;
+  else S.rqMsg = `Not those words. ${want.hint}`;
+  if (S.marked.length >= RQ.marks.length) {
+    S.grade = 'gold'; S.done = true;
+    const me = S;
+    setTimeout(() => { if (S === me) flyUp(); }, 900); // a moment to see both words marked, then up it goes
+  }
+  render();
+}
+function pick(key) {
+  if (S.task === 'stamp') { S.sel = key; S.hint = null; render(); return; }
+  const f = COMPARE.find[S.cstep];
+  if (!key.startsWith(f.doc)) return;
+  S.slot[f.doc] = key; S.slotHint[f.doc] = null; S.msg = null; S.zone = null;
+  const next = COMPARE.find.findIndex((x) => !S.slot[x.doc]);
+  S.cstep = next < 0 ? 2 : next;
+  if (next >= 0) { S.shown = COMPARE.find[next].doc; S.version[S.shown] = 'plain'; }
+  render();
+  if (next >= 0) frame.querySelector('.scroll').scrollTop = 0;
+}
+function checkStamp() {
+  const hit = hits(S.sel, STAMP.proof);
+  if (S.phase === 'choose' && S.pick !== STAMP.answer) {
+    S.wrongFirst = S.pick; S.pick = STAMP.answer; S.fresh = true;
+    if (hit) return finishStamp('red', STAMP.wrong);
+    S.phase = 'fix'; S.msg = `${STAMP.wrong} Now find a line that proves it.`; S.tone = 'bad'; S.sel = null; return render();
+  }
+  if (hit) return finishStamp(S.wrongFirst ? 'red' : S.tries ? 'silver' : 'gold', STAMP.right);
+  S.tries++; S.hint = nearHint(S.sel, STAMP.near) || GENERIC; S.sel = null; S.msg = null; render();
+}
+function finishStamp(grade, m) { S.phase = 'done'; S.grade = grade; S.msg = m; S.tone = grade === 'red' ? 'warn' : 'good'; S.zone = null; S.done = true; render(); }
+function checkCompare() {
+  const bad = COMPARE.find.filter((f) => !hits(S.slot[f.doc], f.proof));
+  const miss = (f, m) => { S.slotHint[f.doc] = nearHint(S.slot[f.doc], f.near) || m; S.slot[f.doc] = null; };
+  if (S.pick !== COMPARE.answer && S.wrongFirst == null) {
+    S.wrongFirst = S.pick; S.pick = COMPARE.answer;
+    if (!bad.length) return finishCompare('red');
+    bad.forEach((f) => miss(f, 'Not that line. Keep looking.'));
+    S.cstep = COMPARE.find.indexOf(bad[0]); S.shown = bad[0].doc;
+    S.msg = 'Not quite: the right answer is now chosen. Now find the proof.'; S.tone = 'bad'; return render();
+  }
+  if (!bad.length) return finishCompare(S.wrongFirst != null ? 'red' : S.tries ? 'silver' : 'gold');
+  S.tries++;
+  bad.forEach((f) => miss(f, 'That line doesn’t show it. Try another.'));
+  S.cstep = COMPARE.find.indexOf(bad[0]); S.shown = bad[0].doc;
+  S.msg = bad.length === 2 ? 'Neither line shows it yet.' : `The line from ${DOCS[bad[0].doc].who} doesn’t show it yet. The other one is right.`; S.tone = 'warn';
+  render();
+}
+function finishCompare(grade) { S.done = true; S.grade = grade; S.msg = COMPARE.right; S.tone = 'good'; S.zone = null; render(); }
+
+// ------------------------------------------------------------------ the idle hand: after 6 s, beside the next thing to do
+function handTarget() {
+  const q = (s) => frame.querySelector(s);
+  if (S.letter) return q('.letter .go');
+  if (q('.next')) return q('.next');
+  if (S.task === 'readq') return frame.querySelector(`.rqstage .mk[data-tag="${RQ.marks[S.marked.length]?.tag}"]`);
+  if (q('.card-foot .go:not(:disabled)')) return q('.card-foot .go');
+  if (S.task === 'stamp' && !S.pick) return q('.pads');
+  if (S.task === 'compare' && S.cstep >= 2) return q('.options');
+  return q('.sheet .tagbox');
+}
+// The hand is drawn pointing right, fingertip at TIP. It tries each side of the target in turn (left, above, below,
+// right) and takes the first place where it covers no words and stays on the screen.
+const WORDS = 'p,h2,h3,dd,dt,blockquote,button,.line,.mk,.option,.pad,.ftab,.pg,.case,.done-line,.proof,.msg,.guide,.scan img,.weight .stone';
+function placeHand() {
+  frame.querySelector('.handwrap')?.remove();
+  const t = handTarget();
+  if (!t || !window.HAND) return;
+  const fr = frame.getBoundingClientRect(), r = t.getBoundingClientRect(), k = fr.width / frame.offsetWidth;
+  const W = 84 * k, H = W * 104 / 184, tx = 176 / 184, ty = 41 / 104;
+  const cx = r.left + Math.min(r.width / 2, 60 * k), cy = r.top + Math.min(r.height / 2, 22 * k);
+  // [tip x, tip y, direction, the hand's box relative to the tip]
+  const tries = [
+    [r.left - 3 * k, cy, 'right', [-W * tx, -H * ty, W * (1 - tx), H * (1 - ty)]],
+    [cx, r.top - 3 * k, 'down', [-H * (1 - ty), -W * tx, H * ty, W * (1 - tx)]],
+    [cx, r.bottom + 3 * k, 'up', [-H * ty, -W * (1 - tx), H * (1 - ty), W * tx]],
+    [r.right + 3 * k, cy, 'left', [-W * (1 - tx), -H * ty, W * tx, H * (1 - ty)]],
+  ];
+  const clear = ([x, y, , [x0, y0, x1, y1]]) => {
+    if (x + x0 < fr.left || y + y0 < fr.top || x + x1 > fr.right || y + y1 > fr.bottom) return false;
+    for (const fx of [0.1, 0.5, 0.9]) for (const fy of [0.15, 0.5, 0.85]) {
+      const e = document.elementFromPoint(x + x0 + (x1 - x0) * fx, y + y0 + (y1 - y0) * fy);
+      if (e && e !== t && !t.contains(e) && e.closest(WORDS)) return false;
+    }
+    return true;
+  };
+  const [x, y, dir] = tries.find(clear) || tries[2];
+  const wrap = h('div', { class: 'handwrap', 'aria-hidden': 'true' });
+  wrap.style.left = `${(x - fr.left) / k}px`;
+  wrap.style.top = `${(y - fr.top) / k}px`;
+  wrap.style.transform = { right: 'none', down: 'rotate(90deg)', up: 'rotate(-90deg)', left: 'scaleX(-1)' }[dir];
+  const img = h('img', { class: 'hand', src: HAND.src, alt: '' });
+  img.style.left = `${-84 * tx}px`;
+  img.style.top = `${-84 * 104 / 184 * ty}px`;
+  wrap.append(img);
+  frame.append(wrap);
+}
+setInterval(() => { S.idle += 0.5; if (S.idle >= 6 && !S.handOn) { S.handOn = true; placeHand(); } }, 500);
+const wake = () => { S.idle = 0; if (S.handOn) { S.handOn = false; frame.querySelector('.handwrap')?.remove(); } };
+frame.addEventListener('pointerdown', wake, true);
+frame.addEventListener('keydown', wake, true);
+
+// ------------------------------------------------------------------ the mockup's toolbar: task and screen size
+let size = 'fit';
+function fit() {
+  const stage = document.getElementById('stage');
+  stage.style.setProperty('--bar', `${document.getElementById('mock').offsetHeight}px`);
+  const sw = stage.clientWidth - 24, sh = stage.clientHeight - 24;
+  let w = sw, hh = sh;
+  if (size !== 'fit') [w, hh] = size.split('x').map(Number);
+  frame.style.width = `${w}px`;
+  frame.style.height = `${hh}px`;
+  const k = Math.min(1, sw / w, sh / hh);
+  frame.style.transform = `translate(-50%, -50%) scale(${k})`;
+  for (const b of document.querySelectorAll('[data-size]')) b.setAttribute('aria-pressed', b.dataset.size === size);
+}
+function setTask(task, keepLetter) {
+  if (!keepLetter) reset(task);
+  S.arriving = S.letter;
+  for (const b of document.querySelectorAll('[data-task]')) b.setAttribute('aria-pressed', b.dataset.task === task);
+  render();
+}
+document.querySelectorAll('[data-task]').forEach((b) => b.addEventListener('click', () => setTask(b.dataset.task)));
+document.querySelectorAll('[data-size]').forEach((b) => b.addEventListener('click', () => { size = b.dataset.size; fit(); render(); }));
+document.getElementById('replay').addEventListener('click', () => setTask(S.task));
+document.getElementById('handnow').addEventListener('click', () => { S.handOn = true; placeHand(); });
+window.addEventListener('resize', () => { fit(); render(); });
+const want = new URLSearchParams(location.search);
+if (want.get('size')) size = want.get('size');
+fit();
+setTask(want.get('task') || 'readq');
+if (want.has('noletter')) { S.letter = false; render(); }
+window.mock = { get S() { return S; }, render, setTask, fit, setSize(s) { size = s; fit(); render(); } };
+</script>
+</body>
+</html>

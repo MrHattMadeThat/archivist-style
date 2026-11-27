@@ -26,9 +26,13 @@ import { paraOf } from './text.js';
 
 const GENERIC = 'That line doesn’t prove it. Try the label at the top: who made it, and when?';
 const MARK_HINT = { WHEN: 'Look for a year, or a time.', WHERE: 'Look for the name of a place.', WHO: 'Look for the people the question is about.' };
-const MARK_ASK = { WHEN: 'WHEN', WHERE: 'WHERE', WHO: 'WHO it is about' };
+export const MARK_ASK = { WHEN: 'WHEN', WHERE: 'WHERE', WHO: 'WHO it is about' };
 
+// One step of a card. Only the step being done now and the steps already done are shown: a step still to come is
+// left out (kids read greyed-out steps as things to do). The desk lifts the current step's title into the card's
+// Now line (desk.js, renderWork).
 function step(n, state, title, ...content) {
+  if (state === 'later') return document.createDocumentFragment();
   const s = el('section', `step ${state}`);
   const head = el('div', 'step-head');
   head.append(el('span', 'step-n', state === 'done' ? '✓' : String(n)), el('h3', 'step-title', title));
@@ -131,10 +135,10 @@ function readq(t, ctx) {
     },
     card() {
       const c = el('div', 'task task-readq');
-      c.append(el('p', 'lead', 'Before you sort anything, read your research question. It is pinned at the top of the desk.'));
+      c.append(el('p', 'lead', 'Before you sort anything, read your research question.'));
       marks().forEach((m, i) => {
         const state = i < st.i || st.phase === 'done' ? 'done' : i === st.i ? 'now' : 'later';
-        c.append(step(i + 1, state, `Click the words that say ${MARK_ASK[m.tag]}.`, state === 'now' ? el('p', 'small', '↑ Click them in the question at the top.') : null));
+        c.append(step(i + 1, state, `Click the words that say ${MARK_ASK[m.tag]}.`, state === 'now' ? el('p', 'small', 'Click them in your question.') : null));
       });
       const m = message(st);
       if (m) c.append(m);

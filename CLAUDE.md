@@ -55,9 +55,8 @@ Read `README.md` first. This file is for agents working in the repo.
   and run `node scripts/check.mjs` after any content edit. Only sources that existed by 1910 (the desk is in 1910).
 - Test hooks added to `window.museum`: `go(x, z, area)`, `area()`, `stage(name)` (set or read), `game()`,
   `say(lines)`, `open(id)` (any exhibit or thing, e.g. `open('mydesk')`). On the desk: `desk.solve()`, `desk.state`.
-- **Card height check** (lab PCs, 1366 × 650): for every task, force the tallest states (wrong first answer, a
-  non-proof line, every hint open, then solved) and assert `.work` scrollHeight ≤ clientHeight. The last run passed
-  for all 15 tasks and the three reports.
+- **Layout check**: replaced on 2026-11-28 by `desk.fits()` at nine screen sizes (see "The desk redesign" below). The
+  old rule (the work card must never scroll at 1366 × 650) is gone: the card now scrolls inside itself.
 - Port 5544 is often taken by another session's server; `archivist-office` in `REPOS/.claude/launch.json` serves the
   same folder on 5546.
 
@@ -79,7 +78,7 @@ Read `README.md` first. This file is for agents working in the repo.
 - **Next is big and pulses** (brass, one slow beat a second; off with prefers-reduced-motion), in the coach bubble and
   in every world dialogue. The user asked for a "big flashing next button"; a hard flash was avoided on purpose.
 - **Dialogue Back/Next**: buttons and the ← → keys. Back never crosses a `do` line (a walk, a fade or a stage change).
-- **Looking back on the desk**: ◂ Back in the work card's top row, or a coloured pip, shows an earlier answer
+- **Looking back on the desk**: ◂ Back in the work card's top row, or a finished task's card in the top bar, shows an earlier answer
   read-only with its proof underlined. Results now keep `proof` (the line key) and `first` (a wrong first answer).
 - **Paper seams**: `T(..., {cut:{t, b}})` removes the white paper margin above `t` / below `b` px, where two pieces join.
   Used for the necks (they tuck under the collars) and the elbows (the upper sleeve also overlaps the forearm). Keep
@@ -90,6 +89,54 @@ Read `README.md` first. This file is for agents working in the repo.
   never flips them.
 - Browser module caching: `?v=` on the page does not refresh ES module imports. In the preview, `fetch(file, {cache:
   'reload'})` each changed module before reloading.
+
+## The desk redesign (2026-11-28)
+
+- **Why**: kids were confused when the desk popped up, and on square monitors the paper was squeezed (139 px wide at
+  1024 × 768 with Windows at 125 %) and **Finish the case** fell off the screen. Plan: `docs/DESK_REDESIGN.md`; the
+  approved mockup: `docs/mockups/desk.html` (open it through the local server).
+- **The look**: your desk under the gas lamp. Wood falling into the Gaslight blue, a green baize blotter with the paper
+  in the lamp light, cut-paper sheets (pale margin + hard shadow via stacked `drop-shadow`, slightly uneven
+  `clip-path` edges, an SVG-noise grain in `--grain`), the task on a ruled index card. All in the desk section of
+  `css/desk.css`; the desk uses `box-sizing: border-box` (the rest of the game doesn't).
+- **Two areas, not three** (`js/desk/desk.js`): the papers column is gone. The task's papers are **folder tabs** on the
+  blotter; papers used earlier in the case are in **Other papers ▾** (a drawer). The versions of a paper are one
+  switch inside the sheet: "Read it in: Easy words · His own words · The 1613 page" (`js/desk/doc.js`). The progress dots
+  are now a card per task with a word (`WORD` in desk.js: Question · Sort · Ask · Compare ...), seal colour when done.
+- **The card never pushes a button off the screen**: `.card-body` scrolls; `.actions` (hint + Check) and Next are moved
+  into `.card-foot`, which never scrolls. The card scrolls itself to the current step after each render.
+- **The Now line**: the title of the LAST `.step.now` is lifted out of the card into the Now line at the top (a stamp
+  or an answer stays open while its proof step is current). `step(..., 'later')` returns nothing now: later steps are
+  hidden, not greyed (kids read greyed steps as things to do). With no current step the Now line uses `.ask`.
+- **The research question opens BIG** (user, 2026-11-28): while a `readq` task is under way, `.rqstage` covers the desk
+  with the question in the middle, "Your Research Question" larger still, a pulsing lamp glow and a gleam across the
+  title. The words are clicked there. Done: a green ✓, then (900 ms) it flies onto its slip under the top bar
+  (`flyUp()`, Web Animations) and a brass pin drops in (`.pin.drop`, the `box` sound). `rqPhase` is
+  'big' → 'leaving' → 'pinned'; `updatePhase()` lands it at once if the task moves on mid-flight. A second `readq` with a
+  new `rq` (case c3) does it again, marked "A new question". The case letter no longer repeats the question; its
+  button says **Read your question**. Reduced motion: no glow, no flight.
+- **`.rqcard` is whichever question is showing** (the big card while it is up, else the pinned slip): the tutorial
+  points at `.rqcard` and `.rq-mark[data-tag]`, and the big card comes first in the DOM. Keep the class names listed at
+  the top of desk.js; js/desk/tutorial.js points at them.
+- **No words on an empty desk** (user): with no paper out, the blotter shows only the paperweight.
+- **The lamp follows the work**: `desk.dataset.focus` = 'paper' while a proof line is wanted (the blotter gets an amber
+  ring, the Now line an arrow), 'card' otherwise (the card glows, the paper dims a little).
+- **The hand points from beside, never over words**: `HAND.make(...).beside(target)` (js/hand.js) tries left, above,
+  below and right, scoring each by how many of nine points would cover text or buttons (`WORDS`), and aims at the first
+  line of words that wrap. The desk's idle nudge and Mr. Harrow's coaching both use it; the coach also scrolls his
+  target into view once per step (the paper and the card scroll inside themselves).
+- **Guided sample**: one step added after WHERE ("There. Now it is pinned to the top of your desk..."), step 2 reworded.
+  Walked end to end at 1366 × 650 (2026-11-28): all 18 steps, hand on screen each time, no errors.
+- **Layout check** (`desk.fits()` → `{ ok, offscreen, sideways, paper }`): no button outside the screen (buttons in the
+  paper, the card body, the drawer or a letter are reached by scrolling), the big question and letters inside the
+  screen, nothing scrolls sideways, and the paper's width. Run it for every task of every case in three states (fresh;
+  wrong answer, a non-proof line, Check, every hint; solved), plus each case letter and report, at 1366 × 650,
+  1366 × 768, 1280 × 1024, 1024 × 768, 1093 × 614, 820 × 615, 1536 × 864, 1920 × 1080 and 640 × 700. Last run
+  (2026-11-28): 102 checks × 9 sizes, all pass; the narrowest paper is 423 px (820 × 615).
+- **Testing traps**: the start menu (`#title`, z 50) covers the overlays; hide it to test a desk opened with
+  `Activities.desk({caseId, save: {}, persist(){}, ...})` (a throwaway save). In a hidden browser pane CSS animations
+  barely advance, so the desk can look stuck half faded in: add a test-only style that sets the desk's
+  `animation-duration` to 0, and `finish()` the flight's Web Animations by hand.
 
 ## Start menu and pause menu (2026-11-26)
 
@@ -118,8 +165,7 @@ Read `README.md` first. This file is for agents working in the repo.
 - Chapter 2 (`c4`, stages fetch4 → report4) and chapter 3 (`c5`, fetch5 → report5) in `js/story.js`; a narrator line
   ("Chapter 2 · Two accounts") marks each start. Sources: Lescarbot via Ganong 1902; Pagan's 1797 deposition via Kilby
   1888 (`printedIn`: filed in Kilby's box); Wright's via Ganong. Details in `docs/SOURCES.md`.
-- Card height: all 30 tasks pass the 1366 × 650 check (fresh, wrong answer with every hint open, solved). The compare
-  card only fits because its two proof boxes sit side by side.
+- Card height: superseded by the desk redesign (2026-11-28): the card scrolls and its buttons are pinned to its foot.
 - Preview: `archivist-chapters` in `REPOS/.claude/launch.json` serves this folder on 5547 (5544/5546 are often taken).
 
 ## The title screen, Options, Credits (2026-11-28)

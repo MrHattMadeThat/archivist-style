@@ -48,6 +48,9 @@
   const TIP = { x: 176 / 184, y: 41 / 104 };
   const ROT = { right: 'rotate(0deg)', down: 'rotate(90deg)', up: 'rotate(-90deg)', left: 'scaleX(-1)' };
 
+  // what the hand must not cover when it points from beside something
+  const WORDS = 'p,h1,h2,h3,h4,dd,dt,li,blockquote,button,label,.line,.rq-mark,.option,.pad,.ftab,.proof,.msg,.guide,.step-title,.scan img,.coach';
+
   function make(parent, cls = '', size = 92) {
     const el = document.createElement('div');
     el.className = `hand ${cls}`;
@@ -77,6 +80,42 @@
         if (prefer === 'right' || (prefer !== 'down' && r.width > 360 && r.left > 110)) return this.at(r.left - 4, r.top + Math.min(r.height / 2, 22), 'right');
         if (r.top > 90) return this.at(r.left + Math.min(r.width / 2, 60), r.top - 4, 'down');
         return this.at(r.left + Math.min(r.width / 2, 60), r.bottom + 4, 'up');
+      },
+      // point at an element without covering any words (the desk and the coach): try the left, then above, below and
+      // right, and take the first place where the hand stays on the screen and lies over no text or button. If every
+      // side covers something, take the side that covers least.
+      beside(target) {
+        const t = typeof target === 'string' ? document.querySelector(target) : target;
+        const rects = t?.getClientRects();
+        if (!rects?.length) return this.hide();
+        // words that wrap onto two lines: aim at the first line, not the box around both
+        const r = rects.length > 1 ? rects[0] : t.getBoundingClientRect();
+        const W = size, H = size * 104 / 184, tx = TIP.x, ty = TIP.y;
+        const cx = r.left + Math.min(r.width / 2, 60), cy = r.top + Math.min(r.height / 2, 22);
+        // [tip x, tip y, direction, the hand's box around the tip]
+        const tries = [
+          [r.left - 3, cy, 'right', [-W * tx, -H * ty, W * (1 - tx), H * (1 - ty)]],
+          [cx, r.top - 3, 'down', [-H * (1 - ty), -W * tx, H * ty, W * (1 - tx)]],
+          [cx, r.bottom + 3, 'up', [-H * ty, -W * (1 - tx), H * (1 - ty), W * tx]],
+          [r.right + 3, cy, 'left', [-W * (1 - tx), -H * ty, W * tx, H * (1 - ty)]],
+        ];
+        const was = el.hidden;
+        el.hidden = true; // so the hand doesn't find itself
+        // how many of nine points over the hand would cover words (Infinity: off the screen)
+        const covers = ([x, y, , [x0, y0, x1, y1]]) => {
+          if (x + x0 < 0 || y + y0 < 0 || x + x1 > innerWidth || y + y1 > innerHeight) return Infinity;
+          let n = 0;
+          for (const fx of [0.1, 0.5, 0.9]) for (const fy of [0.15, 0.5, 0.85]) {
+            const e = document.elementFromPoint(x + x0 + (x1 - x0) * fx, y + y0 + (y1 - y0) * fy);
+            if (e && e !== t && !t.contains(e) && e.closest(WORDS)) n++;
+          }
+          return n;
+        };
+        let spot = null, least = Infinity;
+        for (const c of tries) { const n = covers(c); if (n < least) { least = n; spot = c; } if (n === 0) break; }
+        el.hidden = was;
+        if (!spot) return this.to(t);
+        return this.at(spot[0], spot[1], spot[2]);
       },
       hide() { el.hidden = true; },
       remove() { el.remove(); },

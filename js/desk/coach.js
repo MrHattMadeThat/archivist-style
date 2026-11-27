@@ -42,6 +42,7 @@ export function startCoach(root, steps, { face, name = 'Mr. Harrow', onEnd, star
   const hand = window.HAND.make(root, 'coach-hand');
 
   const pick = (p) => (typeof p === 'function' ? p() : p);
+  let shownStep = -1;
   const waiting = (s) => !!(s?.until && !s.until());
   function render() {
     const s = steps[i];
@@ -57,7 +58,14 @@ export function startCoach(root, steps, { face, name = 'Mr. Harrow', onEnd, star
     turn.hidden = !w;
     next.textContent = i === steps.length - 1 ? 'Done ✓' : 'Next ▸';
     tell.hidden = Date.now() > fuss;
-    hand.to(pick(s.point));
+    const target = pick(s.point);
+    // once per step: scroll what he is talking about into view (the paper and the card scroll inside themselves)
+    if (shownStep !== i) {
+      shownStep = i;
+      const t = typeof target === 'string' ? root.querySelector(target) : target;
+      if (t && t.closest('.paperarea, .card-body')) t.scrollIntoView({ block: 'nearest' });
+    }
+    hand.beside(target); // beside what he means, never over its words
   }
   function go(d) { i = Math.max(0, Math.min(steps.length, i + d)); fuss = 0; onStep?.(i); render(); }
   back.onclick = () => go(-1);

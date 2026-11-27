@@ -9,9 +9,10 @@ const PROOF = ['stewart-fire@when', 'stewart-fire@by'];
 // at the desk; d is window.desk
 export const SAMPLE_COACH = (d) => [
   { say: 'Before your stack, let me show you how it is done, on a different paper. This one is about the Great Fire of 1877, right here in St. John.', point: '.rqcard' },
-  { say: 'Always start with the research question. It is pinned to the top of your desk, and it stays there.', point: '.rqcard' },
+  { say: 'Always start with the research question. Read it before anything else.', point: '.rqcard' },
   { say: 'Find WHEN this question is about. Click those words in the question.', point: '.rq-mark[data-tag="WHEN"]', until: () => marked(d, 'WHEN') },
   { say: 'Good. Now click the words that say WHERE.', point: '.rq-mark[data-tag="WHERE"]', until: () => marked(d, 'WHERE') },
+  { say: 'There. Now it is pinned to the top of your desk, and it stays there while you work.', point: '.rqcard' },
   { say: 'So, for THIS question, a primary source was made by someone in St. John, at the time of the fire. The card says it too.', point: '.rule-now' },
   { say: 'Click Next, and the paper comes out from under the paperweight.', point: '.work .next', until: () => d.state.task >= 1 },
   { say: 'Here it is: a book about the fire. Don’t read it all yet. Read the LABEL first.', point: '.sheet .tag' },

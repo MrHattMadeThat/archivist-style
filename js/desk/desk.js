@@ -1,30 +1,46 @@
-// The source desk: plays one case, task by task. Rewritten from ../archive-desk/src/engine/game.js for the 1910 office.
+// The source desk: plays one case, task by task. Redesigned 2026-11-28 (docs/DESK_REDESIGN.md, mockup in
+// docs/mockups/desk.html): your desk under the gas lamp, two areas instead of three.
 //
-//   ┌ top: YOUR RESEARCH QUESTION (always pinned) · case and progress · Leave the desk ┐
-//   │ left: papers on the desk │ centre: the open paper │ right: the work card (numbered steps) │
-//   └──────────────────────────────────────────────────────────────────────────────────────────┘
+//   ┌ top bar: the case · a card per task, with a word (Question · Sort · Ask...) · Leave the desk ─────┐
+//   │                 the research question, pinned (a slip with a brass pin)                          │
+//   │ the blotter: folder tabs for this task's papers, the paper   │ the task card: Now line, steps,   │
+//   │ (Other papers ▾ holds the ones already used)                 │ buttons pinned to its foot        │
+//   └──────────────────────────────────────────────────────────────────────────────────────────────────┘
 //
-// The research question is the first thing on the desk and never leaves it: a paper can't be sorted until you know
-// the question. Each case starts by reading it (task type `readq`), and every stamp says which question it is for.
+// The research question comes first and never leaves the desk. When a case starts (a `readq` task), the question is
+// BIG in the middle of the screen, glowing, and the student finds its WHEN and WHERE on it; then it flies up to its
+// slip and the pin goes in (user, 2026-11-28). A case that asks a new question mid-way does the same again.
 //
-// Looking back: ◂ Back (or a coloured pip) shows an earlier answer, read-only, with its proof; Next ▸ comes forward
-// again. A pointing hand appears after a few idle seconds to show what to do next. In the guided sample, Mr. Harrow
-// coaches instead (opts.coach, js/desk/coach.js).
+// The card scrolls inside itself, and its buttons (Check, Next) sit in its foot, so no button is ever off the screen.
+// The title of the step being done now is lifted into the Now line at the top of the card; later steps are not shown.
 //
-// Console while the desk is open: desk.solve() answers the current task, desk.next() moves on, desk.state.
+// Looking back: ◂ Back (or a finished card in the top bar) shows an earlier answer, read-only, with its proof; Next ▸
+// comes forward again. A pointing hand appears after a few idle seconds beside what to do next. In the guided sample,
+// Mr. Harrow coaches instead (opts.coach, js/desk/coach.js); js/desk/tutorial.js points at these class names, so keep
+// them: .rqcard, .rq-mark[data-tag], .rule-now, .work .next, .work .go, .sheet .tag, .sheet .tag-row, .sheet .body p,
+// .sheet .ink, .pads, .desk-modal .go.
+//
+// Console while the desk is open: desk.solve() answers the current task, desk.next() moves on, desk.state, and
+// desk.fits() checks this screen size (no button off the screen, nothing scrolls sideways, the paper's width).
 import { el, button } from './dom.js';
 import { renderDoc } from './doc.js';
-import { TASKS, papersOf } from './tasks.js';
+import { TASKS, papersOf, MARK_ASK } from './tasks.js';
 import { prepareAll, matches, lookup } from './text.js';
 import { startCoach } from './coach.js';
 
 const SEAL = { gold: 'Proven first time', silver: 'Proven, with help', red: 'Fixed' };
+const KIND = { readq: 'Read the question', stamp: 'Sort a paper', question: 'Answer a question', compare: 'Compare two papers', sort: 'Sort the lines', order: 'Put them in order', catalogue: 'Write the label' };
+// one word for each task, on its card in the top bar
+const WORD = { readq: 'Question', stamp: 'Sort', question: 'Ask', compare: 'Compare', sort: 'Sort lines', order: 'Order', catalogue: 'Label' };
+const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 export function openDesk(root, { theCase: C, sources, save, persist, onLeave, onComplete, coach, face }) {
   const docs = prepareAll(sources);
   if (!save.results) Object.assign(save, { task: 0, results: {}, marked: {}, introSeen: false });
 
-  let task = null, shown = null, sel = null, zone = null, viewing = null;
+  let task = null, shown = null, sel = null, zone = null, viewing = null, drawer = false;
+  // the research question: 'big' (in the middle, being read), 'leaving' (flying up to its slip), 'pinned'
+  let rqPhase = null, pinDrop = false;
   const versions = {};
   const t = () => C.tasks[save.task];
   const rqAt = (i) => { let q = C.rq; for (let k = 0; k <= i; k++) if (C.tasks[k]?.rq) q = C.tasks[k].rq; return q; };
@@ -35,21 +51,37 @@ export function openDesk(root, { theCase: C, sources, save, persist, onLeave, on
   const desk = el('div', 'desk');
   desk.setAttribute('role', 'dialog');
   desk.setAttribute('aria-label', `Your desk: ${C.title}`);
+  // the big question comes first in the page, so `.rqcard` finds it while it is up (the tutorial points at it)
+  const stage = el('div', 'rqstage');
+  const big = el('section', 'rqbig');
+  big.setAttribute('aria-label', 'Your research question');
+  stage.append(big);
   const top = el('header', 'desk-top');
-  const rqCard = el('div', 'rqcard');
-  const meta = el('div', 'desk-meta');
-  const leave = button('leave', 'Leave the desk');
-  leave.title = 'Your place is saved';
+  const caseBox = el('div', 'desk-case');
+  const progress = el('ol', 'progress');
+  progress.setAttribute('aria-label', 'The tasks in this case');
+  const leave = button('leave');
+  leave.append('Leave the desk', el('small', null, 'your place is saved'));
   leave.onclick = () => close(false);
-  top.append(rqCard, meta, leave);
+  top.append(caseBox, progress, leave);
+  const slipWrap = el('div', 'rqwrap');
   const main = el('div', 'desk-main');
-  const pile = el('aside', 'pile');
-  const paper = el('main', 'paperarea');
+  const reading = el('div', 'reading');
+  const blotter = el('div', 'blotter');
+  const folders = el('div', 'folders');
+  folders.setAttribute('role', 'tablist');
+  folders.setAttribute('aria-label', 'Papers for this task');
+  const paper = el('div', 'paperarea');
+  blotter.append(folders, paper);
+  const drawerBox = el('div', 'drawer');
+  drawerBox.hidden = true;
+  reading.append(blotter, drawerBox);
   const work = el('aside', 'work');
-  main.append(pile, paper, work);
+  work.setAttribute('aria-label', 'Your task');
+  main.append(reading, work);
   const modal = el('div', 'desk-modal');
   modal.hidden = true;
-  desk.append(top, main, modal);
+  desk.append(stage, top, slipWrap, main, modal);
   root.append(desk);
 
   // ------------------------------------------------------------------ context for the tasks
@@ -84,20 +116,16 @@ export function openDesk(root, { theCase: C, sources, save, persist, onLeave, on
     refresh: () => refresh(),
   };
 
-  // ------------------------------------------------------------------ the research question, pinned to the desk
-  function renderRq() {
-    const q = rqAt(viewing ?? save.task);
+  const result = (i = save.task) => save.results[i];
+  const kindOf = (x) => KIND[x.type] || 'A task';
+  const firstKey = (p) => [].concat(p || []).find(Boolean) || null;
+
+  // ------------------------------------------------------------------ the research question
+  // its words; while it is being read (big), every word can be clicked
+  function questionText(q, clickable) {
     const marked = new Set(save.marked[q.text] || []);
-    rqCard.replaceChildren();
-    const changed = save.task > 0 && rqAt(save.task - 1) !== q;
-    const tag = el('div', 'rq-tag');
-    tag.append('Your research question');
-    if (changed && !result() && viewing == null) tag.append(el('span', 'rq-new', 'New question!'));
     const text = el('p', 'rq-text');
-    // split the question into plain words and the marked phrases (WHEN, WHERE, WHO)
     const spans = q.marks.map((m, i) => ({ i, m, at: q.text.indexOf(m.words) })).filter((s) => s.at >= 0).sort((a, b) => a.at - b.at);
-    let pos = 0;
-    const clickable = viewing == null && task?.rqWords;
     const word = (w, markIndex) => {
       if (!clickable || !w.trim()) return document.createTextNode(w);
       const b = button('rq-word', w);
@@ -105,36 +133,110 @@ export function openDesk(root, { theCase: C, sources, save, persist, onLeave, on
       return b;
     };
     const words = (s, markIndex, into) => s.split(/(\s+)/).forEach((w) => w && into.append(word(w, markIndex)));
+    let pos = 0;
     for (const s of spans) {
       words(q.text.slice(pos, s.at), -1, text);
-      const m = el('span', `rq-mark${marked.has(s.m.tag) ? ' marked' : ''}`);
+      const on = marked.has(s.m.tag);
+      const m = el('span', `rq-mark${on ? ' marked' : ''}`);
       m.dataset.tag = s.m.tag;
       words(s.m.words, s.i, m);
+      if (on) m.append(el('span', 'mk-tag', s.m.tag));
       text.append(m);
       pos = s.at + s.m.words.length;
     }
     words(q.text.slice(pos), -1, text);
-    rqCard.classList.toggle('clicking', !!clickable);
-    rqCard.append(tag, text);
+    return text;
   }
 
-  // ------------------------------------------------------------------ render
-  const result = (i = save.task) => save.results[i];
-  const KIND = { readq: 'Read the question', stamp: 'Sort a paper', question: 'Answer a question', compare: 'Compare two papers', sort: 'Sort the lines', order: 'Put them in order', catalogue: 'Write the label' };
-  const kindOf = (x) => KIND[x.type] || 'A task';
-  const firstKey = (p) => [].concat(p || []).find(Boolean) || null;
+  // big while a read-the-question task is under way; when it is done, a moment to see the words marked, then up
+  function updatePhase() {
+    const want = viewing == null && t()?.type === 'readq' && !result();
+    // moved on mid-flight (looking back, or Next pressed by a test or the coach): land at once
+    if (rqPhase === 'leaving' && (viewing != null || t()?.type !== 'readq' || want)) { stopFlight(); rqPhase = want ? 'big' : 'pinned'; return; }
+    if (rqPhase == null || viewing != null) rqPhase = want ? 'big' : 'pinned';
+    else if (want && rqPhase === 'pinned') rqPhase = 'big';
+    else if (!want && rqPhase === 'big') {
+      rqPhase = 'leaving';
+      setTimeout(() => { if (rqPhase === 'leaving') flyUp(); }, 900);
+    }
+  }
 
+  function renderRq() {
+    const q = rqAt(viewing ?? save.task);
+    const changed = save.task > 0 && rqAt(save.task - 1) !== q;
+    const pinned = rqPhase === 'pinned';
+
+    // the slip at the top: laid out even while the big card is up (the flight needs its place), but hidden
+    slipWrap.className = `rqwrap${pinned ? '' : ' waiting'}${pinDrop ? ' thunk' : ''}`;
+    const slip = el('section', pinned ? 'rqcard' : 'rqslip');
+    slip.append(el('span', 'rq-label', 'Your research question'), questionText(q, false));
+    slipWrap.replaceChildren(slip);
+    if (pinned) slipWrap.append(el('span', `pin${pinDrop ? ' drop' : ''}`));
+
+    // the big card in the middle
+    stage.hidden = pinned;
+    big.classList.toggle('rqcard', !pinned);
+    if (pinned) return;
+    const marked = new Set(save.marked[q.text] || []);
+    const next = q.marks.find((m) => !marked.has(m.tag));
+    big.replaceChildren();
+    if (changed) big.append(el('div', 'rq-new', 'A new question'));
+    big.append(el('h2', 'rqbig-label', 'Your Research Question'), questionText(q, rqPhase === 'big' && !!next && !!task?.rqWords));
+    if (rqPhase === 'big' && next) {
+      const ask = el('p', 'rqbig-ask');
+      ask.append('Click the words that say ', el('b', null, MARK_ASK[next.tag] || next.tag));
+      big.append(ask);
+      const said = work.querySelector('.card-body .msg'); // the readq card's "Not those words..." goes here too
+      if (said) big.append(said.cloneNode(true));
+    } else {
+      const ok = el('p', 'rqbig-ask ok', '✓');
+      ok.setAttribute('aria-label', 'Found them');
+      big.append(ok);
+    }
+  }
+
+  // the big question flies up onto its slip; then the pin goes in
+  function flyUp() {
+    const slip = slipWrap.querySelector('section');
+    if (!desk.isConnected) return;
+    if (reduced() || stage.hidden || !slip) return land();
+    const b = big.getBoundingClientRect(), s = slip.getBoundingClientRect();
+    const end = `translate(${s.left - b.left}px, ${s.top - b.top}px) scale(${s.width / b.width})`;
+    stage.classList.add('flying');
+    window.MuseumAudio.play('whoosh', 0.25);
+    stage.animate([{ backgroundColor: 'rgba(5,6,9,.66)' }, { backgroundColor: 'rgba(5,6,9,0)' }], { duration: 650, fill: 'forwards' });
+    big.animate([{ transform: 'none', opacity: 1 }, { transform: end, opacity: 1, offset: 0.82 }, { transform: end, opacity: 0 }],
+      { duration: 650, easing: 'cubic-bezier(.55,0,.25,1)', fill: 'forwards' }).onfinish = land;
+  }
+  // the flight's own animations only (cancelling the CSS glow would stop it for the next question)
+  function stopFlight() {
+    stage.classList.remove('flying');
+    for (const a of [...big.getAnimations(), ...stage.getAnimations()]) if (!(a instanceof CSSAnimation)) a.cancel();
+  }
+  function land() {
+    if (!desk.isConnected || rqPhase !== 'leaving') return;
+    rqPhase = 'pinned';
+    pinDrop = !reduced();
+    stopFlight();
+    if (pinDrop) setTimeout(() => window.MuseumAudio.play('box', 0.3), 230); // the pin goes in
+    refresh();
+    pinDrop = false;
+  }
+
+  // ------------------------------------------------------------------ the top bar
   function renderMeta() {
-    meta.replaceChildren(el('div', 'case-title', C.title));
-    const pips = el('div', 'pips');
+    caseBox.replaceChildren(el('small', null, 'Your desk'), el('span', 'case-title', C.title));
+    progress.replaceChildren();
     C.tasks.forEach((x, i) => {
-      const r = result(i);
-      const p = el(i < save.task ? 'button' : 'span', `pip${x.type === 'readq' ? ' q' : ''}${r ? ` ${r.grade}` : ''}${i === (viewing ?? save.task) ? ' now' : ''}`);
-      p.title = `${kindOf(x)}${r ? ` · ${SEAL[r.grade]}` : i === save.task ? ' · now' : ''}${i < save.task ? ' · click to look back' : ''}`;
-      if (i < save.task) { p.type = 'button'; p.onclick = () => view(i); }
-      pips.append(p);
+      const r = result(i), now = i === (viewing ?? save.task), back = i < save.task;
+      const p = el(back ? 'button' : 'span', `pg${r ? ` done ${r.grade}` : ''}${now ? ' now' : ''}${!r && !now ? ' later' : ''}`);
+      p.title = `${kindOf(x)}${r ? ` · ${SEAL[r.grade]}` : now ? ' · you are here' : ' · still to do'}${back ? ' · click to look back' : ''}`;
+      if (back) { p.type = 'button'; p.onclick = () => view(i); }
+      p.append(el('span', 'pg-n', r ? '✓' : String(i + 1)), el('span', 'pg-w', WORD[x.type] || 'Task'));
+      const li = el('li');
+      li.append(p);
+      progress.append(li);
     });
-    meta.append(pips);
   }
 
   // while the student is writing a paper's label (catalogue), its maker stays a secret everywhere on the desk
@@ -148,86 +250,89 @@ export function openDesk(root, { theCase: C, sources, save, persist, onLeave, on
     return null;
   }
 
-  function renderPile() {
-    pile.replaceChildren();
-    const now = viewing != null ? docsOfTask(C.tasks[viewing]) : task.docs;
-    const add = (id, list) => {
-      const d = docs[id];
-      const b = button(`pilebtn look-${d.src.look}${shown === id ? ' on' : ''}${now.includes(id) ? ' now' : ''}`);
-      b.append(el('span', 'pile-title', d.src.title), el('span', 'pile-who', whoOf(id)));
-      const s = stampOn(id);
-      if (s) b.append(el('span', `pile-stamp ${s.kind}`, `${s.kind === 'primary' ? 'P' : 'S'} · ${s.q}`));
-      b.onclick = () => { if (shown !== id) window.MuseumAudio.play('whoosh', 0.22); shown = id; refresh(); paper.scrollTop = 0; };
-      list.append(b);
-    };
-    if (now.length) {
-      pile.append(el('h3', null, now.length > 1 ? 'Papers for this question' : 'This paper'));
-      const l = el('div', 'pilelist');
-      now.forEach((id) => add(id, l));
-      pile.append(l);
-    }
-    const rest = caseDocs.filter((id) => !now.includes(id) && C.tasks.findIndex((x) => docsOfTask(x).includes(id)) < save.task);
-    if (rest.length) {
-      pile.append(el('h3', null, 'Already used'));
-      const l = el('div', 'pilelist done');
-      rest.forEach((id) => add(id, l));
-      pile.append(l);
-    }
-    if (!now.length && !rest.length) pile.append(el('p', 'pile-empty', 'The papers wait under the paperweight until you have read the question.'));
+  // ------------------------------------------------------------------ the blotter: folder tabs, the drawer, the paper
+  function openPaper(id) {
+    if (shown !== id) window.MuseumAudio.play('whoosh', 0.22);
+    shown = id;
+    drawer = false;
+    refresh();
+    paper.scrollTop = 0;
   }
+
+  function renderFolders() {
+    const x = C.tasks[viewing ?? save.task];
+    const now = viewing != null ? papersOf(x) : task.docs;
+    const picked = viewing != null ? [].concat(result(viewing)?.proof || []) : [].concat(task.selected !== undefined ? task.selected : sel);
+    const proofDocs = picked.filter(Boolean).map((k) => lookup(docs, k)?.doc.id);
+    folders.replaceChildren();
+    for (const id of now) {
+      const on = id === shown, has = proofDocs.includes(id);
+      const b = button(`ftab${on ? ' on' : ''}${has ? ' has-proof' : ''}`);
+      b.setAttribute('role', 'tab');
+      b.setAttribute('aria-selected', on);
+      b.append(el('span', 'ftab-who', whoOf(id)), el('span', 'ftab-title', docs[id].src.title));
+      if (has) { b.append(el('span', 'ftab-tick', '✓')); b.title = 'Your proof is in this one'; }
+      b.onclick = () => openPaper(id);
+      folders.append(b);
+    }
+    // papers this case used before: in the drawer, out of the way
+    const rest = caseDocs.filter((id) => !now.includes(id) && C.tasks.findIndex((y) => papersOf(y).includes(id)) < save.task);
+    drawerBox.hidden = !drawer || !rest.length;
+    if (!rest.length) return;
+    const o = button('others', `Other papers (${rest.length}) ▾`);
+    o.setAttribute('aria-expanded', drawer);
+    o.onclick = () => { drawer = !drawer; refresh(); };
+    folders.append(o);
+    if (!drawer) return;
+    drawerBox.replaceChildren(el('h4', null, 'Papers you have already used'));
+    for (const id of rest) {
+      const b = button(shown === id ? 'on' : null);
+      b.append(el('b', null, docs[id].src.title), el('span', 'who', whoOf(id)));
+      const s = stampOn(id);
+      if (s) b.append(el('span', `pile-stamp ${s.kind}`, `${s.kind === 'primary' ? 'PRIMARY' : 'SECONDARY'} · ${s.q}`));
+      b.onclick = () => openPaper(id);
+      drawerBox.append(b);
+    }
+  }
+
+  // no paper out yet: the blotter and the paperweight, and no words (user, 2026-11-28)
+  const paperweight = () => {
+    const w = el('div', 'weight');
+    w.append(el('div', 'stone'));
+    w.setAttribute('aria-hidden', 'true');
+    return w;
+  };
+  const sheet = (node) => { const w = el('div', 'sheetwrap'); w.append(node); return w; };
 
   function renderPaper() {
     const keep = paper.scrollTop;
-    const same = paper.dataset.doc === shown;
+    const same = paper.dataset.doc === (shown || '');
+    renderFolders();
     paper.replaceChildren();
     paper.dataset.doc = shown || '';
+    if (!shown) { paper.append(paperweight()); return; }
     if (viewing != null) {
       const r = result(viewing), x = C.tasks[viewing];
-      if (!shown) {
-        const blank = el('div', 'blotter');
-        blank.append(el('p', null, 'You read the research question.'), el('p', 'small', 'It is pinned at the top of the desk. ↑'));
-        paper.append(blank);
-        return;
-      }
-      paper.append(el('p', 'readonly', 'Looking back: the underlined line is the proof you chose.'));
-      paper.append(renderDoc(docs[shown], {
+      const bar = el('div', 'readonlybar');
+      bar.append(el('span', null, 'Looking back: the underlined line is the proof you chose.'));
+      paper.append(bar, sheet(renderDoc(docs[shown], {
         version: versions[shown], pointing: false, selected: r.proof,
         stamp: x.type === 'stamp' && x.doc === shown ? { kind: r.stamp, q: rqAt(viewing).short } : null,
         onVersion: (v) => { versions[shown] = v; renderPaper(); },
-      }));
-      return;
-    }
-    if (!shown) {
-      const blank = el('div', 'blotter');
-      if (result()) blank.append(el('p', null, 'Now you know what to look for.'), el('p', 'small', 'Click Next → and the papers come out from under the paperweight.'));
-      else blank.append(el('p', null, 'Read your research question first.'), el('p', 'small', 'It is pinned at the top of the desk. ↑'));
-      paper.append(blank);
+      })));
       return;
     }
     const onTask = task.docs.includes(shown);
-    if (onTask && task.docs.length > 1) {
-      const row = el('div', 'doctabs');
-      row.setAttribute('role', 'tablist');
-      const picked = [].concat(task.selected !== undefined ? task.selected : sel).filter(Boolean);
-      const proofDocs = picked.map((k) => lookup(docs, k)?.doc.id);
-      for (const id of task.docs) {
-        const proofDoc = proofDocs.includes(id) ? id : null;
-        const b = button(`doctab${id === shown ? ' on' : ''}${id === proofDoc ? ' has-proof' : ''}`);
-        b.setAttribute('role', 'tab');
-        b.setAttribute('aria-selected', id === shown);
-        b.append(el('span', 'doctab-who', whoOf(id)), el('span', 'doctab-title', docs[id].src.title));
-        if (id === proofDoc) b.title = 'Your proof is in this one';
-        b.onclick = () => { if (shown !== id) window.MuseumAudio.play('whoosh', 0.22); shown = id; refresh(); paper.scrollTop = 0; };
-        row.append(b);
-      }
-      paper.append(row);
-    } else if (!onTask) {
-      const back = button('backbtn', '← Back to the paper you are working on');
-      back.onclick = () => { shown = task.docs[0] || null; refresh(); };
-      paper.append(el('p', 'readonly', 'You can read this paper, but your proof must come from the papers for this question.'), back);
+    if (!onTask) {
+      const bar = el('div', 'readonlybar');
+      const back = button(null, '← Back to your paper');
+      back.onclick = () => openPaper(task.docs[0] || null);
+      bar.append(el('span', null, 'You can read this paper. Your proof must come from the papers for this task.'));
+      if (task.docs.length) bar.append(back);
+      paper.append(bar);
     }
     const s = onTask && task.stamp ? task.stamp() : null;
-    paper.append(renderDoc(docs[shown], {
+    paper.append(sheet(renderDoc(docs[shown], {
       version: versions[shown],
       pointing: onTask && task.pointing,
       selected: task.selected !== undefined ? task.selected : sel,
@@ -236,17 +341,19 @@ export function openDesk(root, { theCase: C, sources, save, persist, onLeave, on
       stamp: s ? { ...s, q: rq().short } : stampOn(shown),
       onPoint: (key) => (task.point ? task.point(key) : ctx.setSel(key)),
       onVersion: (v) => { versions[shown] = v; renderPaper(); },
-    }));
+    })));
     if (same) paper.scrollTop = keep;
   }
 
+  // ------------------------------------------------------------------ the task card
   function renderWork() {
     work.replaceChildren();
     const at = viewing ?? save.task, x = C.tasks[at];
     const n = C.tasks.slice(0, at + 1).filter((y) => y.type === x.type).length;
     const of = C.tasks.filter((y) => y.type === x.type).length;
-    const kicker = el('div', 'work-kicker');
-    kicker.append(el('span', null, `${viewing != null ? 'Looking back · ' : ''}${kindOf(x)}${of > 1 ? ` · ${n} of ${of}` : ''}`));
+    const cardp = el('div', 'cardpaper');
+    const head = el('div', 'card-head');
+    head.append(el('span', 'card-kind', `${viewing != null ? 'Looking back · ' : ''}${kindOf(x)}${of > 1 ? ` · ${n} of ${of}` : ''}`));
     const nav = el('span', 'work-nav');
     if (at > 0 && result(at - 1)) {
       const b = button('navbtn', '◂ Back');
@@ -260,25 +367,63 @@ export function openDesk(root, { theCase: C, sources, save, persist, onLeave, on
       b.onclick = () => view(fwd ? viewing + 1 : null);
       nav.append(b);
     }
-    kicker.append(nav);
+    head.append(nav);
+    const nowBox = el('div', 'now');
+    nowBox.setAttribute('aria-live', 'polite');
+    const body = el('div', 'card-body');
+    const foot = el('div', 'card-foot');
+    cardp.append(head, nowBox, body, foot);
+    work.append(cardp);
     work.classList.toggle('reviewing', viewing != null);
-    if (viewing != null) { work.append(kicker, reviewCard(viewing)); return; }
-    work.append(kicker, task.card());
+
+    if (viewing != null) {
+      nowBox.append(el('small', null, 'Looking back'), el('p', null, 'An earlier answer. Your proof is underlined in the paper.'));
+      body.append(reviewCard(viewing));
+      foot.hidden = true;
+      desk.dataset.focus = 'card';
+      return;
+    }
+    const card = task.card();
+    body.append(card);
     const r = result();
+    if (r && t().type !== 'readq') {
+      const seal = el('div', `seal ${r.grade}`);
+      seal.append(el('span', 'seal-dot'), el('span', null, SEAL[r.grade]));
+      card.prepend(seal);
+    }
+    // the Now line: the title of the step being done now, lifted to the top of the card
+    const last = save.task === C.tasks.length - 1;
+    // (a stamp or an answer stays open to change while its proof step is current: the LAST current step is the one)
+    const nowStep = [...card.querySelectorAll('.step.now')].pop();
+    let say;
+    if (r) say = `${r.grade === 'red' ? 'Fixed.' : t().type === 'readq' ? 'Done!' : 'Proven!'} Press ${last ? 'Finish the case' : 'Next'}.`;
+    else if (nowStep?.querySelector('.step-title')) {
+      const h = nowStep.querySelector('.step-head');
+      say = h.querySelector('.step-title').textContent;
+      h.remove();
+    } else say = card.querySelector('.ask')?.textContent || kindOf(t());
+    const wantsProof = !r && task.pointing && !!card.querySelector('.step.now .proof:not(.filled)');
+    const p = el('p', null, say);
+    if (wantsProof) p.append(el('span', 'arrow-left', ' ←'), el('span', 'arrow-up', ' ↑'));
+    nowBox.append(el('small', null, 'Now'), p);
+    // the lamp: on the paper while a proof is wanted, on the card otherwise
+    desk.dataset.focus = rqPhase !== 'pinned' ? '' : wantsProof ? 'paper' : 'card';
+    // the buttons go to the card's foot, which never scrolls away
+    const acts = card.querySelector('.actions');
+    if (acts) foot.append(acts);
     if (r) {
-      if (t().type !== 'readq') {
-        const seal = el('div', `seal ${r.grade}`);
-        seal.append(el('span', 'seal-dot'), el('span', null, SEAL[r.grade]));
-        work.querySelector('.task').prepend(seal);
-      }
-      const last = save.task === C.tasks.length - 1;
       const next = button('go next', last ? 'Finish the case →' : 'Next →');
       next.onclick = advance;
-      work.append(next);
+      foot.append(next);
+    }
+    foot.hidden = !foot.childElementCount;
+    // keep what matters now in view on the card: the current step and any message under it (or, when done, the end)
+    const show = r ? card.lastElementChild : [nowStep, ...card.querySelectorAll('.msg')].filter(Boolean).pop();
+    if (show && show !== card.firstElementChild) {
+      const top = nowStep && !r ? nowStep.offsetTop : show.offsetTop, bottom = show.offsetTop + show.offsetHeight;
+      body.scrollTop = Math.max(0, Math.min(top - 10, bottom - body.clientHeight + 12));
     }
   }
-
-  const docsOfTask = papersOf;
 
   // an earlier answer, read-only: what was asked, the answer, the proof, and why
   function reviewCard(i) {
@@ -315,7 +460,7 @@ export function openDesk(root, { theCase: C, sources, save, persist, onLeave, on
       x.bins.forEach((bn, j) => {
         const col = el('div', `tally-col tally-${j ? 'b' : 'a'}`);
         col.append(el('b', null, bn.name));
-        x.items.forEach((it, i) => { if (it.bin === bn.id) col.append(el('span', `tally-item${(r.wrong || []).includes(i) ? ' fixed' : ''}`, it.text || lookup(docs, matches(docs, it.ref)[0])?.text || '')); });
+        x.items.forEach((it, k) => { if (it.bin === bn.id) col.append(el('span', `tally-item${(r.wrong || []).includes(k) ? ' fixed' : ''}`, it.text || lookup(docs, matches(docs, it.ref)[0])?.text || '')); });
         tally.append(col);
       });
       c.append(tally, why(x.right));
@@ -358,9 +503,10 @@ export function openDesk(root, { theCase: C, sources, save, persist, onLeave, on
 
   function view(i) {
     viewing = i;
+    drawer = false;
     if (i != null) {
       const x = C.tasks[i], r = result(i);
-      shown = (firstKey(r?.proof) && lookup(docs, firstKey(r.proof))?.doc.id) || docsOfTask(x)[0] || null;
+      shown = (firstKey(r?.proof) && lookup(docs, firstKey(r.proof))?.doc.id) || papersOf(x)[0] || null;
     } else shown = task.docs.includes(shown) ? shown : task.docs[0] || null;
     refresh();
     paper.scrollTop = 0;
@@ -368,11 +514,11 @@ export function openDesk(root, { theCase: C, sources, save, persist, onLeave, on
   }
 
   function refresh() {
-    renderRq();
+    if (task) updatePhase();
     renderMeta();
-    renderPile();
     renderPaper();
     renderWork();
+    renderRq(); // last: the big question copies the card's message
   }
 
   // ------------------------------------------------------------------ flow
@@ -382,6 +528,7 @@ export function openDesk(root, { theCase: C, sources, save, persist, onLeave, on
     task = TASKS[t().type](t(), ctx);
     sel = null;
     zone = null;
+    drawer = false;
     shown = task.docs[0] || null;
     persist();
     refresh();
@@ -399,24 +546,23 @@ export function openDesk(root, { theCase: C, sources, save, persist, onLeave, on
   function openModal(node) {
     modal.replaceChildren(node);
     modal.hidden = false;
+    desk.classList.add('modal-open');
     node.querySelector('.go')?.focus({ preventScroll: true });
   }
-  const closeModal = () => { modal.hidden = true; modal.replaceChildren(); };
+  const closeModal = () => { modal.hidden = true; modal.replaceChildren(); desk.classList.remove('modal-open'); };
 
+  // the case's letter: who sent it and why. The question itself comes next, big (it is not repeated here).
   function showIntro() {
     const box = el('section', 'letter');
-    box.append(el('div', 'letter-kicker', `${C.title} · from ${C.from}`));
+    box.append(el('div', 'letter-kicker', `From ${C.from}`), el('h2', null, C.title));
     for (const p of C.intro) box.append(el('p', null, p));
-    const q = el('div', 'letter-rq');
-    q.append(el('div', 'rq-tag', 'Your research question'), el('p', null, C.rq.text));
-    box.append(q);
-    const ok = button('go', 'To work');
+    const ok = button('go', rqPhase === 'pinned' ? 'To work' : 'Read your question');
     ok.onclick = () => { save.introSeen = true; persist(); closeModal(); };
     box.append(ok);
     openModal(box);
   }
 
-  function taskName(x, i) {
+  function taskName(x) {
     if (x.type === 'readq') return 'Read the research question';
     if (x.type === 'stamp') return `${whoOf(x.doc)}, “${docs[x.doc].src.title}”: ${x.answer}`;
     if (x.type === 'catalogue') return `Write the label: “${docs[x.doc].src.title}”`;
@@ -432,7 +578,7 @@ export function openDesk(root, { theCase: C, sources, save, persist, onLeave, on
     C.tasks.forEach((x, i) => {
       const r = result(i) || { grade: 'red' };
       const li = el('li', `report-row ${r.grade}`);
-      li.append(el('span', 'seal-dot'), el('span', 'report-name', taskName(x, i)), el('span', 'report-grade', SEAL[r.grade]));
+      li.append(el('span', 'seal-dot'), el('span', 'report-name', taskName(x)), el('span', 'report-grade', SEAL[r.grade]));
       list.append(li);
     });
     const cols = el('div', 'report-cols');
@@ -467,13 +613,34 @@ export function openDesk(root, { theCase: C, sources, save, persist, onLeave, on
   }
   // body[data-overlay] tells the museum behind the desk not to walk
   document.body.dataset.overlay = 'desk';
-  function onKey(e) { if (e.key === 'Escape' && modal.hidden) close(false); }
+  function onKey(e) {
+    if (e.key !== 'Escape' || !modal.hidden) return;
+    if (drawer) { drawer = false; refresh(); return; }
+    close(false);
+  }
   document.addEventListener('keydown', onKey);
+
+  // does the desk fit this screen? (see CLAUDE.md: run it at each target size, for every task, in its tallest states)
+  function fits() {
+    const W = innerWidth, H = innerHeight, off = [];
+    const out = (r) => r.top < -1 || r.left < -1 || r.bottom > H + 1 || r.right > W + 1;
+    for (const b of desk.querySelectorAll('button')) {
+      // buttons inside a scrolling area or a letter are reached by scrolling it
+      if (!b.getClientRects().length || b.closest('.paperarea, .card-body, .drawer, .letter, .rqwrap')) continue;
+      if (out(b.getBoundingClientRect())) off.push(b.textContent.trim().slice(0, 30));
+    }
+    for (const box of desk.querySelectorAll('.letter, .rqstage:not([hidden]) .rqbig')) if (out(box.getBoundingClientRect())) off.push(`(${box.className})`);
+    const sideways = [desk, main, paper, work.querySelector('.card-body')].some((e) => e && e.scrollWidth > e.clientWidth + 1);
+    const s = paper.querySelector('.sheet');
+    return { ok: !off.length && !sideways, offscreen: off, sideways, paper: s ? s.offsetWidth : null };
+  }
 
   window.desk = {
     get state() { return save; },
     get task() { return task; },
     get sel() { return sel; },
+    get question() { return rqPhase; },
+    fits,
     solve() { closeModal(); save.introSeen = true; task.solve(); },
     next() { closeModal(); if (result()) advance(); },
   };
@@ -486,18 +653,19 @@ export function openDesk(root, { theCase: C, sources, save, persist, onLeave, on
   desk.addEventListener('keydown', wake, true);
   function nudgeTarget() {
     if (!modal.hidden) return modal.querySelector('.go');
+    if (rqPhase === 'leaving') return null;
     if (viewing != null) return work.querySelector('.navbtn.fwd');
     if (result()) return work.querySelector('.next');
-    if (task.rqWords) return rqCard.querySelector('.rq-mark:not(.marked)');
-    const go = work.querySelector('.go:not(.next):not(:disabled)');
+    if (rqPhase === 'big') return big.querySelector('.rq-mark:not(.marked)') && rq().marks.map((m) => big.querySelector(`.rq-mark[data-tag="${m.tag}"]:not(.marked)`)).find(Boolean);
+    const go = work.querySelector('.card-foot .go:not(.next):not(:disabled)');
     if (go) return go;
-    return work.querySelector('.step.now .pads button:not(:disabled)') || work.querySelector('.step.now .options') || work.querySelector('.step.now .sortitem, .step.now .orderitem')
-      || work.querySelector('.step.now .proof') || work.querySelector('.step.now .step-title');
+    return work.querySelector('.pads button:not(:disabled)') || work.querySelector('.options') || work.querySelector('.sortitem, .orderitem')
+      || (task.pointing && paper.querySelector('.sheet .tag')) || work.querySelector('.proof');
   }
   const idleTick = setInterval(() => {
     if (coachRun) return;
     idle += 0.5;
-    if (idle >= 6) nudge.to(nudgeTarget()); // it follows the page as it changes
+    if (idle >= 6) { const n = nudgeTarget(); if (n) nudge.beside(n); else nudge.hide(); } // it follows the page as it changes
   }, 500);
 
   let coachRun = null;

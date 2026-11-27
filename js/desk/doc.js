@@ -68,8 +68,24 @@ export function renderDoc(p, opts = {}) {
   }
   sheet.append(label);
 
+  // while proof is wanted, a pencil note says so (lines also get a faint underline: they look clickable before a hover)
+  if (opts.pointing) {
+    const note = el('p', 'pencil');
+    if (version === 'plain') note.append('✎ Click any line, in the label or the words below, to use it as your proof.');
+    else {
+      const back = button('linkish', 'Easy words');
+      back.onclick = () => opts.onVersion?.('plain');
+      note.append('✎ To use a line of the text as proof, go back to ', back, '. The label works from any tab.');
+    }
+    sheet.append(note);
+  }
+
+  // the versions of the paper, as one switch: "Read it in: Easy words · His own words · The 1613 page"
   if (versions.length > 1) {
+    const row = el('div', 'readin');
+    row.append(el('span', 'readin-label', 'Read it in:'));
     const tabs = el('div', 'tabs');
+    row.append(tabs);
     tabs.setAttribute('role', 'tablist');
     for (const v of versions) {
       // a paper can name its own tabs (src.tabs), e.g. { orig: 'In English, 1902' }
@@ -80,7 +96,7 @@ export function renderDoc(p, opts = {}) {
       b.onclick = () => opts.onVersion?.(v);
       tabs.append(b);
     }
-    sheet.append(tabs);
+    sheet.append(row);
   }
 
   const body = el('div', `body v-${version}`);
@@ -111,13 +127,6 @@ export function renderDoc(p, opts = {}) {
     }
   } else {
     for (const par of src[version]) body.append(el('p', 'orig', par));
-  }
-  if (version !== 'plain' && opts.pointing) {
-    const note = el('p', 'tabnote');
-    const back = button('linkish', 'Easy words');
-    back.onclick = () => opts.onVersion?.('plain');
-    note.append('To pick a line of the text as proof, go back to ', back, '. (The label above works from any tab.)');
-    body.prepend(note);
   }
   sheet.append(body);
 
