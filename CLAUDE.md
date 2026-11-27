@@ -122,6 +122,32 @@ Read `README.md` first. This file is for agents working in the repo.
   card only fits because its two proof boxes sit side by side.
 - Preview: `archivist-chapters` in `REPOS/.claude/launch.json` serves this folder on 5547 (5544/5546 are often taken).
 
+## The title screen, Options, Credits (2026-11-28)
+
+- The user asked for a title screen and start menu that feel like a real game, with the voice switch and other
+  settings in Options, reachable from the title and the pause menu, and an animation behind the title.
+- **The live title** (world.js, "THE TITLE SCREEN"): while `#title` is up, Union Street at night plays behind it.
+  `enterTitle()` (from `showTitle`) saves your place (`TITLE.saved`) and moves to the street; `leaveTitle()` (from
+  `startPlay`) puts it back. `titleTick()` runs from `frame()` while paused at the title: the camera follows
+  `TITLE_SHOTS` (a 46 s loop, ended behind a quick fade; the menu is on the left so the subject sits right of centre),
+  a cab passes every ~31 s, a woman under an umbrella (`W.folk[1]`) walks by, fog sprites drift (`W.titleFog`),
+  and Halley's comet (`TX.comet`, additive, `W.titleComet`) hangs over the open lot beside No. 72 (in front of the far
+  roofs at z -24: the museum and its neighbours hide anything lower). The moon is hidden on the title. `isNight()` is
+  true on the title; you (the rig) are hidden. Music: the street cue, from the first click or key (browsers need a
+  gesture). It never touches the cab while an opening is paused (`CUT.on`).
+- **The menu**: logo + `.menu` buttons in period type on a dark shade (`.title-shade`); the pointing hand (`HAND.make`,
+  class `menu`) points at the chosen button; arrow keys move, hover focuses. `root.pointHand()` places the hand
+  directly (focus events do not fire while the window lacks focus, as in a hidden preview pane). Esc backs out of
+  Credits and the New game question. `body.at-title` hides the HUD, the prompt, the To do and the dialogue box.
+- **Options** (`#options`, a `<dialog>`): sound sliders, the read-aloud switch with the voice slider, and the controls.
+  Opened from the title (`#title-options`) or the pause menu (`#pause-options`); `audio.js` binds its sliders and the
+  switch by their data attributes, so they are the only ones now. `paused()` is true while it is open.
+- **Credits & sources** (`#credits`): real and invented, the type, three.js. The logo hides while it is open
+  (`.title.reading`) so it fits 650 px.
+- Verified at 1366 × 650: title shots, Options from both places, Credits, arrow keys, Continue back to your place,
+  Main menu and back, a New game ("Board the train" over the live title), and pausing mid-opening. Not checked on a
+  phone-sized screen; the comet is only visible in the later shots of the loop.
+
 ## The new opening, the town and the real newspaper (2026-11-27, evening)
 
 - The plan is in `docs/STORY.md`: who you are (a compulsive cataloguer), the theme as a joke (Percy Gage's comet

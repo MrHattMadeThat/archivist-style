@@ -1386,6 +1386,7 @@ function build(){
   /* Mrs. Hanlon's boarding house, and the townspeople (placeCast puts them where the stage wants them) */
   buildLodgings();
   W.gage=makePerson(GAGE,'gage');W.hanlon=makePerson(HANLON,'hanlon');W.folk=FOLK.map(f=>makePerson(f,f.id));
+  buildTitle();
   TX.cardFx=T(64,44,drawCardFx,{border:2,grain:false});W.cards=[];for(let i=0;i<22;i++){const c=S(TX.cardFx,300,32,22);c.visible=false;scene.add(c);W.cards.push(c);}
   /* the stacks, in the basement */
   for(const t of THINGS.filter(t=>t.kind==='shelf')){put(TX.shelves[t.shelf],110,150,560,t.at[0],0,-4.45,t);solid(t.at[0],-4.5,1.36,0.45);}
@@ -1494,7 +1495,7 @@ function faceFront(){if(ME.view.mode!=='front'&&!ME.flip)ME.flip={from:ME.view,t
 const keys={};
 /* the start menu (#title) and the pause menu (#pausemenu): while either is up the world stands still */
 const pauseMenu=document.getElementById('pausemenu'),titleScreen=document.getElementById('title');
-const paused=()=>pauseMenu.open||!titleScreen.hidden;
+const paused=()=>pauseMenu.open||!titleScreen.hidden||document.getElementById('options').open;
 window.addEventListener('keydown',e=>{const k=e.key.toLowerCase();if(paused()||document.body.dataset.overlay||FADE.on)return;
   if(k==='escape'&&!cardOpen){e.preventDefault();openPause();return;}
   if(e.target.id==='menubtn')return;
@@ -1759,9 +1760,9 @@ function placeCast(){if(!W.gage)return;const st=G.stage;
   const pp=thing('paper');if(pp)pp.off=!G.readPaper;
   GRID=null;}
 // night or a foggy day: the stage says which. Outdoors, the sky, the moon, the fog and the gas lamps follow it.
-const isNight=()=>(CUT.on&&!G.opening)||!!(window.STORY.stages[G.stage]||{}).night;
+const isNight=()=>TITLE.on||(CUT.on&&!G.opening)||!!(window.STORY.stages[G.stage]||{}).night;
 function applyTime(){const night=isNight();
-  for(const s of W.skies||[])s.material.map=night?TX.sky:TX.skyDay;for(const m of W.moons||[])m.visible=night;
+  for(const s of W.skies||[])s.material.map=night?TX.sky:TX.skyDay;for(const m of W.moons||[])m.visible=night&&!TITLE.on;// on the title, the comet is the only bright thing in the sky
   for(const g of W.gas)if(g.outdoor)g.dayK=night?1:0.25;
   const f=(!night&&AREA.fogDay)||AREA.fog||[16,42,P.fog];scene.fog.near=f[0];scene.fog.far=f[1];scene.fog.color.copy(col(f[2]));}
 // the door that leads toward an area: the first step of the shortest way there, through the doors
@@ -1961,7 +1962,7 @@ function pose(){
   }
   // seated on the train, the whole figure sinks behind the seat end (ME.sink) and rocks with the coach
   RIG.root.position.set(ME.x,s.y-(ME.sink||0),ME.z);RIG.root.rotation.y=rot;RIG.root.rotation.z=s.waddle+(CUT.train?Math.sin(TM*1.7)*0.012:0);
-  RIG.root.visible=!CUT.hideMe;RIG.shadow.visible=!CUT.hideMe&&!ME.sink;
+  RIG.root.visible=!CUT.hideMe&&!TITLE.on;RIG.shadow.visible=!CUT.hideMe&&!ME.sink&&!TITLE.on;
   RIG.body.scale.set(0.82/Math.sqrt(s.sy),0.82*s.sy,0.82);RIG.torso.rotation.z=-s.lean;
   if(RIG.mode==='side'){RIG.legN.rotation.z=s.legN;RIG.legF.rotation.z=s.legF;RIG.legN.position.y=0;RIG.legF.position.y=0;}else{RIG.legN.rotation.z=0;RIG.legF.rotation.z=0;RIG.legN.position.y=s.liftN;RIG.legF.position.y=s.liftF;}
   const o=RIG.out,side=RIG.mode==='side';
@@ -2014,6 +2015,7 @@ function hud(){
   else ui.prompt.hidden=true;
 }
 function audioScene(){
+  if(TITLE.on&&!titleScreen.hidden&&!pauseMenu.open)return 'street';
   if(paused())return '';
   if(document.body.dataset.overlay==='desk')return 'desk';
   if((CUT.train||CUT.line) && !CUT.skip)return 'train';
@@ -2024,11 +2026,68 @@ function audioScene(){
 }
 function frame(now){const dt=Math.min(0.05,(now-last)/1000);last=now;
   MuseumAudio.scene(audioScene());
-  if(paused()){requestAnimationFrame(frame);return;}step(dt);if(CUT.on)cutTick(dt);pose();world();placeCamera(dt);if(document.body.dataset.overlay!=='desk')renderer.render(scene,camera);hud();
+  if(paused()){if(TITLE.on&&!titleScreen.hidden){titleTick(dt);world();renderer.render(scene,camera);}requestAnimationFrame(frame);return;}step(dt);if(CUT.on)cutTick(dt);pose();world();placeCamera(dt);if(document.body.dataset.overlay!=='desk')renderer.render(scene,camera);hud();
   if(ME.dist>3&&!hintT){hintT=1;document.getElementById('keyhint').style.opacity='0';}requestAnimationFrame(frame);}
 function resize(){const w=vp.clientWidth,h=vp.clientHeight;if(!w||!h)return;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();
   if(paused())renderer.render(scene,camera);} /* setSize clears the canvas, and frame() draws nothing while a menu is up */
-new ResizeObserver(resize).observe(vp);
+new ResizeObserver(()=>{resize();if(!titleScreen.hidden)titleScreen.pointHand?.();}).observe(vp);
+/* ================= THE TITLE SCREEN =================
+   While the title is up, Union Street at night plays behind it: the camera drifts along the street and up the front of
+   No. 72, a cab goes by now and then, a woman walks past under her umbrella, fog drifts in from the harbour, and
+   Halley's comet hangs over the rooftops (it was in the evening sky over North America in late May 1910). The street
+   is borrowed: your place in the game is saved when the title opens and put back when you start playing. */
+const TITLE={on:false,t:0,saved:null,cabAt:6,walkAt:2,loop:46};
+// the camera's path: [time (s), position, look at]. The menu is on the left, so the subject sits right of centre.
+const TITLE_SHOTS=[[0,[173,2.7,10.5],[178,2.5,-3]],[12,[184,3.1,9.8],[189,3.0,-4]],[23,[199,3.4,12.4],[197,8.8,-5]],[34,[206,7.4,19.5],[198,5.6,-4]],[46,[211,8.2,21.5],[203,5.4,-4]]];
+function titleCam(t){const S=TITLE_SHOTS;let i=0;while(i<S.length-2&&t>S[i+1][0])i++;const a=S[i],b=S[i+1],u=clamp((t-a[0])/(b[0]-a[0])),e=u*u*(3-2*u);
+  return{pos:a[1].map((v,k)=>lerp(v,b[1][k],e)),look:a[2].map((v,k)=>lerp(v,b[2][k],e))};}
+function drawComet(ctx,W,H){// 900 x 300, additive: a bright head (right) and a long soft tail fanning away to the left
+  const hx=W*0.88,hy=H*0.32;
+  // a broad faint veil first, then the bright streaks
+  const veil=ctx.createLinearGradient(hx,hy,hx-W*0.8,hy+H*0.3);veil.addColorStop(0,'rgba(210,222,255,0.35)');veil.addColorStop(1,'rgba(180,200,240,0)');
+  ctx.fillStyle=veil;ctx.beginPath();ctx.moveTo(hx,hy-4);ctx.quadraticCurveTo(hx-W*0.4,hy-26,hx-W*0.86,hy-30);ctx.lineTo(hx-W*0.86,hy+H*0.62);ctx.quadraticCurveTo(hx-W*0.4,hy+60,hx,hy+6);ctx.fill();
+  for(let i=0;i<110;i++){const a=rr(-0.08,0.24),len=rr(0.45,1)*W*0.86,w=rr(1.5,6),ex=hx-len*Math.cos(a),ey=hy+len*Math.sin(a);
+    const g=ctx.createLinearGradient(hx,hy,ex,ey);g.addColorStop(0,`rgba(230,236,255,${rr(0.25,0.5)})`);g.addColorStop(1,'rgba(170,190,235,0)');
+    ctx.strokeStyle=g;ctx.lineWidth=w;ctx.beginPath();ctx.moveTo(hx,hy);ctx.quadraticCurveTo(hx-len*0.5,hy+len*Math.sin(a)*0.35,ex,ey);ctx.stroke();}
+  const gl=ctx.createRadialGradient(hx,hy,0,hx,hy,46);gl.addColorStop(0,'rgba(255,255,248,1)');gl.addColorStop(0.25,'rgba(232,238,255,0.7)');gl.addColorStop(1,'rgba(200,215,255,0)');ctx.fillStyle=gl;ctx.fillRect(hx-46,hy-46,92,92);}
+function buildTitle(){
+  TX.comet=T(900,300,drawComet,{border:0,grain:false});
+  // the comet hangs over the open lot beside No. 72, in front of the far roofs, where the sky is clear
+  const c=S(TX.comet,58,792,96,{add:true,fog:false,opacity:0.9});c.position.set(219,14.5,-24);c.rotation.z=-0.26;c.visible=false;scene.add(c);W.titleComet=c;
+  W.titleFog=[];for(let i=0;i<8;i++){const s=S(TX.puff,26,64,64,{opacity:0.16});s.position.set(rr(164,236),rr(0.6,1.8),rr(-1.5,4));s.scale.setScalar(rr(3,5.5));s.visible=false;scene.add(s);W.titleFog.push({s,v:rr(0.25,0.6)});}}
+function enterTitle(){if(TITLE.on)return;TITLE.on=true;TITLE.saved={area:AREA.id,x:ME.x,z:ME.z,view:ME.view};TITLE.t=0;TITLE.cabAt=7;TITLE.walkAt=2.5;
+  enterArea('street');document.body.classList.add('at-title');W.titleComet.visible=true;for(const f of W.titleFog)f.s.visible=true;
+  const c=titleCam(0);camPos.set(...c.pos);camLook.set(...c.look);applyTime();}
+function leaveTitle(){if(!TITLE.on)return;TITLE.on=false;document.body.classList.remove('at-title');ui.fade.classList.remove('on');
+  W.titleComet.visible=false;for(const f of W.titleFog)f.s.visible=false;
+  if(!CUT.on){const C=W.cabS;C.g.visible=false;C.goal=null;C.leave=false;MuseumAudio.drive('cab_roll',0);}
+  W.titleWalker=null;placeCast();const s=TITLE.saved;if(s){enterArea(s.area);ME.x=s.x;ME.z=s.z;ME.view=s.view;ME.flip=null;}snapCamera();applyTime();}
+function titleTick(dt){TITLE.t+=dt;const t=TITLE.t%TITLE.loop,c=titleCam(t);camPos.set(...c.pos);camLook.set(...c.look);camera.position.copy(camPos);camera.lookAt(camLook);
+  if(!CUT.on){ME.x=camPos.x;// sounds are placed by their distance from you; on the title, from the camera
+    // a cab now and then
+    const C=W.cabS;if(TITLE.t>TITLE.cabAt&&!C.g.visible){Object.assign(C,{x:150,v:0.8,d:0,goal:null,leave:true});C.g.visible=true;TITLE.cabAt=TITLE.t+31;}
+    cabTick(dt);}
+  // a passer-by under her umbrella
+  const p=W.folk[1];if(!W.titleWalker&&TITLE.t>TITLE.walkAt){W.titleWalker={x:166};p.g.visible=true;p.shadow.visible=true;p.headS.mat.map=p.headTex;}
+  if(W.titleWalker){const w=W.titleWalker;w.x+=1.0*dt;p.g.position.set(w.x,0.03*Math.abs(Math.sin(TITLE.t*5.2)),-3.75);p.shadow.position.set(w.x+0.05,0.015,-3.7);
+    if(w.x>234){W.titleWalker=null;p.g.visible=false;p.shadow.visible=false;TITLE.walkAt=TITLE.t+18;}}
+  // fog along the street
+  for(const f of W.titleFog){f.s.position.x+=f.v*dt;if(f.s.position.x>238)f.s.position.x=162;f.s.quaternion.copy(camera.quaternion);}
+  W.titleComet.mat.opacity=0.82+0.08*Math.sin(TITLE.t*0.7);
+  // the loop starts again behind a quick fade
+  ui.fade.classList.toggle('on',TITLE.t>1&&(t>TITLE.loop-0.5||t<0.25));}
+/* the menus: the arrow keys move through the buttons; the pointing hand follows; a soft click on each move */
+function menuButtons(root){return[...root.querySelectorAll('.menu:not([hidden]) button')].filter(b=>b.offsetParent&&!b.closest('[hidden]'));}
+function setupMenuHands(){
+  const hands=[[titleScreen,window.HAND.make(titleScreen,'menu',58),52],[pauseMenu,window.HAND.make(pauseMenu,'menu',44),34]];
+  for(const[root,hand,dx] of hands){
+    // (the hand is position: fixed, and neither the title nor the dialog is transformed, so screen coordinates work)
+    const point=b=>{if(!b||!b.closest('.menu')||!b.getClientRects().length)return hand.hide();const r=b.getBoundingClientRect();hand.at(r.left+dx,r.top+Math.min(r.height/2,21),'right');};
+    root.pointHand=()=>point(document.activeElement);
+    root.addEventListener('focusin',e=>{point(e.target.closest('.menu button'));MuseumAudio.play('wood_1',0.14,1.35);});
+    root.addEventListener('pointerover',e=>{const b=e.target.closest('.menu button');if(b&&document.activeElement!==b){b.focus({preventScroll:true});point(b);}});
+    root.addEventListener('keydown',e=>{if(e.key!=='ArrowDown'&&e.key!=='ArrowUp')return;const bs=menuButtons(root);if(!bs.length)return;e.preventDefault();
+      const i=bs.indexOf(document.activeElement),n=e.key==='ArrowDown'?(i+1)%bs.length:(i-1+bs.length)%bs.length;bs[i<0?0:n].focus();point(bs[i<0?0:n]);});}}
 /* ---------- start menu and pause menu ----------
    New game on the start menu is the only way to begin again; the pause menu never erases anything.
    A new game over an old one clears the save and reloads, then skips the start menu once (BEGIN_KEY). */
@@ -2042,14 +2101,14 @@ function showTitle(){
   haltPlayer();if(pauseMenu.open)pauseMenu.close();
   const can=playedThisVisit||hasSave(),cont=document.getElementById('continue');
   cont.hidden=!can;document.getElementById('newgame').classList.toggle('big',!can);document.getElementById('continue-where').textContent=can&&objText()?'To do: '+objText():'';
-  document.getElementById('titlemenu').hidden=false;document.getElementById('titleconfirm').hidden=true;
-  menuBtn().hidden=true;titleScreen.hidden=false;(can?cont:document.getElementById('newgame')).focus();}
-function startPlay(){titleScreen.hidden=true;menuBtn().hidden=false;playedThisVisit=true;last=performance.now();vp.focus({preventScroll:true});
+  document.getElementById('titlemenu').hidden=false;document.getElementById('titleconfirm').hidden=true;document.getElementById('credits').hidden=true;titleScreen.classList.remove('reading');
+  menuBtn().hidden=true;enterTitle();titleScreen.hidden=false;(can?cont:document.getElementById('newgame')).focus();titleScreen.pointHand?.();}
+function startPlay(){leaveTitle();titleScreen.hidden=true;menuBtn().hidden=false;playedThisVisit=true;last=performance.now();vp.focus({preventScroll:true});
   if(G.stage==='arrive'&&!G.opening&&!CUT.on)runOpening();}// a new game opens on the train
 function openPause(){
   if(paused()||document.body.dataset.overlay)return;haltPlayer();
   const t=objText();document.getElementById('pause-obj').innerHTML=t?'<b>To do</b>'+esc(t):'';
-  pauseMenu.showModal();document.getElementById('resume').focus();}
+  pauseMenu.showModal();document.getElementById('resume').focus();pauseMenu.pointHand?.();}
 function setupMenus(){
   const $=id=>document.getElementById(id);
   $('continue').onclick=startPlay;
@@ -2060,6 +2119,14 @@ function setupMenus(){
   $('newgame-yes').onclick=()=>{try{localStorage.removeItem(SAVE_KEY);sessionStorage.setItem(BEGIN_KEY,'1');}catch(e){}location.reload();};
   menuBtn().onclick=openPause;$('skipbtn').onclick=e=>{e.stopPropagation();skipOpening();};
   $('to-title').onclick=showTitle;
+  const opts=$('options');let optFrom=null;
+  const openOptions=e=>{optFrom=e.currentTarget;opts.showModal();opts.querySelector('input')?.focus();};
+  $('title-options').onclick=openOptions;$('pause-options').onclick=openOptions;
+  opts.addEventListener('close',()=>{optFrom?.focus();(pauseMenu.open?pauseMenu:titleScreen).pointHand?.();});
+  $('title-credits').onclick=()=>{$('titlemenu').hidden=true;$('credits').hidden=false;titleScreen.classList.add('reading');$('credits-back').focus();titleScreen.pointHand?.();};
+  $('credits-back').onclick=()=>{$('credits').hidden=true;$('titlemenu').hidden=false;titleScreen.classList.remove('reading');$('title-credits').focus();titleScreen.pointHand?.();};
+  titleScreen.addEventListener('keydown',e=>{if(e.key!=='Escape')return;if(!$('credits').hidden)$('credits-back').click();else if(!$('titleconfirm').hidden)$('newgame-no').click();});
+  setupMenuHands();
   pauseMenu.addEventListener('close',()=>{last=performance.now();if(titleScreen.hidden)vp.focus({preventScroll:true});});}
 async function boot(){
   try{await Promise.race([Promise.all(['40px "IM Fell English SC"','40px "IM Fell English"','20px "Special Elite"'].map(f=>document.fonts.load(f))),new Promise(r=>setTimeout(r,2500))]);}catch(e){}
@@ -2081,7 +2148,7 @@ async function boot(){
     const board=document.getElementById('newgame');
     board.textContent='Board the train';board.focus();
   }
-  window.museum={tick:(n=60,dt=1/60)=>{for(let i=0;i<n;i++){step(dt);if(CUT.on)cutTick(dt);pose();}return[ME.x,ME.z];},opening:runOpening,skip:skipOpening,cut:CUT,cab:()=>W.cabS,train:()=>W.trainOut,cast:()=>({gage:W.gage,hanlon:W.hanlon,folk:W.folk}),night:()=>isNight(),keys,go:(x,z,area)=>{if(area)enterArea(area);ME.x=x;ME.z=z;snapCamera();},area:()=>AREA.id,say:l=>say(l),stage:st=>{if(st)setStage(st);return G.stage;},game:()=>G,open:id=>interact(EXHIBITS.concat(THINGS).find(e=>e.id===id)),close:closeCard,walk:routeTo,me:ME,
+  window.museum={tick:(n=60,dt=1/60)=>{for(let i=0;i<n;i++){step(dt);if(CUT.on)cutTick(dt);pose();}return[ME.x,ME.z];},opening:runOpening,skip:skipOpening,cut:CUT,cab:()=>W.cabS,train:()=>W.trainOut,cast:()=>({gage:W.gage,hanlon:W.hanlon,folk:W.folk}),title:TITLE,night:()=>isNight(),keys,go:(x,z,area)=>{if(area)enterArea(area);ME.x=x;ME.z=z;snapCamera();},area:()=>AREA.id,say:l=>say(l),stage:st=>{if(st)setStage(st);return G.stage;},game:()=>G,open:id=>interact(EXHIBITS.concat(THINGS).find(e=>e.id===id)),close:closeCard,walk:routeTo,me:ME,
     frame:(w=960,h=540,cam)=>{renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();pose();world();placeCamera(1);if(cam){camera.position.set(cam[0],cam[1],cam[2]);camera.lookAt(cam[3],cam[4],cam[5]);}renderer.render(scene,camera);const d=canvas.toDataURL('image/jpeg',0.85);resize();return d;}};
   requestAnimationFrame(frame);
 }

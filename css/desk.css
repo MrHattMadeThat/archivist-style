@@ -300,25 +300,17 @@ button.pip:hover{transform:scale(1.25)}
 .viewport .hud.right{top:calc(50px + env(safe-area-inset-top,0px))}
 .menubtn kbd{font-family:var(--f-type);font-size:10px;border:1px solid currentColor;padding:0 4px;margin-left:4px;opacity:.8}
 .menubtn:hover,.menubtn:focus-visible{color:var(--paper);border-color:var(--paper)}
-.title{position:fixed;inset:0;z-index:50;display:grid;place-items:center;padding:16px;
-  background:radial-gradient(ellipse at 50% 42%,rgba(11,14,21,.35) 0,rgba(11,14,21,.82) 70%,rgba(5,6,9,.95) 100%)}
 .title-card{position:relative;width:min(460px,100%);text-align:center;padding:26px 38px 22px;background:var(--paper);color:var(--ink);
   box-shadow:6px 7px 0 rgba(0,0,0,.6);transform:rotate(-.8deg);
   clip-path:polygon(0 3%,3% 0,40% 1.5%,72% 0,100% 2%,99% 50%,100% 98%,62% 100%,30% 98.5%,2% 100%,0 55%)}
 .title-card small{display:block;font-family:var(--f-type);font-size:13px;letter-spacing:.2em;text-transform:uppercase;color:var(--red)}
 .title-card h1{font-family:var(--f-display);font-weight:400;font-size:clamp(32px,5vw,48px);line-height:1.05;margin:6px 0 0}
 .title-sub{font-family:var(--f-body);font-style:italic;font-size:20px;margin:2px 0 18px;color:var(--soft)}
-.title-menu{display:grid;gap:10px;transform:rotate(.8deg)}
-.title-menu button,#pausemenu button{font-family:var(--f-type);font-size:17px;padding:9px 14px;cursor:pointer;color:var(--ink);background:#f6f0df;border:2px solid var(--ink);box-shadow:3px 3px 0 rgba(0,0,0,.35)}
-.title-menu button:hover,#pausemenu button:hover{background:#fffaf0}
-.title-menu button.big,#pausemenu button.big{font-size:20px;padding:11px 14px;background:var(--brass)}
-.title-menu button.big:hover,#pausemenu button.big:hover{background:#e6b85e}
-.title-menu button.danger{background:var(--red);color:var(--paper)}
-.title-menu button.danger:hover{background:#bb5039}
-.title-menu button:focus-visible,#pausemenu button:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
-#continue span{display:block;font-family:var(--f-read);font-size:13.5px;letter-spacing:0;margin-top:3px;color:var(--soft)}
-.title-warn{margin:0 0 2px;font-family:var(--f-read);font-size:15.5px;line-height:1.4}
-.title-keys{margin:16px 0 0;font-family:var(--f-type);font-size:11.5px;color:var(--soft)}
+#pausemenu button,#options button{font-family:var(--f-type);font-size:17px;padding:9px 14px;cursor:pointer;color:var(--ink);background:#f6f0df;border:2px solid var(--ink);box-shadow:3px 3px 0 rgba(0,0,0,.35)}
+#pausemenu button:hover,#options button:hover{background:#fffaf0}
+#pausemenu button.big,#options button.big{font-size:20px;padding:11px 14px;background:var(--brass)}
+#pausemenu button.big:hover,#options button.big:hover{background:#e6b85e}
+#pausemenu button:focus-visible,#options button:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
 #pausemenu{width:min(22rem,86vw);background:var(--paper);color:var(--ink);border:none;padding:22px 26px 18px;box-shadow:6px 7px 0 rgba(0,0,0,.6);text-align:center}
 #pausemenu::backdrop{background:rgba(5,6,9,.62)}
 #pausemenu h2{font-family:var(--f-display);font-weight:400;font-size:32px;margin:0}
@@ -401,3 +393,60 @@ body.cutscene .hud,body.cutscene .obj,body.cutscene .prompt,body.cutscene .hand.
 .dlg-card.note{background:repeating-linear-gradient(180deg,transparent 0 25px,rgba(63,107,139,.18) 25px 26px),#f8f3e4;border-top:3px solid var(--red);transform:rotate(-.4deg)}
 .dlg-card.note p{margin:2px 0;font-family:"IM Fell English",var(--f-read);font-style:italic;font-size:17px;line-height:1.45}
 .dlg-card.note p:last-child{margin-bottom:0}
+
+/* ---------------------------------------------------------------- the title screen (#title): a live scene behind, the menu on the left
+   Union Street at night plays behind (world.js, "THE TITLE SCREEN"). The menu is set like a game's: big period type,
+   the pointing hand at the chosen line. While the title is up, the game's own HUD is hidden (body.at-title). */
+body.at-title .hud,body.at-title .obj,body.at-title .prompt,body.at-title .menubtn,body.at-title .hand.quest,body.at-title .dlg{display:none!important}
+.title{position:fixed;inset:0;z-index:50;color:var(--card);font-family:var(--f-read)}
+.title-shade{position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(90deg,rgba(4,5,9,.9) 0,rgba(4,5,9,.78) 24%,rgba(4,5,9,.25) 48%,rgba(4,5,9,0) 62%),linear-gradient(0deg,rgba(4,5,9,.55) 0,rgba(4,5,9,0) 30%)}
+.title-left{position:absolute;left:clamp(22px,6vw,96px);top:50%;transform:translateY(-50%);width:min(440px,calc(100vw - 44px));max-height:calc(100vh - 24px);overflow:auto}
+.logo{margin-bottom:clamp(14px,4vh,34px);animation:logoin .9s ease-out both}
+@keyframes logoin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.logo{animation:none}}
+.logo small{display:block;font-family:var(--f-type);font-size:12.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--brass)}
+.logo h1{margin:4px 0 0;font-family:"IM Fell English SC",var(--f-read);font-weight:400;font-size:clamp(40px,6.4vw,74px);line-height:.98;color:#f1e8d0;
+  text-shadow:0 2px 0 #000,0 0 26px rgba(255,179,75,.28)}
+.logo-rule{display:flex;align-items:center;gap:12px;margin-top:8px;color:var(--brass)}
+.logo-rule::before,.logo-rule::after{content:"";flex:1;height:0;border-top:1.5px solid currentColor;opacity:.7}
+.logo-rule::before{max-width:34px}
+.logo-rule span{font-family:"IM Fell English",var(--f-read);font-style:italic;font-size:clamp(20px,2.4vw,27px);color:#e9dcb8}
+.title .menu{display:grid;justify-items:start;gap:2px}
+.title .menu button{font:inherit;font-family:"IM Fell English SC",var(--f-read);font-size:clamp(22px,2.6vw,29px);line-height:1.15;text-align:left;cursor:pointer;
+  color:#d9cfb5;background:none;border:0;padding:5px 12px 5px 62px;margin:0;text-shadow:0 2px 0 #000}
+.title .menu button:hover,.title .menu button:focus-visible{color:var(--amber);outline:none}
+.title .menu button:focus-visible{text-decoration:underline 2px rgba(255,179,75,.5);text-underline-offset:6px}
+#continue span{display:block;font-family:var(--f-read);font-size:14px;line-height:1.3;color:#a9a08a;text-shadow:none;margin-top:2px;max-width:330px}
+.title .menu button.danger{color:#f08a70}
+.title-warn{margin:0 0 6px 62px;font-size:16px;line-height:1.4;color:#e9dcb8}
+.title .hand.menu{z-index:60}
+.title-keys{margin:clamp(14px,4vh,30px) 0 0 62px;font-family:var(--f-type);font-size:12px;color:#8f8775}
+.title-keys kbd,.opt-group kbd{font-family:var(--f-type);font-size:11px;border:1px solid currentColor;border-radius:3px;padding:0 5px;margin-right:3px}
+.title.reading .logo,.title.reading .title-keys{display:none}
+.credits{background:rgba(226,218,198,.96);color:var(--ink);padding:14px 18px 10px;box-shadow:6px 7px 0 rgba(0,0,0,.6);max-height:calc(100vh - 40px);overflow:auto}
+.credits h2{margin:0 0 6px;font-family:"IM Fell English SC",var(--f-read);font-weight:400;font-size:26px}
+.credits p{margin:0 0 8px;font-size:14.5px;line-height:1.4}
+.credits .small{font-size:12.5px;color:var(--soft)}
+.title .credits .menu button{color:var(--ink);text-shadow:none;font-size:22px;padding-left:0}
+.title .credits .menu button:hover,.title .credits .menu button:focus-visible{color:var(--red)}
+/* ---------------------------------------------------------------- Options (#options): from the title or the pause menu */
+#options{width:min(46rem,94vw);max-height:94vh;overflow:auto;background:var(--card);color:var(--ink);border:none;padding:18px 24px 16px;box-shadow:6px 7px 0 rgba(0,0,0,.6);font-family:var(--f-read)}
+#options::backdrop{background:rgba(5,6,9,.55)}
+#options h2,#pausemenu h2{font-family:var(--f-display,"IM Fell English SC"),serif;font-weight:400;font-size:32px;margin:0 0 8px;text-align:center}
+.opt-cols{display:grid;grid-template-columns:1fr 1fr;gap:10px 16px}
+.opt-group{margin:0;border:1.5px solid rgba(21,24,32,.5);padding:6px 12px 10px;min-width:0}
+.opt-group legend{font-family:var(--f-type);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--red);padding:0 6px}
+.opt-group label{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:16px;margin:6px 0}
+.opt-group input[type=range]{width:52%;accent-color:var(--red)}
+.opt-group input:disabled{opacity:.35}
+.opt-group label.switch{justify-content:flex-start;font-weight:600}
+.opt-group label.switch input{width:20px;height:20px;margin:0;accent-color:var(--red);cursor:pointer}
+.opt-group.keys{grid-column:1/-1}
+.opt-group dl{display:grid;grid-template-columns:max-content 1fr;gap:4px 14px;margin:4px 0 0;font-size:15px}
+.opt-group dt{font-family:var(--f-type);font-size:13px}
+.opt-group dd{margin:0}
+#options form{display:grid;justify-items:center;margin-top:12px}
+#options form button{min-width:12rem}
+#pausemenu .hand.menu{z-index:5}
+@media (max-width:640px){.opt-cols{grid-template-columns:1fr}}
