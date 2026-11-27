@@ -122,6 +122,38 @@ Read `README.md` first. This file is for agents working in the repo.
   card only fits because its two proof boxes sit side by side.
 - Preview: `archivist-chapters` in `REPOS/.claude/launch.json` serves this folder on 5547 (5544/5546 are often taken).
 
+## The new opening, the town and the real newspaper (2026-11-27, evening)
+
+- The plan is in `docs/STORY.md`: who you are (a compulsive cataloguer), the theme as a joke (Percy Gage's comet
+  pills), a mystery (Mr. Tull, Box 17), real dates (Tue 17 – Thu 19 May 1910), and the pacing rule.
+- **New areas** (`AREAS`): `line` (x 430..560, the train from outside, opening only), `square` (x 300..372: King Square,
+  Sydney Street, the old burial ground), `lodgings` (x 400..420: Mrs. Hanlon's kitchen and your room). New doors:
+  `to-square` / `to-union` (Union Street's west end ↔ the square's east end), `to-lodgings` / `to-sydney`. The quest
+  marker routes through any doors with `doorToward()` (a breadth-first search over `DOORS`); `DOOR_TOWARD` is gone.
+- **Day and night**: a stage with `night: true` is dark and gaslit; any other stage is a foggy day. `applyTime()` (from
+  `setStage` and `enterArea`) swaps the outdoor skies (`W.skies`: TX.sky / TX.skyDay), hides the moons, uses the area's
+  `fogDay`, and dims outdoor gas glows (`g.outdoor`, `g.dayK`). Indoors is gaslit either way.
+- **The townspeople**: `makePerson(spec, id)` builds a body, a head (and a looking-up head for the comet night) and an
+  optional arm from a description (`GAGE`, `HANLON`, `FOLK` near Mr. Harrow's drawings; `drawPerson`,
+  `drawPersonHead`, `drawPersonArm`). `placeCast()` (from `setStage`) puts them where `CAST_AT` says for the stage, or
+  hides them (and switches their THING off with `off: true`; the prompt and the quest marker skip `off` things).
+- **The opening** (`runOpening`): outside (`CUT.line`, `CUT.follow` tracks the train; `lineTick` turns the wheels, moves
+  the side rod and puffs smoke), inside with Gage (`DO.cards` spills your index cards, `DO.gageGo` walks him off), the
+  cab with the cabman talking (`STORY.opening.cab`, said while the cab drives), then the door as before. `CUT.cam.k`
+  sets how tightly the camera follows.
+- **New DO lines**: `cards`, `gageGo`, `paper` (opens the newspaper, goes on when it is folded), `sleep`, `toSquare`,
+  `toHarrowOffice`. A choice may set `who` (e.g. `narrator`) so its reply is not said by the line's speaker. Cards of
+  type `note` show a letter or an index card (`note: { tag, lines }`).
+- **The newspaper** (`js/desk/paper.js`, `Activities.paper()`): the real Standard of 18 May 1910, set in type (with
+  `UnifrakturMaguntia` and `Oswald` from Google Fonts) and as the scan in `sources/`, comet stories marked.
+- **Town catalogue cards** (`TOWN_CARDS`, pushed into `EXHIBITS` with `area`, `place` and `head: 'Your index card'`).
+- A saved game starts where its stage happens (`START` in `boot`). The bed only works at stage `sleep`; the desk at a
+  stage with no case can play `STORY.deskEvent` (the stuck drawer).
+- Fixed in passing: on Union Street a comment had swallowed the line that puts up the telegraph poles.
+- Verified in the browser at 1366 × 650 (2026-11-27): the whole path from a new game to chapter 2, no errors. Not
+  heard: nothing new has sound of its own yet (the foghorn the cabman mentions, the train from outside, the square's
+  crowd all use the existing cues).
+
 ## Union Street, outside No. 72 (2026-11-26)
 
 - **The building is 72 Union Street, not Douglas Avenue.** The user asked about the NBM's Douglas Avenue building; it
@@ -180,6 +212,28 @@ Read `README.md` first. This file is for agents working in the repo.
   800 px or so, so an emulated 1366-wide viewport looks zoomed in: render `museum.frame(w, h, [cam xyz, look xyz])` into
   a fixed `<img>` in the top-left to inspect a view. `museum.opening()`, `museum.skip()`, `museum.cut`, `museum.cab()`
   are test hooks.
+
+## Sound (2026-11-27)
+
+- **Everything in `audio/` except `audio/voice/` comes from `node scripts/render_audio.mjs`** (pass names to render only
+  those, e.g. `node scripts/render_audio.mjs hoof_0 street`). No dependencies, deterministic, about 5 s. Python has no
+  NumPy on this machine, so the old `render_score.py` was replaced. Never hand-edit a WAV; change the script and re-render.
+- **Music**: `CUES` in the script, one per area (`audioScene()` in world.js picks it; the desk is `bench_keys`). Written as
+  chords (one a bar, `Dm,A7` splits a bar) plus melody lines (`A4:2 D5:1 | ...`, lengths in beats; the parser throws if
+  a bar doesn't add up) plus an `accomp(chord, bar, put)` pattern. Instruments are period ones only (1910). Loops are
+  rendered twice and the second pass kept, so reverb rings across the seam. Loop noise must come from `loopNoise()`
+  (plain noise clicks at the seam).
+- **Effects**: one-shots are levelled by their loudest 50 ms (`{win}`), loops by RMS. `ring()` is peak-normalised: a raw
+  high-Q band-pass is ~100x quieter than its burst, which is why the old hoof was only a click.
+- **Hooves**: `cabTick` plays `hoof_0..3` as each leg touches down (four-beat walk); the far-side legs (0, 1) at half
+  volume. `MuseumAudio.drive('cab_roll', level)` holds the wheels loop at a level that follows the cab's speed; 0 stops it.
+- **Footsteps**: `wood_0..3` / `stone_0..3`, left foot 0|1, right foot 2|3. The stacks' box pick-up is `box`.
+- **Voices**: `muted.voices` (saved in `archivist:audio-v1`) is separate from the slider, so switching back on restores
+  the level. `spoken()` in voice-worker.js: 1906 -> nineteen oh six, 1860s -> eighteen sixties, 1897-1917 -> ... to ...,
+  c. 1910 -> about, St./Mr./Mrs./No. -> Saint/Mister/Missus/Number, · -> a comma. Screen text is unchanged.
+- **Testing**: browsers cache WAVs hard; fetch each changed file with `{cache: 'reload'}` before reloading. To see what
+  plays, wrap `AudioBufferSourceNode.prototype.start` and log `buffer.duration`. Nobody has listened to the 2026-11-27
+  render yet: the checks were spectrograms, loop seams, harmony against the chords, and the in-game trigger log.
 
 ## Arrival (`arrival.html`)
 

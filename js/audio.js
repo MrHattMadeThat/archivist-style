@@ -2,16 +2,22 @@
 (() => {
   const key = 'archivist:audio-v1';
   const levels = { master: 0.85, music: 0.7, effects: 0.85, voices: 0.9 };
+  const muted = { voices: false }; // a switch of its own, so turning voices back on restores the slider's level
   try {
     const saved = JSON.parse(localStorage.getItem(key));
     for (const bus of Object.keys(levels)) {
       if (Number.isFinite(saved?.[bus])) levels[bus] = Math.max(0, Math.min(1, saved[bus]));
     }
+    for (const bus of Object.keys(muted)) muted[bus] = saved?.muted?.[bus] === true;
   } catch {}
+  const save = () => { try { localStorage.setItem(key, JSON.stringify({ ...levels, muted })); } catch {} };
+  const busLevel = bus => muted[bus] ? 0 : levels[bus] ** 2;
 
   let context, scene = '', revision = 0;
   const buses = {}, buffers = new Map(), loops = new Map();
-  const effects = ['wood_0', 'wood_1', 'stone_0', 'stone_1', 'creak', 'whoosh', 'stamp', 'hoof', 'title_phrase'];
+  // sounds rendered by scripts/render_audio.mjs; footsteps and hooves come in four takes each
+  const effects = ['wood', 'stone', 'hoof'].flatMap(n => [0, 1, 2, 3].map(i => n + '_' + i))
+    .concat(['creak', 'whoosh', 'stamp', 'box', 'title_phrase']);
   function load(name) {
     if (!buffers.has(name)) {
       buffers.set(name, fetch('audio/' + name + '.wav')
@@ -32,7 +38,7 @@
       context = new Audio();
       for (const bus of Object.keys(levels)) {
         buses[bus] = context.createGain();
-        buses[bus].gain.value = levels[bus] ** 2;
+        buses[bus].gain.value = busLevel(bus);
         buses[bus].connect(bus === 'master' ? context.destination : buses.master);
       }
       for (const name of effects) load(name);
@@ -70,7 +76,7 @@
   }
   function speak(who, text) {
     stopVoice();
-    if (!context || !levels.voices || !text || document.hidden || !window.Worker) return;
+    if (!context || !levels.voices || muted.voices || !text || document.hidden || !window.Worker) return;
     if (!worker) {
       worker = new Worker('js/voice-worker.js');
       worker.onmessage = ({data}) => {
@@ -94,12 +100,13 @@
     buses.master.gain.setTargetAtTime(active ? levels.master ** 2 : 0, context.currentTime, 0.015);
     if (!active) stopVoice();
     const score = scene === 'desk' ? 'bench_keys' : scene;
-    for (const name of ['room', 'rail_wheels', ...scores]) {
-      const bed = scene === 'train' ? 'rail_wheels' : scene === 'street' ? null : 'room';
-      const ambience = name === 'room' || name === 'rail_wheels';
+    const beds = ['room', 'rail_wheels', 'street_air'];
+    for (const name of [...beds, ...scores]) {
+      const bed = scene === 'train' ? 'rail_wheels' : scene === 'street' ? 'street_air' : 'room';
+      const ambience = beds.includes(name);
       const wanted = ambience ? name === bed : name === score;
       const bus = ambience ? 'effects' : 'music';
-      const volume = ambience ? 0.27 : 0.48;
+      const volume = name === 'street_air' ? 0.34 : ambience ? 0.27 : 0.48;
       if (active && wanted && !loops.has(name)) {
         load(name).then(buffer => {
           if (buffer && current === revision) loops.set(name, source(buffer, bus, volume, 1, true));
@@ -125,14 +132,53 @@
       levels[bus] = Number(slider.value) / 100;
       if (context) {
         if (bus === 'master') mix();
-        else buses[bus].gain.setTargetAtTime(levels[bus] ** 2, context.currentTime, 0.015);
+        else buses[bus].gain.setTargetAtTime(busLevel(bus), context.currentTime, 0.015);
       }
-      try { localStorage.setItem(key, JSON.stringify(levels)); } catch {}
+      save();
     };
+  }
+  // "Voices" boxes (start menu and pause menu): unticked, nobody reads the lines aloud
+  const switches = [...document.querySelectorAll('[data-audio-on]')];
+  function setOn(bus, on) {
+    muted[bus] = !on;
+    for (const box of switches) if (box.dataset.audioOn === bus) box.checked = on;
+    for (const slider of document.querySelectorAll('[data-audio-bus="' + bus + '"]')) slider.disabled = !on;
+    if (bus === 'voices' && !on) stopVoice();
+    if (context) buses[bus].gain.setTargetAtTime(busLevel(bus), context.currentTime, 0.015);
+    save();
+  }
+  for (const box of switches) box.onchange = () => setOn(box.dataset.audioOn, box.checked);
+  for (const bus of Object.keys(muted)) setOn(bus, !muted[bus]);
+
+  // a loop held at a level that follows the game (the cab's wheels with its speed); level 0 lets it go
+  const driven = new Map();
+  function drive(name, level) {
+    if (!context || context.state !== 'running') return;
+    const now = context.currentTime, held = driven.get(name);
+    if (level > 0.001 && scene && !document.hidden) {
+      if (!held) {
+        const entry = { level, node: null };
+        driven.set(name, entry);
+        load(name).then(buffer => {
+          if (!buffer || driven.get(name) !== entry) return;
+          entry.node = source(buffer, 'effects', entry.level, 1, true);
+        });
+      } else if (Math.abs(held.level - level) > 0.005) {
+        held.level = level;
+        if (held.node) { held.node.gain.gain.cancelScheduledValues(now); held.node.gain.gain.setTargetAtTime(level, now, 0.08); }
+      }
+    } else if (held) {
+      driven.delete(name);
+      if (held.node) {
+        held.node.gain.gain.cancelScheduledValues(now);
+        held.node.gain.gain.setTargetAtTime(0, now, 0.08);
+        held.node.node.stop(now + 0.6);
+      }
+    }
   }
 
   window.MuseumAudio = {
-    speak, stopVoice,
+    speak, stopVoice, drive,
     scene(next) {
       if (scene !== next) { scene = next; mix(); }
     },

@@ -71,8 +71,43 @@ used are in `docs/source-texts/`.
 - Not used yet: Kilby/Weston say the commission first met at Halifax in September 1796; Ganong says St. Andrews in
   August 1796. Another "two sources disagree" task for later.
 
+## The morning paper: *The Standard*, Saint John, Wednesday 18 May 1910, page 1
+
+- Library and Archives Canada microfilm, via Canadiana: https://www.canadiana.ca/view/oocihm.N_00384_19100518 (the
+  IIIF image service, image `69429/c0tm71z4c31v`). The scan in `sources/standard-1910-05-18-p1.jpg` is that page,
+  cropped to the paper, 2000 px wide. Public domain.
+- Set in type in `js/desk/paper.js`, word for word: "Prof. Blake on the Comet" (whole); "Comet Works Destruction at
+  Portland" (cut: the grim items, and a paragraph about New Orleans written in the racist language of the day, are
+  left out and marked […]); "Shower of Meteors"; and the headlines and first lines of "London Wrapped in Silent
+  Grief", "All Work on C.P.R. Ceases", "Dr. Cook Said to Have Been in New York" and "Commander Peary Honored in
+  Vienna". The scan tab shows the whole page as printed.
+- Not used yet: the Cook/Peary North Pole dispute on the same page ("A. S. Cheeseborough in St. John last week…"), a
+  ready-made "who was in a position to know" case.
+
+## Saint John in 1910: the places and the talk
+
+- **Halley's comet**: the Earth passed through the tail on the night of 18 May 1910 (Prof. Blake, the Standard, above).
+  Comet pills: "Comet pills would find a ready sale here" (same page). The comet was beside the sun that night, so
+  nothing could be seen.
+- **King Edward VII** died on 6 May 1910; the funeral was on Friday 20 May ("All Work on C.P.R. Ceases", same page).
+- **King Square**: set aside in 1785, named for George III; paths laid out in the Union Jack pattern in the 1840s
+  (sources give 1844 and 1847, so the card says "the 1840s"); the bandstand built in 1908 by the architect Neil Brodie
+  for the City Cornet Band, iron-framed with a copper roof, now called the King Edward VII Memorial Bandstand.
+  https://en.wikipedia.org/wiki/King%27s_Square,_Saint_John and the Historical Marker Database,
+  https://www.hmdb.org/m.asp?m=77531.
+- **The Loyalist Burial Ground**: laid out in 1783, bounded by Sydney, Union and Carmarthen Streets and King Street
+  East, beside King Square; oldest stone 1784 (Conradt Hendricks); closed to burials in 1848.
+  https://en.wikipedia.org/wiki/Loyalist_Burial_Ground
+- **The foghorn**: Robert Foulis's steam fog alarm, installed on Partridge Island in 1859, the first of its kind.
+  https://www.thecanadianencyclopedia.ca/en/article/robert-foulis
+- **The tides and the Reversing Falls**: the cabman's "higher than a house" for the harbour's tide, and the river
+  running backwards at the falls, are both true of Saint John.
+- **Guesses** (no source describes them): Mrs. Hanlon's house and its number, the trees' places, the lamps and benches
+  in the square, the people in the crowd and what they say, the train (typical of the period, not a particular one).
+
 ## Invented (and labelled as such in README.md)
 
-- Mr. Harrow, the attendant, Miss Agnes Lyle, her pupil Tom Nason, Mr. Silas Mott the newspaperman, the offices and
+- Mr. Harrow, the attendant (Miss Doucet), Miss Agnes Lyle, her pupil Tom Nason, Mr. Silas Mott the newspaperman,
+  Percy Gage the pill seller, Mrs. Hanlon and her boarding house, the cabman, the townsfolk, Mr. Tull and his card, the offices and
   the stacks, the archive boxes' labels, and every
   "mail" consequence in the end-of-case reports.

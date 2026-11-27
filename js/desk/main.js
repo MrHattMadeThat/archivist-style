@@ -5,6 +5,7 @@
 // and an interactable in the world that opens it.
 import { openDesk } from './desk.js';
 import { openShelf } from './stacks.js';
+import { openPaper } from './paper.js';
 import { SOURCES, SHELVES, BOXES, shelfOf } from './sources.js';
 import { CASES } from './cases.js';
 import { papersOf } from './tasks.js';
@@ -22,6 +23,8 @@ window.Activities = {
     openDesk(root(), { theCase: C, sources: SOURCES, save, persist, onLeave, onComplete, face, coach: C.coach ? SAMPLE_COACH : null });
   },
   // tutor: true runs Mr. Harrow's filing lesson on this shelf
+  // the morning paper (The Standard, 18 May 1910): onClose(read) when it is folded up
+  paper(opts) { openPaper(root(), opts || {}); },
   shelf(opts) { openShelf(root(), { ...opts, sources: SOURCES, coach: opts.tutor ? SHELF_COACH : null, locked: opts.tutor }); },
 };
 window.dispatchEvent(new Event('activities-ready'));

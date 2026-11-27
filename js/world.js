@@ -9,7 +9,7 @@ const P={skyTop:'#060b17',skyBot:'#23314b',fog:'#120e0b',far:'#101a2c',stone:'#6
   coat:'#272833',coat2:'#8c6b3b',hat:'#1b1c24',skin:'#e7d9c2',trouser:'#34374b',boot:'#121319',glass:'#121826',glow:'#ffb34b',glowDim:'#a9753b',
   dust:'#8e96a6',leaf:'#b1672b',scarfA:'#3f6b8b',scarfB:'#d9c9a1',case:'#6b4931',brass:'#d1a14b',grain:0.14,
   wood:'#5c3b24',woodDark:'#36210f',woodLight:'#8a5f3a',felt:'#4e2522',plaster:'#c9bd9c',rug:'#6e2b22',
-  wallpapers:['#3c4a38','#55302c','#31444e','#4b4532']};
+  wallpapers:['#3c4a38','#55302c','#31444e','#4b4532','#4d3d2c','#3a4652']};
 const FD='"IM Fell English SC","IM Fell English",Georgia,serif';
 const FT='"Special Elite","Courier New",monospace';
 
@@ -506,6 +506,113 @@ function drawHarHead(ctx){
   line(ctx,[[97,112],[103,112]],2.2);line(ctx,[[129,114],[150,112],[160,150],[158,214]],1.4,P.ink,0.7);}
 function drawHarEyes(ctx){for(const x of [24,56]){fill(ctx,path(ell(x,12,4.5,5,10,0.02)),P.ink);dot(ctx,x+1.4,10,1.3,P.paper);}}
 
+/* ---- the people of Saint John (invented): Percy Gage, who sells comet pills; Mrs. Hanlon, the landlady; the folk in
+   King Square. Same cel style and frames as Mr. Harrow: a body is 240 x 480 (shoulders at y 62, boots at 474), a head
+   200 x 220 (the face centred at x 100; the neck tucks under the collar), an arm 96 x 220 pinned at the top. A person is
+   drawn from a description o: clothes and colours, a hat, something in the hand. 1910 dress throughout. */
+function plaid(ctx,p,c){ctx.save();ctx.clip(p);const W=ctx.canvas.width,H=ctx.canvas.height;ctx.strokeStyle=hexA(c,0.55);ctx.lineWidth=2.4;
+  ctx.beginPath();for(let x=0;x<W;x+=16){ctx.moveTo(x,0);ctx.lineTo(x,H);}for(let y=0;y<H;y+=16){ctx.moveTo(0,y);ctx.lineTo(W,y);}ctx.stroke();
+  ctx.strokeStyle=hexA(c,0.28);ctx.lineWidth=1;ctx.beginPath();for(let x=8;x<W;x+=16){ctx.moveTo(x,0);ctx.lineTo(x,H);}for(let y=8;y<H;y+=16){ctx.moveTo(0,y);ctx.lineTo(W,y);}ctx.stroke();ctx.restore();}
+function personLegs(ctx,o){
+  if(o.lower==='skirt'){const sk=path([[72,196],[168,196],[184,300],[204,458],[36,458],[56,300]],{jit:1});cel(ctx,sk,o.skirt,{s:12,dark:0.45});
+    ctx.save();ctx.clip(sk);for(const x of [84,108,132,156])line(ctx,[[x+6,210],[x-(120-x)*0.18,456]],1.6,P.ink,0.3);ctx.restore();flecks(ctx,sk,[36,196,170,262],80);ink(ctx,sk,4.5);
+    for(const sx of [0,1]){const bt=path(sx?flipX([[84,452],[114,452],[118,466],[112,476],[78,476],[76,464]],240):[[84,452],[114,452],[118,466],[112,476],[78,476],[76,464]],{jit:0.6});cel(ctx,bt,P.boot,{s:4,ra:0.7});ink(ctx,bt,3);}
+    return;}
+  const knee=o.lower==='knickers';
+  for(const sx of [0,1]){const F=pts=>sx?flipX(pts,240):pts;
+    const leg=path(F([[86,296],[118,296],[116,knee?392:448],[88,knee?392:448]]),{smooth:false,jit:0.8});cel(ctx,leg,o.trou,{s:6});if(o.check)plaid(ctx,leg,o.check);ink(ctx,leg,3.5);
+    if(knee){const st=path(F([[90,388],[114,388],[113,448],[91,448]]),{smooth:false,jit:0.6});cel(ctx,st,o.sock||mix(P.stone,P.ink,0.55),{s:4,hatch:false});ink(ctx,st,2.6);
+      const cf=path(F([[86,382],[120,382],[119,396],[87,396]]),{smooth:false});fill(ctx,cf,mix(o.trou,P.ink,0.3));ink(ctx,cf,2);}
+    const bt=path(F([[82,444],[118,444],[122,462],[116,474],[76,474],[72,462]]),{jit:0.6});cel(ctx,bt,P.boot,{s:4,ra:0.7});ink(ctx,bt,3);}}
+function personTorso(ctx,o){
+  if(o.blouse&&!o.coat){// a shirtwaist with a high collar, over the skirt
+    const bd=path([[80,70],[120,64],[160,70],[172,124],[162,204],[78,204],[68,124]],{jit:0.8});cel(ctx,bd,o.blouse,{s:7,ha:0.2});
+    if(o.stripe){ctx.save();ctx.clip(bd);for(let x=60;x<180;x+=10)line(ctx,[[x,64],[x,206]],2,o.stripe,0.5);ctx.restore();}ink(ctx,bd,4);
+    const wb=path([[78,196],[162,196],[164,212],[76,212]],{smooth:false});fill(ctx,wb,mix(o.skirt,P.ink,0.3));ink(ctx,wb,2.2);
+    const col=path([[106,56],[134,56],[132,84],[108,84]],{smooth:false});fill(ctx,col,P.paper);ink(ctx,col,1.8);
+    if(o.cameo){const cm=path(ell(120,94,6,7,10,0.02));fill(ctx,cm,P.brass);ink(ctx,cm,1.4);}
+    if(o.shawl){const sh=path([[66,84],[120,72],[174,84],[168,150],[120,196],[72,150]],{jit:1});cel(ctx,sh,o.shawl,{s:8,ha:0.3});for(let x=78;x<168;x+=12)line(ctx,[[x,150+Math.abs(120-x)*-0.4],[x-2,166+Math.abs(120-x)*-0.4]],1.4,P.ink,0.4);ink(ctx,sh,3.2);}
+    return;}
+  if(o.vest){const vest=path([[98,88],[142,88],[150,214],[120,232],[90,214]],{smooth:false,jit:0.6});cel(ctx,vest,o.vest,{s:6,ha:0.25});for(const y of [118,142,166,190])dot(ctx,120,y,3.5,mix(P.brass,P.ink,0.2));
+    if(o.chain){line(ctx,[[104,170],[112,182],[124,184],[136,176]],2.2,P.brass);const fob=path(ell(138,178,5,6,8,0.03));cel(ctx,fob,P.brass,{s:2,hatch:false});ink(ctx,fob,1.4);}ink(ctx,vest,3);}
+  else{const sh=path([[100,84],[140,84],[146,214],[94,214]],{smooth:false});fill(ctx,sh,o.shirt||mix(P.paper,P.stone,0.25));ink(ctx,sh,2);}
+  const cc=o.coat,hem=o.hem||336,panelL=[[118,66],[84,72],[62,94],[56,160],[54,hem-80],[58,hem],[100,hem+6],[104,Math.min(240,hem-60)],[100,150],[96,100]];
+  for(const sx of [0,1]){const pts=sx?flipX(panelL,240):panelL;const pn=path(pts,{jit:1});cel(ctx,pn,cc,{s:12,dark:0.5});if(o.check)plaid(ctx,pn,o.check);else flecks(ctx,pn,sx?[136,66,110,hem-60]:[50,66,70,hem-60],100);ink(ctx,pn,4.5);
+    const lp=path(sx?flipX([[118,64],[96,68],[86,94],[102,134],[108,96]],240):[[118,64],[96,68],[86,94],[102,134],[108,96]],{smooth:false,jit:0.6});cel(ctx,lp,mix(cc,P.ink,0.3),{s:4,hatch:false,ra:0.3});ink(ctx,lp,2.4);}
+  for(const y of [150,190,230])if(y<hem-30)dot(ctx,104,y,3.5,mix(cc,P.ink,0.5));
+  if(o.lower!=='skirt'){const sc=path([[104,60],[136,60],[128,90],[112,90]],{smooth:false});fill(ctx,sc,P.paper);ink(ctx,sc,1.6);
+    if(o.tie){const t=path([[114,70],[126,70],[128,110],[120,122],[112,110]],{smooth:false});fill(ctx,t,o.tie);ink(ctx,t,1.6);}
+    if(o.scarf){const s=path([[96,62],[144,62],[140,84],[100,84]],{jit:0.6});fill(ctx,s,o.scarf);ink(ctx,s,2);line(ctx,[[132,80],[138,120]],8,o.scarf);}}
+  else{const col=path([[106,56],[134,56],[132,80],[108,80]],{smooth:false});fill(ctx,col,P.paper);ink(ctx,col,1.8);}}
+function personApron(ctx,c){const ap=path([[86,198],[154,198],[166,436],[74,436]],{jit:0.8});cel(ctx,ap,c,{s:6,hatch:false,ra:0.3});for(const x of [100,120,140])line(ctx,[[x,212],[x+(x-120)*0.1,430]],1.2,P.ink,0.2);ink(ctx,ap,3);
+  const bib=path([[100,108],[140,108],[144,202],[96,202]],{smooth:false,jit:0.5});fill(ctx,bib,c);ink(ctx,bib,2.4);line(ctx,[[100,110],[94,70]],3,c);line(ctx,[[140,110],[146,70]],3,c);}
+function hangingArm(ctx,o,sx){const F=pts=>sx?flipX(pts,240):pts,sl=o.coat||o.blouse;
+  const arm=path(F([[64,92],[50,108],[42,200],[44,266],[66,268],[72,200],[78,118]]),{jit:0.8});cel(ctx,arm,sl,{s:8,dark:0.5});
+  if(o.check)plaid(ctx,arm,o.check);else if(o.stripe&&!o.coat){ctx.save();ctx.clip(arm);for(let x=36;x<84;x+=10)line(ctx,F([[x,92],[x,270]]),2,o.stripe,0.5);ctx.restore();}ink(ctx,arm,3.5);
+  const cf=path(F([[44,262],[66,262],[68,276],[42,276]]),{smooth:false});fill(ctx,cf,o.glove||P.paper);ink(ctx,cf,1.6);
+  const [hx,hy]=F([[55,288]])[0];const hd=path(ell(hx,hy,12,14,10,0.06));cel(ctx,hd,o.glove||P.skin,{s:3,hatch:false});ink(ctx,hd,2.2);return[hx,hy];}
+function holdItem(ctx,what,[hx,hy]){
+  if(what==='papers'){ctx.save();ctx.translate(hx+2,hy+8);ctx.rotate(0.25);const pp=box(-10,-6,26,58,1);fill(ctx,pp,mix(P.paper,P.stone,0.15));for(let k=0;k<5;k++)line(ctx,[[-6,4+k*9],[12,4+k*9]],1.2,P.ink,0.45);ink(ctx,pp,2);ctx.restore();}
+  if(what==='umbrella'){line(ctx,[[hx,hy-14],[hx-4,474]],5,P.ink);line(ctx,[[hx,hy-14],[hx,hy-30],[hx+10,hy-34],[hx+14,hy-24]],4,mix(P.woodDark,P.ink,0.2));
+    const can=path([[hx-14,hy+40],[hx+8,hy+40],[hx+2,440],[hx-8,440]],{smooth:false,jit:0.6});fill(ctx,can,mix('#1d2230',P.ink,0.1));ink(ctx,can,2.4);}
+  if(what==='basket'){const bk=path([[hx-26,hy+6],[hx+26,hy+6],[hx+20,hy+44],[hx-20,hy+44]],{smooth:false,jit:0.6});fill(ctx,bk,'#8a6a3a');hatch(ctx,bk,{ang:0.6,gap:6,a:0.4});hatch(ctx,bk,{ang:-0.6,gap:6,a:0.3});ink(ctx,bk,2.6);
+    ctx.save();ctx.strokeStyle=P.ink;ctx.lineWidth=3;ctx.beginPath();ctx.arc(hx,hy+6,24,Math.PI,0);ctx.stroke();ctx.restore();}}
+function newsBag(ctx){line(ctx,[[170,80],[78,250]],7,mix('#5a4a32',P.ink,0.2));
+  const bg=path([[40,230],[112,230],[116,302],[36,302]],{jit:0.8});cel(ctx,bg,'#6a5838',{s:5,hatch:false,ra:0.3});ink(ctx,bg,3);
+  for(let k=0;k<3;k++){const pp=box(46+k*18,212+k*2,30,26,1);fill(ctx,pp,mix(P.paper,P.stone,0.15-k*0.03));ink(ctx,pp,1.6);}
+  txt(ctx,'STANDARD',76,272,13,{font:FT,c:P.paper,maxW:70});}
+function drawPerson(o){return ctx=>{personLegs(ctx,o);personTorso(ctx,o);if(o.apron)personApron(ctx,o.apron);
+  const h=hangingArm(ctx,o,0);if(o.both)hangingArm(ctx,o,1);if(o.hold)holdItem(ctx,o.hold,h);if(o.bag)newsBag(ctx);}}
+function drawPersonHead(o){return ctx=>{const sk=o.skin||P.skin,hc=o.hairC||mix('#4a3326',P.ink,0.2),fw=o.fw||46,cx=100;
+  const nk=path([[82,214],[84,166],[116,166],[118,214]],{smooth:false,jit:0.6});cel(ctx,nk,sk,{s:4,hatch:false});ink(ctx,nk,2.6);
+  if(o.hair==='bun'){const bun=path(ell(cx,42,30,22,14,0.04));cel(ctx,bun,hc,{s:5,hatch:false,ra:0.3});for(let k=0;k<3;k++)line(ctx,[[cx-20+k*12,32],[cx-14+k*12,54]],1.2,P.ink,0.35);ink(ctx,bun,2.6);}
+  if(o.hair==='pomp'){const pm=path(ell(cx,64,fw+16,34,18,0.04));cel(ctx,pm,hc,{s:6,ra:0.3});ink(ctx,pm,3);}
+  for(const sx of [-1,1]){const e=path(ell(cx+sx*(fw+3),124,7,12,10,0.05));fill(ctx,e,mix(sk,P.ink,0.12));ink(ctx,e,2);}
+  const f=path([[cx,62],[cx+fw*0.66,70],[cx+fw,100],[cx+fw,140],[cx+fw*0.74,170],[cx,186],[cx-fw*0.74,170],[cx-fw,140],[cx-fw,100],[cx-fw*0.66,70]],{jit:0.5});cel(ctx,f,sk,{s:8,ha:0.2});
+  for(const sx of [-1,1])fill(ctx,path(ell(cx+sx*fw*0.55,150,9,6,10,0.05)),hexA('#c0504a',o.blush??0.16));ink(ctx,f,3.6);
+  if(o.hair==='slick'||o.hair==='grey'){const c=o.hair==='grey'?mix(P.paper,P.stone,0.35):hc;const hr=path([[cx-fw-2,106],[cx-fw+6,72],[cx,56],[cx+fw-6,72],[cx+fw+2,106],[cx+fw-10,84],[cx+10,76],[cx-14,84],[cx-fw+10,90]],{jit:0.6});cel(ctx,hr,c,{s:4,hatch:false,ra:0.4});line(ctx,[[cx-14,62],[cx-16,82]],1.6,P.paper,0.3);ink(ctx,hr,2.6);}
+  if(o.hair==='bun'||o.hair==='pomp'){const fr=path([[cx-fw-2,110],[cx-fw+4,74],[cx,58],[cx+fw-4,74],[cx+fw+2,110],[cx+fw-8,86],[cx,78],[cx-fw+8,86]],{jit:0.6});cel(ctx,fr,hc,{s:4,hatch:false,ra:0.4});for(let k=0;k<4;k++)line(ctx,[[cx-22+k*12,70],[cx-30+k*14,96]],1.2,P.ink,0.3);ink(ctx,fr,2.6);}
+  const ey=o.up?106:118,lift=o.up?5:0;
+  for(const sx of [-1,1]){const x=cx+sx*18;fill(ctx,path(ell(x,ey,5,5.5,10,0.02)),P.ink);dot(ctx,x+1.4,ey-(o.up?3:1.5),1.4,P.paper);line(ctx,[[x-9,ey-12-lift],[x+9,ey-14-lift]],2.6,o.brow||mix(hc,P.ink,0.3));}
+  if(o.specs){for(const sx of [-1,1]){ctx.save();ctx.strokeStyle=P.ink;ctx.lineWidth=2.4;ctx.beginPath();ctx.arc(cx+sx*18,ey,11,0,TAU);ctx.stroke();ctx.restore();}line(ctx,[[cx-7,ey],[cx+7,ey]],2);}
+  const nose=path([[cx-4,ey+2],[cx+4,ey+2],[cx+8,140],[cx,146],[cx-8,140]],{smooth:false,jit:0.3});cel(ctx,nose,sk,{s:3,hatch:false});ink(ctx,nose,2.2);
+  if(o.must==='waxed'){const m=path([[cx-22,154],[cx,148],[cx+22,154],[cx+34,146],[cx+40,150],[cx+26,160],[cx,156],[cx-26,160],[cx-40,150],[cx-34,146]],{jit:0.4});fill(ctx,m,hc);ink(ctx,m,2);curl(ctx,cx+38,148,-1.2,5,2.4,hc);curl(ctx,cx-38,148,-1.9,5,2.4,hc);}
+  if(o.must==='walrus'){const m=path([[cx-26,150],[cx,146],[cx+26,150],[cx+24,166],[cx+12,160],[cx,162],[cx-12,160],[cx-24,166]],{jit:0.8});fill(ctx,m,o.mustC||hc);for(let k=0;k<6;k++)line(ctx,[[cx-20+k*8,152],[cx-22+k*8,164]],1.2,P.ink,0.4);ink(ctx,m,2);}
+  if(o.grin){const mo=path([[cx-18,162],[cx+18,162],[cx+12,172],[cx,176],[cx-12,172]],{smooth:false});fill(ctx,mo,P.ink);fill(ctx,path([[cx-14,163],[cx+14,163],[cx+12,168],[cx-12,168]],{smooth:false}),P.paper);}
+  else if(o.up)fill(ctx,path(ell(cx,166,5,6,10,0.03)),P.ink);
+  else if(!o.must)line(ctx,[[cx-10,164],[cx,166],[cx+10,164]],2.2,P.ink,0.8);
+  if(o.hair==='bun'||o.hair==='grey')line(ctx,[[cx-12,180],[cx+12,180]],1.2,P.ink,0.2);
+  const hat=o.hatC||P.hat;
+  if(o.hat==='bowler'){const cr=path([[cx-34,66],[cx-30,32],[cx-16,18],[cx+16,18],[cx+30,32],[cx+34,66]],{jit:0.5});cel(ctx,cr,hat,{s:5,hatch:false,ra:0.45});line(ctx,[[cx-33,58],[cx+33,58]],5,mix(hat,P.ink,0.5));ink(ctx,cr,3);
+    const br=path([[cx-54,70],[cx-46,62],[cx+46,62],[cx+54,70],[cx+46,76],[cx-46,76]],{jit:0.5});fill(ctx,br,hat);ink(ctx,br,2.6);}
+  if(o.hat==='cap'){const cr=path([[cx-fw-4,82],[cx-fw+2,52],[cx,40],[cx+fw+10,52],[cx+fw+12,78]],{jit:0.6});cel(ctx,cr,hat,{s:5,ra:0.35});flecks(ctx,cr,[40,36,120,50],40);ink(ctx,cr,3);
+    const pk=path([[cx-fw,80],[cx+fw+20,74],[cx+fw+26,86],[cx-fw+4,90]],{jit:0.5});fill(ctx,pk,mix(hat,P.ink,0.3));ink(ctx,pk,2.4);}
+  if(o.hat==='wide'){const br=path(ell(cx,58,fw+50,16,20,0.03,-0.08));cel(ctx,br,hat,{s:4,hatch:false,ra:0.4});ink(ctx,br,3);
+    const cr=path([[cx-34,58],[cx-30,26],[cx+30,24],[cx+34,56]],{jit:0.6});cel(ctx,cr,hat,{s:4,hatch:false});ink(ctx,cr,2.6);line(ctx,[[cx-34,50],[cx+34,48]],6,o.ribbon||'#7a2f3a');
+    const fe=path([[cx+20,40],[cx+70,4],[cx+86,8],[cx+46,40]],{jit:1});fill(ctx,fe,o.feather||mix(P.paper,P.stone,0.2));for(let k=0;k<6;k++)line(ctx,[[cx+30+k*8,36-k*5],[cx+40+k*8,40-k*5]],1.2,P.ink,0.5);ink(ctx,fe,2);}
+  if(o.hat==='bonnet'){const bn=path([[cx-fw-10,130],[cx-fw-6,70],[cx,46],[cx+fw+6,70],[cx+fw+10,130],[cx+fw-2,128],[cx+fw-6,80],[cx,66],[cx-fw+6,80],[cx-fw+2,128]],{jit:0.6});cel(ctx,bn,hat,{s:5,ra:0.3});ink(ctx,bn,3);line(ctx,[[cx-fw+2,128],[cx-20,190]],3,hat);line(ctx,[[cx+fw-2,128],[cx+20,190]],3,hat);}}}
+function drawPersonArm(o){return ctx=>{const sl=path([[24,4],[58,4],[62,60],[58,178],[26,180],[20,60]],{jit:0.7});cel(ctx,sl,o.sleeve,{s:8,dark:0.5});
+  if(o.check)plaid(ctx,sl,o.check);else if(o.stripe){ctx.save();ctx.clip(sl);for(let x=16;x<70;x+=10)line(ctx,[[x,0],[x,182]],2,o.stripe,0.5);ctx.restore();}ink(ctx,sl,3.5);
+  const cf=path([[26,174],[58,174],[60,188],[24,188]],{smooth:false});fill(ctx,cf,P.paper);ink(ctx,cf,1.6);
+  if(o.item==='pills'){ctx.save();ctx.translate(58,204);ctx.rotate(-0.18);const bx=box(-10,-26,50,40,1);cel(ctx,bx,'#a8402f',{s:3,hatch:false,ra:0.4});ink(ctx,bx,2.2);
+    txt(ctx,'COMET',15,-10,11,{font:FT,c:P.paper,maxW:44});txt(ctx,'PILLS',15,4,11,{font:FT,c:P.paper,maxW:44});ctx.restore();}
+  if(o.item==='ladle'){line(ctx,[[44,196],[70,120]],5,mix(P.stone,P.ink,0.3));const bw=path(ell(42,206,14,10,12,0.03));fill(ctx,bw,mix(P.stone,P.ink,0.35));ink(ctx,bw,2);}
+  if(o.item==='paper'){ctx.save();ctx.translate(50,196);ctx.rotate(-0.4);const pp=box(-8,-34,34,64,1);fill(ctx,pp,mix(P.paper,P.stone,0.12));for(let k=0;k<6;k++)line(ctx,[[-4,-26+k*9],[22,-26+k*9]],1.2,P.ink,0.45);ink(ctx,pp,2);ctx.restore();}
+  const hd=path(ell(42,198,12,12,10,0.06));cel(ctx,hd,P.skin,{s:3,hatch:false});ink(ctx,hd,2.2);}}
+// who is who: Percy Gage in a loud check suit and a brown bowler; Mrs. Hanlon in a striped shirtwaist and an apron;
+// the folk in King Square
+const GAGE={body:{lower:'trousers',trou:'#8a7550',check:'#3a2414',coat:'#8a7550',hem:300,vest:'#a8402f',chain:true,tie:'#2c5a3c'},
+  head:{hair:'slick',hairC:'#24160e',must:'waxed',grin:true,hat:'bowler',hatC:'#5a4128',blush:0.28},arm:{sleeve:'#8a7550',check:'#3a2414',item:'pills'}};
+const HANLON={body:{lower:'skirt',skirt:'#3b3340',blouse:'#cfc6b4',stripe:'#5f7397',apron:'#e6dfcf'},
+  head:{hair:'bun',hairC:'#9a5a36',fw:50,blush:0.3},arm:{sleeve:'#cfc6b4',stripe:'#5f7397',item:'ladle'}};
+const FOLK=[
+  {id:'newsboy',scale:0.74,body:{lower:'knickers',trou:'#4a4030',coat:'#5d4c34',hem:250,both:true,bag:true,scarf:'#7a3a2a'},head:{hair:'slick',hat:'cap',hatC:'#4a4438',fw:42,blush:0.3}},
+  {id:'folk1',scale:0.96,body:{lower:'skirt',skirt:'#3a2f45',coat:'#58394a',hem:372,both:true,hold:'umbrella'},head:{hair:'pomp',hairC:'#3a2418',hat:'wide',hatC:'#2a2230',blush:0.24}},
+  {id:'folk2',scale:1.0,body:{lower:'trousers',trou:'#2f3340',coat:'#3d4250',hem:330,shirt:'#c9c2b0',tie:'#6b2a2a',both:true,hold:'papers'},head:{hair:'slick',must:'walrus',hat:'bowler'}},
+  {id:'folk3',scale:0.9,body:{lower:'skirt',skirt:'#2a2a30',blouse:'#4a4440',shawl:'#5a4a5a',both:true,hold:'basket'},head:{hair:'grey',hat:'bonnet',hatC:'#2b2630',specs:true,fw:44}},
+  {id:'folk4',scale:1.02,body:{lower:'trousers',trou:'#3d3a30',coat:'#4b4a3a',hem:262,shirt:'#9a9280',both:true},head:{hair:'slick',hairC:'#2a1d14',must:'walrus',mustC:'#6a4a2a',hat:'cap',hatC:'#3a3a32'}},
+  {id:'folk5',scale:0.98,body:{lower:'skirt',skirt:'#2e3a3a',coat:'#40565a',hem:380,both:true},head:{hair:'pomp',hairC:'#6a4228',hat:'wide',hatC:'#5a4a3a',feather:'#c9b98a',ribbon:'#2a4a3a',blush:0.22}}];
+
 /* ---- office and basement furniture ---- */
 function drawBigDesk(ctx,W,H){
   const front=box(14,84,W-28,H-90,1.5);fill(ctx,front,P.wood);shade(ctx,front,0,84,0,H,0.4);ink(ctx,front,3);
@@ -682,6 +789,176 @@ function drawSkyline(ctx,W,H){// the town behind: roofs and chimneys, a few lit 
 function drawMoon(ctx,W,H){const m=path(ell(W/2,H/2,W*0.4,W*0.4,30,0.008));fill(ctx,m,'#efe4c4');hatch(ctx,m,{ang:0.7,gap:9,a:0.2,clip2:box(0,0,W*0.42,H,0)});ink(ctx,m,5);}
 function drawMat(ctx,W,H){const b=box(6,6,W-12,H-12,1.5);fill(ctx,b,'#7a5a34');ctx.save();ctx.clip(b);for(let i=0;i<900;i++){ctx.strokeStyle=R()<0.5?hexA(P.ink,0.3):hexA(P.paper,0.12);ctx.lineWidth=1.4;const x=rr(0,W),y=rr(0,H);ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+rr(-3,3),y+rr(4,8));ctx.stroke();}ctx.restore();
   ctx.save();ctx.strokeStyle=hexA(P.ink,0.5);ctx.lineWidth=10;ctx.strokeRect(26,22,W-52,H-44);ctx.restore();ink(ctx,b,3);}
+
+/* ================= KING SQUARE, SYDNEY STREET AND THE OLD BURIAL GROUND =================
+   King Square: set aside in 1785; its paths laid out in the 1840s in the pattern of the Union Jack; the two-storey
+   bandstand, iron-framed with a copper roof, built in 1908 (architect Neil Brodie, for the City Cornet Band). Across
+   Sydney Street, the Loyalist Burial Ground (1783; oldest stone 1784; closed to burials in 1848), which runs to Union
+   Street. Mrs. Hanlon's boarding house on Sydney Street is invented, and so are the neighbours, the trees' places, the
+   lamps and benches. Facades are drawn at 80 px a unit. Sources: docs/SOURCES.md ("Saint John in 1910"). */
+const GRASS=()=>mix('#2f4430',P.skyBot,0.3),GRAVEL=()=>mix('#8a806a',P.skyBot,0.35);
+function drawSquareGround(ctx,W,H){// 2048 x 600 = 34 x 10 units: grass, and the gravel paths of the Union Jack
+  ctx.fillStyle=GRASS();ctx.fillRect(0,0,W,H);
+  for(let i=0;i<2600;i++){ctx.strokeStyle=R()<0.5?hexA(P.ink,rr(0.15,0.35)):hexA('#9ab07a',rr(0.05,0.14));ctx.lineWidth=1.4;const x=rr(0,W),y=rr(0,H);ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+rr(-2,2),y-rr(4,9));ctx.stroke();}
+  const band=(pts,w)=>{ctx.save();ctx.strokeStyle=GRAVEL();ctx.lineWidth=w;ctx.lineCap='butt';ctx.beginPath();ctx.moveTo(...pts[0]);for(const p of pts.slice(1))ctx.lineTo(...p);ctx.stroke();
+    ctx.strokeStyle=hexA(P.ink,0.35);ctx.lineWidth=w+6;ctx.globalCompositeOperation='destination-over';ctx.stroke();ctx.restore();};
+  const cx=W*0.5,cy=H*0.5;
+  band([[0,0],[W,H]],46);band([[0,H],[W,0]],46);band([[cx,0],[cx,H]],70);band([[0,cy],[W,cy]],70);// the Union Jack: the diagonals, then the cross
+  ctx.save();ctx.globalCompositeOperation='source-atop';for(let i=0;i<1600;i++){ctx.fillStyle=R()<0.5?hexA(P.ink,0.18):hexA(P.paper,0.08);ctx.fillRect(rr(0,W),rr(0,H),rr(2,4),rr(2,4));}ctx.restore();
+  const ring=path(ell(cx,cy,150,90,30,0.01));fill(ctx,ring,GRAVEL());ink(ctx,ring,3,hexA(P.ink,0.4));}
+function drawSidewalkGround(ctx,W,H){// 1024 x 300: Sydney Street's packed earth, then the flagstones (the top quarter)
+  drawRoad(ctx,W,H);ctx.fillStyle=mix(P.stoneDark,P.ink,0.3);ctx.fillRect(0,0,W,H*0.26);let x=0;while(x<W-30){const w=rr(110,180);const s=box(x+3,3,w-6,H*0.26-6,1.2);fill(ctx,s,mix(mix(P.stone,P.stoneDark,rr(0,0.4)),P.skyBot,0.25));ink(ctx,s,2);x+=w;}}
+function drawElm(ctx,W,H){// 600 x 760: an elm, the street tree of 1910 Saint John
+  const bark=mix('#3a2c22',P.skyBot,0.3),leaf=mix('#2e4a2c',P.skyBot,0.32);
+  const tr=path([[W/2-26,H],[W/2-16,H-230],[W/2-70,H-420],[W/2-40,H-430],[W/2-4,H-300],[W/2+30,H-440],[W/2+60,H-430],[W/2+18,H-230],[W/2+28,H]],{jit:2});fill(ctx,tr,bark);hatch(ctx,tr,{ang:1.45,gap:9,a:0.3});ink(ctx,tr,4);
+  const blobs=[];for(let i=0;i<34;i++){const a=rr(0,TAU),r=rr(0,1)**0.6;blobs.push([W/2+Math.cos(a)*r*230,250+Math.sin(a)*r*170,rr(50,90)]);}
+  blobs.sort((a,b)=>a[1]-b[1]);for(const[x,y,s] of blobs){const b=path(ell(x,y,s,s*0.8,14,0.12));cel(ctx,b,mix(leaf,P.ink,rr(0,0.2)),{s:9,dark:0.4,ha:0.25,ra:0.12});}
+  const all=new Path2D();for(const[x,y,s] of blobs)all.addPath(path(ell(x,y,s,s*0.8,14,0)));ctx.save();ctx.strokeStyle=hexA(P.ink,0.22);ctx.lineWidth=1.6;ctx.stroke(all);ctx.restore();}
+function drawLampPost(ctx,W,H){// 120 x 460: a cast-iron gas lamp on a post
+  const iron=mix(P.boot,P.skyBot,0.15),cx=W/2;const post=path([[cx-9,H-20],[cx-6,140],[cx+6,140],[cx+9,H-20]],{smooth:false,jit:0.4});fill(ctx,post,iron);line(ctx,[[cx+3,H-40],[cx+2,150]],2,P.paper,0.12);ink(ctx,post,2.6);
+  const base=path([[cx-22,H],[cx-18,H-30],[cx-10,H-46],[cx+10,H-46],[cx+18,H-30],[cx+22,H]],{smooth:false});fill(ctx,base,iron);ink(ctx,base,2.6);
+  line(ctx,[[cx-24,150],[cx+24,150]],4,iron);for(const sx of [-1,1])curl(ctx,cx+sx*20,150,sx<0?Math.PI:0,7,2.6,iron);
+  const cage=path([[cx-30,62],[cx+30,62],[cx+20,136],[cx-20,136]],{smooth:false,jit:0.4});const g=ctx.createLinearGradient(0,62,0,136);g.addColorStop(0,mix(P.glow,P.paper,0.45));g.addColorStop(1,P.glow);ctx.fillStyle=g;ctx.fill(cage);
+  for(const x of [cx-10,cx+10])line(ctx,[[x,62],[x*1+(x<cx?4:-4),136]],2,iron);ink(ctx,cage,3,iron);
+  const cap=path([[cx-38,64],[cx,22],[cx+38,64]],{smooth:false});fill(ctx,cap,iron);ink(ctx,cap,2.4,iron);dot(ctx,cx,16,6,iron);}
+function drawParkBench(ctx,W,H){// 300 x 150
+  const wd=mix('#5a3f28',P.skyBot,0.3),iron=mix(P.boot,P.skyBot,0.15);
+  for(const y of [30,52])line(ctx,[[22,y],[W-22,y]],14,wd);for(const y of [30,52])line(ctx,[[22,y-6],[W-22,y-6]],1.5,P.paper,0.1);
+  line(ctx,[[18,88],[W-18,88]],16,wd);for(const x of [40,W-40]){line(ctx,[[x,20],[x,H-6]],7,iron);line(ctx,[[x-14,H-6],[x+14,H-6]],5,iron);curl(ctx,x+(x<W/2?-10:10),96,0,8,3,iron);}
+  ctx.save();ctx.strokeStyle=hexA(P.ink,0.8);ctx.lineWidth=2;ctx.strokeRect(22,23,W-44,14);ctx.strokeRect(22,45,W-44,14);ctx.strokeRect(18,80,W-36,16);ctx.restore();}
+function drawBandstand(ctx,W,H){// 1000 x 1000: the 1908 bandstand: a stone base with arches, an iron-railed upper deck on slim
+  // iron columns, and a copper roof (two years old in 1910, so still copper-coloured, not yet green) with a finial
+  const stone=mix('#7a7466',P.skyBot,0.35),iron=mix('#1e2a2a',P.skyBot,0.2),copper=mix('#9a5a34',P.skyBot,0.3),cx=W/2;
+  const base=path([[150,H],[150,700],[850,700],[850,H]],{smooth:false,jit:1});fill(ctx,base,stone);ctx.save();ctx.clip(base);for(let y=712;y<H;y+=36){line(ctx,[[150,y],[850,y]],2,P.ink,0.4);for(let x=150+(y%72?0:40);x<850;x+=80)line(ctx,[[x,y],[x,y+36]],2,P.ink,0.4);}ctx.restore();
+  for(const x of [250,410,590,750]){const a=arch(x,760,110,240);fill(ctx,a,mix(P.ink,P.skyBot,0.3));ink(ctx,a,3);}shade(ctx,base,0,700,0,H,0.3);ink(ctx,base,4);
+  const deck=box(120,672,760,34,1);fill(ctx,deck,mix(stone,P.paper,0.15));ink(ctx,deck,3);
+  // the rail and the columns of the upper deck, the bandsmen's stands behind
+  for(let x=140;x<=860;x+=20)line(ctx,[[x,600],[x,672]],2.4,iron);line(ctx,[[130,600],[870,600]],7,iron);line(ctx,[[130,640],[870,640]],3,iron);
+  for(const x of [150,330,500,670,850]){line(ctx,[[x,330],[x,672]],10,iron);for(const sx of [-1,1])curl(ctx,x+sx*16,350,sx<0?Math.PI:0,14,3,iron);}
+  const frieze=box(120,300,760,40,1);fill(ctx,frieze,iron);ctx.save();ctx.clip(frieze);for(let x=130;x<880;x+=40)curl(ctx,x,320,0,10,2.4,mix(iron,P.paper,0.25));ctx.restore();ink(ctx,frieze,3);
+  // the roof: a bell-shaped copper roof, ribbed, with a finial and a flag pole
+  const roof=path([[90,304],[910,304],[820,250],[700,180],[580,120],[cx,96],[420,120],[300,180],[180,250]],{jit:1});cel(ctx,roof,copper,{s:16,dark:0.4,ha:0.25});
+  ctx.save();ctx.clip(roof);for(const x of [180,300,420,cx,580,700,820])line(ctx,[[cx+(x-cx)*0.08,100],[x,304]],3,P.ink,0.4);ctx.restore();ink(ctx,roof,4);
+  const fin=path([[cx-16,104],[cx,40],[cx+16,104]],{smooth:false});fill(ctx,fin,copper);ink(ctx,fin,2.4);line(ctx,[[cx,40],[cx,4]],4,iron);
+  // the steps up
+  for(let k=0;k<4;k++){const st=box(cx-70+k*0,H-12-k*14,140,14,1);fill(ctx,st,mix(stone,P.paper,0.1));ink(ctx,st,2);}}
+function drawBoardingHouse(ctx,W,H){// 900 x 1150: a three-storey clapboard house with a bay window, ROOMS in the window
+  const wood=mix('#6b6250',P.skyBot,0.4),trim=mix(P.paper,P.skyBot,0.45);
+  const body=path([[30,H],[30,180],[W-30,180],[W-30,H]],{smooth:false,jit:1});fill(ctx,body,wood);
+  ctx.save();ctx.clip(body);for(let y=190;y<H;y+=18){line(ctx,[[0,y],[W,y+2]],2,P.ink,0.35);line(ctx,[[0,y+2],[W,y+4]],1.5,P.paper,0.06);}ctx.restore();shade(ctx,body,0,H,0,180,0.38);ink(ctx,body,4);
+  const cor=box(14,150,W-28,40,1);fill(ctx,cor,trim);shade(ctx,cor,0,150,0,190,0.45);ink(ctx,cor,3);
+  const roof=path([[24,154],[60,40],[W-60,40],[W-24,154]],{smooth:false,jit:1});fill(ctx,roof,mix(P.stoneDark,P.skyTop,0.4));shade(ctx,roof,0,40,0,154,0.3);ink(ctx,roof,3.5);
+  line(ctx,[[180,40],[180,0],[214,0],[214,40]],10,mix('#5a3a2a',P.skyBot,0.4));
+  for(const[top,lit] of [[240,[0,0,1]],[520,[1,0,0]]])for(let i=0;i<3;i++)stWin(ctx,170+i*280,top,100,180,{plain:true,lit:!!lit[i],blind:0.45});
+  // the bay window on the ground floor, ROOMS card in it
+  const bay=box(80,790,300,250,1);fill(ctx,bay,trim);ink(ctx,bay,3);stWin(ctx,230,812,220,180,{plain:true,lit:true,blind:0.3});
+  const card=box(200,920,60,34,0.6);fill(ctx,card,P.paper);ink(ctx,card,1.6);txt(ctx,'ROOMS',230,944,17,{font:FT,c:P.ink,maxW:52});
+  for(const x of [40,W-40])line(ctx,[[x,190],[x,H]],8,trim);
+  const step=box(500,H-40,250,40,1);fill(ctx,step,mix(P.stone,P.skyBot,0.3));ink(ctx,step,2.5);}
+function drawBHDoor(ctx,W,H){// 200 x 330: the boarding house door: panels, a lit transom with the number, a brass knocker
+  const trim=mix(P.paper,P.skyBot,0.4),cx=W/2;const fr=box(6,6,W-12,H-12,1);fill(ctx,fr,trim);ink(ctx,fr,3);
+  const tr=box(24,22,W-48,46,1);const g=ctx.createLinearGradient(0,22,0,68);g.addColorStop(0,mix(P.glow,P.paper,0.3));g.addColorStop(1,P.glowDim);ctx.fillStyle=g;ctx.fill(tr);txt(ctx,'61',cx,58,26,{c:P.woodDark});ink(ctx,tr,2.4);
+  const d=box(24,76,W-48,H-88,1);fill(ctx,d,mix('#2a3a4a',P.skyBot,0.2));shade(ctx,d,24,0,W-24,0,0.3);for(const[y,h] of [[96,90],[200,110]])for(const x of [36,cx+6]){const pn=box(x,y,58,h,1);fill(ctx,pn,mix('#2a3a4a',P.ink,0.2));ink(ctx,pn,2);}ink(ctx,d,3);
+  dot(ctx,W-44,200,6,P.brass);const kn=path(ell(cx,160,10,12,10,0.04));ctx.save();ctx.strokeStyle=P.brass;ctx.lineWidth=4;ctx.stroke(kn);ctx.restore();}
+function drawGraves(v){return(ctx,W,H)=>{// 480 x 260: a few old slate and sandstone stones, leaning, with lichen
+  const slate=mix('#4a4e58',P.skyBot,0.35),sand=mix('#7a6e5a',P.skyBot,0.35);let x=20;R=mulberry(77+v*13);
+  for(let i=0;i<3+v%2;i++){const w=rr(70,110),h=rr(120,200),c=R()<0.5?slate:sand,lean=rr(-0.12,0.12);ctx.save();ctx.translate(x+w/2,H-10);ctx.rotate(lean);
+    const st=path([[-w/2,0],[-w/2,-h+w*0.3],[-w*0.3,-h+6],[0,-h],[w*0.3,-h+6],[w/2,-h+w*0.3],[w/2,0]],{jit:1});cel(ctx,st,c,{s:7,ha:0.25,ra:0.25});mottle(ctx,st,'#8a9a6a',0.25,6,10,[-w/2,-h,w,h]);
+    for(let k=0;k<4;k++)line(ctx,[[-w*0.3,-h+40+k*16],[w*0.3,-h+40+k*16]],2,P.ink,0.35);ink(ctx,st,3);ctx.restore();x+=w+rr(14,40);}
+  const gr=path([[0,H],[0,H-18],[W,H-14],[W,H]],{smooth:false});fill(ctx,gr,GRASS());}}
+function drawRailing(ctx,W,H){// 512 x 120, repeats: a low iron railing with spear tops
+  const iron=mix(P.boot,P.skyBot,0.2);line(ctx,[[0,30],[W,30]],6,iron);line(ctx,[[0,H-14],[W,H-14]],6,iron);
+  for(let x=10;x<W;x+=26){line(ctx,[[x,18],[x,H-6]],4,iron);const t=path([[x-6,22],[x,4],[x+6,22]],{smooth:false});fill(ctx,t,iron);}}
+function drawFingerpost(lines){return(ctx,W,H)=>{// 300 x 430: a wooden fingerpost; lines: [[text, dir], ...] dir 1 right, -1 left
+  const wd=mix('#5a4630',P.skyBot,0.3),cx=W/2;const post=box(cx-10,40,20,H-40,1);fill(ctx,post,wd);hatch(ctx,post,{ang:1.5,gap:9,a:0.25});ink(ctx,post,2.6);
+  lines.forEach(([t,d],i)=>{const y=60+i*62,x0=d>0?cx-20:cx+20,x1=d>0?W-10:10;const arm=path([[x0,y],[x1-d*22,y],[x1,y+22],[x1-d*22,y+44],[x0,y+44]],{smooth:false,jit:0.6});fill(ctx,arm,mix(P.paper,wd,0.25));ink(ctx,arm,2.6);
+    txt(ctx,t,(x0+x1-d*18)/2,y+30,20,{font:FD,c:P.ink,maxW:Math.abs(x1-x0)-34});});}}
+function drawSkyDay(ctx,W,H){// a foggy May morning: pale grey-blue, no stars
+  const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#6f7a88');g.addColorStop(0.6,'#9aa2a8');g.addColorStop(1,'#b8bbb4');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  for(let i=0;i<14;i++){const y=rr(H*0.2,H*0.8),x=rr(0,W);const c=ctx.createRadialGradient(x,y,4,x,y,rr(80,200));c.addColorStop(0,'rgba(220,222,216,0.35)');c.addColorStop(1,'rgba(220,222,216,0)');ctx.fillStyle=c;ctx.fillRect(x-220,y-220,440,440);}}
+/* ---- Mrs. Hanlon's boarding house, inside (invented): her kitchen, and your room at the back. 1910 furnishings. */
+function drawStove(ctx,W,H){// 300 x 330: a black cast-iron kitchen range with a kettle and a pot
+  const iron=mix(P.boot,P.ink,0.1),cx=W/2;const body=box(30,120,W-60,H-150,1.5);cel(ctx,body,iron,{s:6,hatch:false,ra:0.3,to:'#000000'});
+  for(const x of [50,cx+6]){const d=box(x,170,W/2-64,100,1);fill(ctx,d,mix(iron,P.paper,0.08));ink(ctx,d,2);dot(ctx,x+(W/2-64)-12,220,5,P.brass);}
+  const fire=box(60,276,W-120,22,1);fill(ctx,fire,hexA(P.glow,0.85));ink(ctx,fire,2);ink(ctx,body,3);
+  const top=box(20,108,W-40,16,1);fill(ctx,top,mix(iron,P.paper,0.12));ink(ctx,top,2.4);for(const x of [40,W-40])line(ctx,[[x,H-30],[x,H]],8,iron);
+  line(ctx,[[W-60,108],[W-60,0]],18,iron);
+  const ket=path([[70,108],[74,76],[100,66],[126,76],[130,108]],{jit:0.6});cel(ctx,ket,mix(P.stone,P.ink,0.3),{s:4,hatch:false});ink(ctx,ket,2.4);line(ctx,[[126,84],[150,72]],5,mix(P.stone,P.ink,0.3));ctx.save();ctx.strokeStyle=P.ink;ctx.lineWidth=3;ctx.beginPath();ctx.arc(100,64,18,Math.PI,0);ctx.stroke();ctx.restore();
+  const pot=box(150,80,70,30,1);fill(ctx,pot,mix(P.stone,P.ink,0.4));ink(ctx,pot,2.2);for(let k=0;k<3;k++)line(ctx,[[170+k*14,76],[166+k*14,50],[172+k*14,30]],2,P.paper,0.25);}
+function drawKitchenTable(ctx,W,H){// 420 x 230: a scrubbed pine table, two chairs, a teapot and a loaf
+  const pine=mix('#b8955a',P.ink,0.25),dark=mix(pine,P.ink,0.4);
+  for(const x of [40,W-40]){const ch=path([[x-24,H],[x-24,40],[x+24,40],[x+24,H]],{smooth:false});ctx.save();ctx.lineWidth=7;ctx.strokeStyle=dark;ctx.stroke(ch);ctx.restore();line(ctx,[[x-24,130],[x+24,130]],7,dark);for(let k=0;k<3;k++)line(ctx,[[x-14+k*14,46],[x-14+k*14,128]],4,dark);}
+  const top=box(70,110,W-140,22,1);fill(ctx,top,pine);ink(ctx,top,2.6);for(const x of [84,W-84])line(ctx,[[x,132],[x,H]],10,dark);
+  const tp=path([[160,110],[164,84],[186,76],[208,84],[212,110]],{jit:0.5});cel(ctx,tp,mix('#3a5a7a',P.ink,0.2),{s:4,hatch:false});ink(ctx,tp,2.2);line(ctx,[[210,94],[226,84]],4,mix('#3a5a7a',P.ink,0.2));
+  const lf=path(ell(270,98,34,16,14,0.06));cel(ctx,lf,'#b07a3a',{s:4,hatch:false});ink(ctx,lf,2.2);}
+function drawDresser(ctx,W,H){// 300 x 430: a kitchen dresser with plates on the rack
+  const wd=mix('#6a4a2a',P.ink,0.2);const top=box(20,20,W-40,240,1);fill(ctx,top,wd);ink(ctx,top,3);for(const y of [90,170])line(ctx,[[24,y],[W-24,y]],6,mix(wd,P.ink,0.3));
+  for(const[y,n] of [[40,5],[120,5],[200,4]])for(let i=0;i<n;i++){const x=46+i*(W-92)/(n-1);const pl=path(ell(x,y+14,20,22,14,0.02));fill(ctx,pl,mix(P.paper,'#7a9ac0',0.18));ctx.save();ctx.strokeStyle=hexA('#3a5a8a',0.6);ctx.lineWidth=2;ctx.beginPath();ctx.arc(x,y+14,13,0,TAU);ctx.stroke();ctx.restore();ink(ctx,pl,1.8);}
+  const base=box(10,260,W-20,H-270,1);fill(ctx,base,wd);for(const x of [24,W/2+4]){const d=box(x,280,W/2-34,H-300,1);fill(ctx,d,mix(wd,P.ink,0.15));ink(ctx,d,2);dot(ctx,x+(W/2-34)/2,300,5,P.brass);}ink(ctx,base,3);}
+function drawBed(ctx,W,H){// 520 x 300: an iron bedstead with brass knobs, a patchwork quilt
+  const iron=mix('#1e2430',P.ink,0.1);const quilt=path([[60,150],[470,150],[478,250],[52,250]],{jit:1});fill(ctx,quilt,'#7a3a32');
+  ctx.save();ctx.clip(quilt);const cols=['#7a3a32','#3a5a6a','#8a7a4a','#5a3a5a','#c9c0a8'];for(let x=50;x<480;x+=40)for(let y=150;y<252;y+=34){ctx.fillStyle=cols[((x/40|0)+(y/34|0))%5];ctx.fillRect(x,y,40,34);}ctx.restore();stitch(ctx,[[60,184],[470,184]],P.paper,0.3);ink(ctx,quilt,3);
+  const pil=path(ell(110,140,56,20,16,0.06));fill(ctx,pil,P.paper);ink(ctx,pil,2.4);
+  for(const[x,h] of [[40,200],[490,140]]){line(ctx,[[x,H],[x,H-h]],9,iron);dot(ctx,x,H-h-8,10,P.brass);}
+  ctx.save();ctx.strokeStyle=iron;ctx.lineWidth=6;for(let x=54;x<120;x+=16){ctx.beginPath();ctx.moveTo(x,H-60);ctx.lineTo(x,H-186);ctx.stroke();}ctx.restore();line(ctx,[[40,H-190],[120,H-190]],7,iron);line(ctx,[[40,H-60],[120,H-60]],7,iron);
+  line(ctx,[[46,H-50],[494,H-50]],8,iron);}
+function drawWashstand(ctx,W,H){// 200 x 300: a washstand with a jug and basin
+  const wd=mix('#6a4a2a',P.ink,0.2);const top=box(16,110,W-32,16,1);fill(ctx,top,mix(P.paper,P.stone,0.3));ink(ctx,top,2.4);const b=box(24,126,W-48,H-130,1);fill(ctx,b,wd);ink(ctx,b,2.6);
+  const bs=path([[44,110],[156,110],[140,82],[60,82]],{smooth:false,jit:0.4});fill(ctx,bs,mix(P.paper,'#7a9ac0',0.2));ink(ctx,bs,2.2);
+  const jug=path([[80,96],[76,50],[90,30],[110,30],[124,50],[120,96]],{jit:0.4});cel(ctx,jug,mix(P.paper,'#7a9ac0',0.2),{s:4,hatch:false});ink(ctx,jug,2.2);line(ctx,[[118,44],[134,58],[120,80]],4,P.ink,0.7);}
+function drawTrunk(ctx,W,H){// 230 x 150: Mr. Tull's trunk, E. T. on the lid
+  const lea=mix('#4a3020',P.ink,0.1);const b=box(10,40,W-20,H-46,1.5);cel(ctx,b,lea,{s:6,ha:0.3});for(const x of [40,W-40])line(ctx,[[x,40],[x,H-6]],7,mix(P.brass,P.ink,0.3));
+  const lid=path([[10,44],[14,16],[W-14,16],[W-10,44]],{smooth:false,jit:0.5});fill(ctx,lid,mix(lea,P.paper,0.06));ink(ctx,lid,2.6);ink(ctx,b,3);
+  txt(ctx,'E. T.',W/2,36,18,{font:FD,c:mix(P.paper,P.brass,0.4)});const lk=box(W/2-10,46,20,20,1);fill(ctx,lk,P.brass);ink(ctx,lk,1.8);}
+function drawNightTable(ctx,W,H){// 200 x 230: a small table with a candle and the morning paper
+  const wd=mix('#6a4a2a',P.ink,0.2);const top=box(10,96,W-20,14,1);fill(ctx,top,wd);ink(ctx,top,2.4);for(const x of [24,W-24])line(ctx,[[x,110],[x,H]],8,wd);
+  const pp=path([[40,96],[120,90],[132,96],[48,102]],{smooth:false});fill(ctx,pp,mix(P.paper,P.stone,0.15));ink(ctx,pp,1.6);txt(ctx,'The Standard',86,98,10,{c:P.ink,a:0.8,rot:-0.06});
+  const cs=box(146,40,12,56,1);fill(ctx,cs,P.paper);ink(ctx,cs,1.8);const fl=path(ell(152,32,5,9,8,0.05));fill(ctx,fl,P.glow);dot(ctx,152,96,14,mix(P.brass,P.ink,0.2));}
+/* ================= THE EVENING TRAIN, FROM OUTSIDE =================
+   A 4-4-0 steam locomotive and tender with two wooden coaches, lit inside, crossing the dark country. Typical of a
+   Canadian train of the period, not drawn from a particular engine. Side-on, facing right, 100 px a unit; y 0 is the
+   rail. The wheels are their own pieces (they turn), the side rods are lines between the crank pins. */
+const RAIL=()=>({body:mix('#1c2420',P.skyBot,0.1),black:mix('#0e1012',P.skyBot,0.08),red:mix('#6a1e16',P.skyBot,0.12),brass:mix(P.brass,P.skyBot,0.15),wood:mix('#4a2618',P.skyBot,0.15)});
+function drawLoco(ctx,W,H){const c=RAIL(),U=cabU(0,4.2),pp=(pts,o)=>path(U(pts),o);// 760 x 420: x 0..7.6, y 0..4.2
+  // frame and running board
+  const fr=pp([[0.2,0.9],[6.9,0.9],[6.9,1.25],[0.2,1.25]],{smooth:false});fill(ctx,fr,c.black);ink(ctx,fr,2.6);
+  // the cab, at the back
+  const cab=pp([[0.1,1.2],[0.1,3.5],[0.05,3.62],[1.9,3.62],[1.85,3.5],[1.85,1.2]],{smooth:false,jit:0.6});cel(ctx,cab,c.wood,{s:8,ha:0.25});ink(ctx,cab,4);
+  const cw=pp([[0.45,2.4],[1.45,2.4],[1.45,3.2],[0.45,3.2]],{smooth:false});const g=ctx.createLinearGradient(0,U([[0,3.2]])[0][1],0,U([[0,2.4]])[0][1]);g.addColorStop(0,P.glow);g.addColorStop(1,P.glowDim);ctx.fillStyle=g;ctx.fill(cw);ink(ctx,cw,2.4);
+  const roof=pp([[0.0,3.62],[1.95,3.62],[1.9,3.78],[0.05,3.78]],{smooth:false});fill(ctx,roof,c.black);ink(ctx,roof,2.4);
+  // the boiler, the firebox under the cab front, the smokebox at the front
+  const bo=pp([[1.85,1.3],[1.85,2.75],[5.6,2.75],[5.6,1.3]],{smooth:false,jit:0.5});cel(ctx,bo,c.body,{s:10,dark:0.5});for(const x of [2.6,3.6,4.6])line(ctx,U([[x,1.3],[x,2.75]]),6,c.brass);ink(ctx,bo,4);
+  const sb=pp([[5.6,1.25],[5.6,2.8],[6.55,2.8],[6.65,2.6],[6.65,1.25]],{smooth:false,jit:0.5});cel(ctx,sb,c.black,{s:6,hatch:false,ra:0.4});ink(ctx,sb,3.5);
+  const stack=pp([[5.95,2.8],[5.9,3.55],[5.75,3.95],[6.45,3.95],[6.3,3.55],[6.25,2.8]],{smooth:false,jit:0.4});cel(ctx,stack,c.black,{s:4,hatch:false,ra:0.4});ink(ctx,stack,3);
+  for(const[x,w] of [[3.1,0.5],[4.4,0.44]]){const dm=pp([[x-w/2,2.75],[x-w/2+0.06,3.18],[x,3.26],[x+w/2-0.06,3.18],[x+w/2,2.75]],{jit:0.3});cel(ctx,dm,c.brass,{s:4,hatch:false,ra:0.5});ink(ctx,dm,2.6);}
+  const bell=pp([[3.68,2.75],[3.7,3.0],[3.84,3.08],[3.98,3.0],[4.0,2.75]]);fill(ctx,bell,c.brass);ink(ctx,bell,2);
+  // the headlight: a big box lamp on the smokebox, lit
+  const hl=pp([[6.05,2.82],[6.05,3.3],[6.62,3.3],[6.62,2.82]],{smooth:false});fill(ctx,hl,c.black);ink(ctx,hl,2.4);const lens=pp([[6.5,2.88],[6.5,3.24],[6.66,3.24],[6.66,2.88]],{smooth:false});fill(ctx,lens,mix(P.glow,P.paper,0.5));ink(ctx,lens,2);
+  // the cylinder and the pilot (cowcatcher)
+  const cy=pp([[5.3,0.95],[5.3,1.45],[6.25,1.45],[6.25,0.95]],{smooth:false});cel(ctx,cy,c.black,{s:4,hatch:false,ra:0.4});ink(ctx,cy,2.6);
+  const pil=pp([[6.7,1.0],[7.55,0.12],[6.7,0.12]],{smooth:false});fill(ctx,pil,c.red);ctx.save();ctx.clip(pil);for(let x=6.7;x<7.6;x+=0.12)line(ctx,U([[x,1.0],[x,0.1]]),3,P.ink,0.6);ctx.restore();ink(ctx,pil,3);
+  line(ctx,U([[0.2,1.25],[6.9,1.25]]),3,P.paper,0.12);}
+function drawTender(ctx,W,H){const c=RAIL(),U=cabU(0,2.8),pp=(pts,o)=>path(U(pts),o);// 400 x 280: x 0..4, y 0..2.8
+  const b=pp([[0.1,0.85],[0.1,2.3],[3.9,2.3],[3.9,0.85]],{smooth:false,jit:0.6});cel(ctx,b,c.body,{s:9,dark:0.5});ink(ctx,b,4);
+  const coal=pp([[0.3,2.3],[0.6,2.62],[1.5,2.72],[2.6,2.64],[3.5,2.4],[3.7,2.3]],{jit:1.2});fill(ctx,coal,c.black);hatch(ctx,coal,{ang:0.6,gap:5,a:0.4,c:P.paper});ink(ctx,coal,2.4);
+  line(ctx,U([[0.1,2.32],[3.9,2.32]]),5,c.brass);const fr=pp([[0.1,0.7],[3.9,0.7],[3.9,0.88],[0.1,0.88]],{smooth:false});fill(ctx,fr,c.black);ink(ctx,fr,2);}
+function drawCoachOut(ctx,W,H){const c=RAIL(),U=cabU(0,3.4),pp=(pts,o)=>path(U(pts),o);// 1000 x 340: x 0..10, y 0..3.4
+  const b=pp([[0.25,0.85],[0.25,2.72],[9.75,2.72],[9.75,0.85]],{smooth:false,jit:0.6});cel(ctx,b,c.wood,{s:9,dark:0.45,ha:0.25});
+  ctx.save();ctx.clip(b);for(let x=0.3;x<9.8;x+=0.09)line(ctx,U([[x,0.85],[x,2.72]]),1.2,P.ink,0.25);ctx.restore();ink(ctx,b,4);
+  for(let i=0;i<10;i++){const x=0.9+i*0.86;const w=pp([[x,1.7],[x,2.42],[x+0.52,2.42],[x+0.52,1.7]],{smooth:false});const gl=ctx.createLinearGradient(0,U([[0,2.42]])[0][1],0,U([[0,1.7]])[0][1]);gl.addColorStop(0,mix(P.glow,P.paper,0.3));gl.addColorStop(1,P.glow);ctx.fillStyle=gl;ctx.fill(w);
+    ctx.save();ctx.clip(w);ctx.fillStyle=hexA(P.ink,0.35);if(i%3===1)ctx.fill(path(U([[x+0.1,1.7],[x+0.12,2.1],[x+0.22,2.18],[x+0.34,2.1],[x+0.36,1.7]])));ctx.restore();ink(ctx,w,2.4);}
+  const roof=pp([[0.1,2.72],[0.3,3.0],[9.7,3.0],[9.9,2.72]],{smooth:false,jit:0.4});fill(ctx,roof,c.black);ink(ctx,roof,3);
+  const cl=pp([[1.0,3.0],[1.0,3.3],[9.0,3.3],[9.0,3.0]],{smooth:false});fill(ctx,cl,c.black);for(let x=1.3;x<8.9;x+=0.6){const cw=pp([[x,3.06],[x,3.24],[x+0.3,3.24],[x+0.3,3.06]],{smooth:false});fill(ctx,cw,hexA(P.glow,0.8));}ink(ctx,cl,2.4);
+  for(const x of [0.25,9.75])line(ctx,U([[x,0.9],[x,2.7]]),6,c.black);line(ctx,U([[0.25,1.0],[9.75,1.0]]),4,c.black);line(ctx,U([[0.25,1.65],[9.75,1.65]]),3,c.brass);}
+function drawPuff(ctx,W,H){const g=ctx.createRadialGradient(W/2,H/2,4,W/2,H/2,W/2);g.addColorStop(0,'rgba(190,192,196,0.9)');g.addColorStop(0.6,'rgba(150,154,162,0.55)');g.addColorStop(1,'rgba(120,124,134,0)');ctx.fillStyle=g;
+  for(let i=0;i<5;i++){ctx.beginPath();ctx.arc(W/2+rr(-20,20),H/2+rr(-16,16),rr(26,44),0,TAU);ctx.fill();}}
+function drawTrack(ctx,W,H){// 1024 x 128, repeats along x: ballast, ties, two rails seen from the side and a little above
+  ctx.fillStyle=mix('#2a2a2a',P.skyBot,0.3);ctx.fillRect(0,0,W,H);for(let i=0;i<900;i++){ctx.fillStyle=R()<0.5?hexA(P.ink,0.4):hexA(P.paper,0.1);ctx.fillRect(rr(0,W),rr(0,H),rr(2,5),rr(2,4));}
+  for(let x=10;x<W;x+=48){const t=box(x,30,30,70,1);fill(ctx,t,mix('#3a2a20',P.skyBot,0.3));ink(ctx,t,1.6);}
+  for(const y of [42,86]){line(ctx,[[0,y],[W,y]],7,mix('#5a5a60',P.skyBot,0.2));line(ctx,[[0,y-2],[W,y-2]],2,P.paper,0.35);}}
+function drawSpruceBand(ctx,W,H){// 2048 x 300, repeats: a black row of spruce against the sky
+  const c=mix(P.far,P.ink,0.6);for(let i=0;i<60;i++){const x=rr(0,W),h=rr(120,280),y=H;for(const ox of [0,-W,W]){const X=x+ox;if(X<-80||X>W+80)continue;const pts=[[X,y-h]];for(let k=1;k<=6;k++){const yy=y-h+k*h/6.2,w=k*h*0.06;pts.push([X+w,yy],[X+w*0.45,yy-h*0.025]);}pts.push([X+h*0.05,y],[X-h*0.05,y]);for(let k=6;k>=1;k--){const yy=y-h+k*h/6.2,w=k*h*0.06;pts.push([X-w*0.45,yy-h*0.025],[X-w,yy]);}fill(ctx,path(pts,{smooth:false}),c);}}
+  ctx.fillStyle=c;ctx.fillRect(0,H-30,W,30);}
 
 /* ================= THE OPENING: the evening train, and a cab to Union Street =================
    A wooden railway coach of the period: plush seats, mahogany panels, a brass luggage rack, a clerestory roof, roller
@@ -932,26 +1209,41 @@ const OFFICE_ROOMS=[
 const BASE_ROOMS=[
   {name:'The Stacks',x0:120,x1:130,cellar:true,sign:'THE STACKS'},
   {name:'Foot of the Stairs',x0:130,x1:140,cellar:true,sign:'ARCHIVES · BASEMENT',doors:[{x:500,label:'OFFICES',sub:'Stairs up'}]}];
+const LODGE_ROOMS=[
+  {name:'Mrs. Hanlon’s kitchen',x0:400,x1:410,wp:4,win:300},
+  {name:'Your room',x0:410,x1:420,wp:5,win:640}];
 const AREAS={
   museum:{id:'museum',x0:-20,x1:20,parts:[-10,0,10],rooms:ROOMS,gas:[-19.1,-10.4,-6.3,-0.42,5.5,9.45]},
   office:{id:'office',x0:60,x1:90,parts:[70,80],rooms:OFFICE_ROOMS,gas:[60.9,69.55,74.8,80.45,89.1]},
   basement:{id:'basement',x0:120,x1:140,parts:[130],rooms:BASE_ROOMS,gas:[120.9,126.7,132.6,139.1]},
   // outdoors: no walls or gas sconces; a camera set further back and higher, so the building fits; a thinner, bluer fog
   street:{id:'street',x0:170,x1:230,parts:[],rooms:[{name:'Union Street',x0:170,x1:230}],gas:[],outdoor:true,
-    cam:{h:8.6,back:21,look:7.4,ahead:2,m:14},fog:[32,95,mix(P.far,P.skyBot,0.4)]},
+    cam:{h:8.6,back:21,look:7.4,ahead:2,m:14},fog:[32,95,mix(P.far,P.skyBot,0.4)],fogDay:[18,80,'#8f979c']},
   // the evening train, for the opening only (no doors lead here)
   train:{id:'train',x0:258,x1:282,parts:[],rooms:[{name:'The evening train',x0:258,x1:282}],gas:[],outdoor:true,
-    cam:{h:2.7,back:6.4,look:1.25,ahead:0.4,m:6},fog:[20,60,P.fog]}};
+    cam:{h:2.7,back:6.4,look:1.25,ahead:0.4,m:6},fog:[20,60,P.fog]},
+  // King Square, Sydney Street and the old burial ground (x 300..372): between the museum and your lodgings
+  square:{id:'square',x0:300,x1:372,parts:[],rooms:[{name:'King Square',x0:300,x1:335},{name:'Sydney Street',x0:335,x1:349},{name:'The old burial ground',x0:349,x1:372}],gas:[],outdoor:true,
+    cam:{h:7.4,back:17,look:4.6,ahead:2,m:12},fog:[26,90,mix(P.far,P.skyBot,0.4)],fogDay:[16,70,'#8f979c']},
+  // the evening train seen from outside, for the opening only (no doors lead here)
+  line:{id:'line',x0:430,x1:560,parts:[],rooms:[{name:'',x0:430,x1:560}],gas:[],outdoor:true,cam:{h:3.2,back:15,look:2.2,ahead:1,m:10},fog:[40,150,P.far]},
+  // Mrs. Hanlon's boarding house on Sydney Street (x 400..420): her kitchen, and your room
+  lodgings:{id:'lodgings',x0:400,x1:420,parts:[410],rooms:LODGE_ROOMS,gas:[400.9,409.1,410.9,419.1]}};
 let AREA=AREAS.museum;
 // where each door leads, and where the Archivist steps out
 const F72_DOOR=190+550/80;// the museum's front door on Union Street (the facade's left edge + the door bay)
+const BH_DOOR=337+625/80;// the boarding house door on Sydney Street
 const DOORS={
   'to-street':{from:'museum',at:[-5,4.1],labelY:1.4,name:'the front door',verb:'Go out to Union Street',to:['street',F72_DOOR,-3.3],face:'front'},
   'to-museum':{from:'street',at:[F72_DOOR,-4.0],labelY:5.2,name:'the museum',verb:'Go in: the museum',to:['museum',-5,3.2],face:'back'},
   'to-offices':{from:'museum',at:[-2,-4.0],name:'the CURATOR door (stairs up)',to:['office',72.5,-3.5]},
   'to-galleries':{from:'office',at:[72.5,-4.0],name:'the stairs down to the galleries',to:['museum',-2,-3.5]},
   'to-stacks':{from:'office',at:[77.5,-4.0],name:'the STACKS door (basement)',to:['basement',135,-3.5]},
-  'to-upstairs':{from:'basement',at:[135,-4.0],name:'the stairs up to the offices',to:['office',77.5,-3.5]}};
+  'to-upstairs':{from:'basement',at:[135,-4.0],name:'the stairs up to the offices',to:['office',77.5,-3.5]},
+  'to-square':{from:'street',at:[171.6,-2.9],labelY:4.6,name:'King Square',verb:'Walk to King Square',to:['square',369.6,-1.6],face:'front'},
+  'to-union':{from:'square',at:[370.8,-1.4],labelY:4.6,name:'Union Street',verb:'Walk along Union Street to the museum',to:['street',172.6,-2.0],face:'front'},
+  'to-lodgings':{from:'square',at:[BH_DOOR,-4.0],labelY:4.4,name:'Mrs. Hanlon’s boarding house',verb:'Go in: Mrs. Hanlon’s boarding house',to:['lodgings',405,3.2],face:'back'},
+  'to-sydney':{from:'lodgings',at:[405,4.1],labelY:1.4,name:'the front door',verb:'Go out to Sydney Street',to:['square',BH_DOOR,-3.3],face:'front'}};
 // everything else you can walk up to and use (exhibits are in EXHIBITS)
 const THINGS=[
   ...Object.entries(DOORS).map(([id,d])=>({id,kind:'door',area:d.from,at:d.at,labelY:d.labelY??4.6,verb:d.verb||'Go through: '+d.name,door:d})),
@@ -959,8 +1251,28 @@ const THINGS=[
   {id:'mydesk',kind:'desk',area:'office',at:[84,-1.3],labelY:2.6,verb:'Sit at your desk'},
   {id:'shelf-a-f',kind:'shelf',area:'basement',at:[122.4,-2.9],labelY:4.4,verb:'Look at shelf A – F',shelf:'a-f'},
   {id:'shelf-g-o',kind:'shelf',area:'basement',at:[125.2,-2.9],labelY:4.4,verb:'Look at shelf G – O',shelf:'g-o'},
-  {id:'shelf-p-z',kind:'shelf',area:'basement',at:[128,-2.9],labelY:4.4,verb:'Look at shelf P – Z',shelf:'p-z'}];
+  {id:'shelf-p-z',kind:'shelf',area:'basement',at:[128,-2.9],labelY:4.4,verb:'Look at shelf P – Z',shelf:'p-z'},
+  {id:'hanlon',kind:'talk',area:'lodgings',at:[403.9,-0.6],labelY:3.4,verb:'Talk to Mrs. Hanlon'},
+  {id:'bed',kind:'bed',area:'lodgings',at:[416.4,-2.6],labelY:2.6,verb:'Go to bed'},
+  {id:'trunk',kind:'look',area:'lodgings',at:[418.4,0.3],labelY:1.8,verb:'Look at the old trunk'},
+  {id:'paper',kind:'look',area:'lodgings',at:[413.6,-2.4],labelY:2.4,verb:'Read the Standard again'},
+  {id:'closed',kind:'look',area:'square',at:[301.8,-1.4],labelY:4.6,verb:'Charlotte Street · the City Market'},
+  {id:'gage',kind:'talk',area:'square',at:[0,0],labelY:3.6,verb:'Talk to the pill seller'},
+  ...['newsboy','folk1','folk2','folk3','folk4','folk5'].map((id,i)=>({id,kind:'talk',area:'square',at:[0,0],labelY:i?3.4:2.8,verb:i?'Talk to a passer-by':'Talk to the newsboy',folk:i}))];
 for(const e of EXHIBITS)e.area='museum';
+// catalogue cards out in the town: the archivist catalogues everything. Real places; sources in docs/SOURCES.md.
+const TOWN_CARDS=[
+  {id:'bandstand',area:'square',place:'King Square',no:'T-1',name:'The bandstand',at:[317,-1.0],labelY:6.4,head:'Your index card',
+   label:'BANDSTAND, KING SQUARE. Built 1908.',
+   body:['Built in 1908 for the City Cornet Band, to a design by the Saint John architect Neil Brodie.','Two storeys: a stone base with arches, and an iron-framed deck for the band under a copper roof.'],
+   now:'It still stands in King Square. Today it is called the King Edward VII Memorial Bandstand.'},
+  {id:'jack',area:'square',place:'King Square',no:'T-2',name:'The paths of King Square',at:[309.6,1.4],labelY:1.2,head:'Your index card',
+   label:'KING SQUARE. Set aside in 1785. Paths laid out in the 1840s.',
+   body:['The square was set aside for the town in 1785 and named for King George III.','In the 1840s its paths were laid out in the pattern of the Union Jack, the British flag. You can only really see it from above.']},
+  {id:'graves',area:'square',place:'The old burial ground',no:'T-3',name:'The Loyalist Burial Ground',at:[362,-1.9],labelY:2.4,head:'Your index card',
+   label:'THE OLD BURIAL GROUND. 1783 – 1848.',
+   body:['Set aside in 1783 by the Loyalists, who came to Saint John after the American Revolution.','The oldest stone still standing is from 1784, for Conradt Hendricks. No one has been buried here since 1848.']}];
+for(const c of TOWN_CARDS)EXHIBITS.push(c);
 const thing=id=>THINGS.find(t=>t.id===id);
 
 /* ================= SCENE ================= */
@@ -1000,7 +1312,7 @@ function build(){
   TX.upperArm=T(90,126,drawUpperArm(true),{border:5,cut:{b:112}});TX.upperArmPlain=T(90,126,drawUpperArm(false),{border:5,cut:{b:112}});TX.forearm=T(100,140,drawForearm(false),{border:5,cut:{t:18}});TX.forearmGrip=T(100,140,drawForearm(true),{border:5,cut:{t:18}});TX.scarf=T(230,100,drawScarf,{border:5});TX.case=T(200,170,drawCase,{border:5});
   TX.attBody=T(260,260,drawAttBody);TX.attHead=T(200,214,drawAttHead,{cut:{b:186}});TX.attEyes=T(80,24,drawAttEyes,{border:0});TX.attArm=T(124,70,drawAttArm,{border:4});
   TX.floor=T(1024,512,drawFloor,{border:0,repeat:[8,2]});TX.cut=T(512,90,drawCut,{border:0,repeat:[10,1]});
-  Object.values(AREAS).filter(a=>!a.outdoor).forEach((a,ai)=>a.rooms.forEach((r,i)=>{r.wallTex=T(1000,650,drawBackWall(r),{border:0,seed:500+ai*10+i});r.signTex=T(1000,110,drawSign(r.sign,54),{border:4,seed:800+ai*10+i});}));
+  Object.values(AREAS).filter(a=>!a.outdoor).forEach((a,ai)=>a.rooms.forEach((r,i)=>{r.wallTex=T(1000,650,drawBackWall(r),{border:0,seed:500+ai*10+i});if(r.sign)r.signTex=T(1000,110,drawSign(r.sign,54),{border:4,seed:800+ai*10+i});}));
   TX.stoneFloor=T(1024,512,drawStoneFloor,{border:0,repeat:[6,2]});
   TX.partD=T(1000,650,drawPartition(true),{border:4,seed:700});TX.poche=T(128,128,drawPoche,{border:0,grain:false,repeat:[1,1]});TX.partE=T(1000,650,drawPartition(false),{border:4,seed:701});
   TX.vMin=T(300,260,drawVitrine('minerals'));TX.vIns=T(300,260,drawVitrine('insects'));TX.vTri=T(300,260,drawVitrine('trilobites'));
@@ -1015,12 +1327,12 @@ function build(){
   TX.sconce=T(140,210,drawSconce,{border:4});TX.glow=T(256,256,drawGlow,{border:0,grain:false});TX.moth=T(120,90,drawMoth,{border:4});TX.blob=T(128,64,drawBlob,{border:0,grain:false});
 
   /* every area: floor, cut face, walls, partitions, gas light */
-  W.gas=[];
-  for(const a of Object.values(AREAS)){const w=a.x1-a.x0,cx=(a.x0+a.x1)/2;if(a.outdoor){(a.id==='train'?buildTrain:buildStreet)(a);continue;}
+  W.gas=[];W.skies=[];W.moons=[];
+  for(const a of Object.values(AREAS)){const w=a.x1-a.x0,cx=(a.x0+a.x1)/2;if(a.outdoor){const n0=W.gas.length;({train:buildTrain,street:buildStreet,square:buildSquare,line:buildLine})[a.id](a);for(let i=n0;i<W.gas.length;i++)W.gas[i].outdoor=true;continue;}
     const fl=plane(a.id==='basement'?TX.stoneFloor:TX.floor,w,10,{order:-10});fl.rotation.x=-Math.PI/2;fl.position.x=cx;scene.add(fl);
     const cut=plane(TX.cut,w+0.4,0.7,{});cut.position.set(cx,-0.35,5);scene.add(cut);
     for(const r of a.rooms){const wl=plane(r.wallTex,10,6.5,{});wl.position.set((r.x0+r.x1)/2,3.25,-5);scene.add(wl);
-      const sg=S(r.signTex,150,500,55);sg.position.set((r.x0+r.x1)/2,5.85,-4.97);scene.add(sg);
+      if(r.signTex){const sg=S(r.signTex,150,500,55);sg.position.set((r.x0+r.x1)/2,5.85,-4.97);scene.add(sg);}
       const pool=plane(TX.glow,9,7,{add:true,opacity:a.id==='basement'?0.14:0.2,order:-5});pool.rotation.x=-Math.PI/2;pool.position.set((r.x0+r.x1)/2,0.01,-1.0);scene.add(pool);
       const wash=plane(TX.glow,12,7,{add:true,opacity:0.12,order:-6});wash.position.set((r.x0+r.x1)/2,3.6,-4.96);scene.add(wash);}
     for(const x of [a.x0,...a.parts,a.x1])scene.add(thickWall(x,!(x===a.x0||x===a.x1)));
@@ -1071,6 +1383,10 @@ function build(){
   W.harEyes=S(TX.harEyes,215,40,12);W.harEyes.position.set(0,(212-114)/215,0.004);W.harHead.add(W.harEyes);
   W.harArm=S(TX.harArm,215,40,10);W.harArm.position.set((178-120)/215,(470-90)/215,0.01);W.har.add(W.harArm);
   W.harSolid={x:0,z:0,hx:0.32,hz:0.28};BOXES.push(W.harSolid);
+  /* Mrs. Hanlon's boarding house, and the townspeople (placeCast puts them where the stage wants them) */
+  buildLodgings();
+  W.gage=makePerson(GAGE,'gage');W.hanlon=makePerson(HANLON,'hanlon');W.folk=FOLK.map(f=>makePerson(f,f.id));
+  TX.cardFx=T(64,44,drawCardFx,{border:2,grain:false});W.cards=[];for(let i=0;i<22;i++){const c=S(TX.cardFx,300,32,22);c.visible=false;scene.add(c);W.cards.push(c);}
   /* the stacks, in the basement */
   for(const t of THINGS.filter(t=>t.kind==='shelf')){put(TX.shelves[t.shelf],110,150,560,t.at[0],0,-4.45,t);solid(t.at[0],-4.5,1.36,0.45);}
   put(TX.sortTable,110,180,200,136.8,0,1.6);solid(136.8,1.6,1.6,0.35);
@@ -1093,8 +1409,8 @@ function buildStreet(a){const cx=(a.x0+a.x1)/2,w=a.x1-a.x0,F=190;// F: the museu
   TX.pole=T(200,1400,drawPole,{border:4,seed:1220});TX.fence=T(1140,150,drawFence,{border:4,seed:1221});TX.shed=T(500,360,drawShed,{border:5,seed:1222});
   TX.road=T(1024,512,drawRoad,{border:0,repeat:[w/10,1]});TX.walk=T(1024,256,drawWalk,{border:0,repeat:[w/5,1]});TX.curb=T(1024,34,drawCurb,{border:0,repeat:[w/7,1]});
   TX.sideWall=T(720,970,drawSideWall,{border:0,seed:1223});TX.sky=T(512,1024,drawSky,{border:0,grain:false});TX.skyline=T(2048,700,drawSkyline,{border:4,seed:1224});TX.moon=T(200,200,drawMoon,{border:5});
-  const sky=plane(TX.sky,280,130,{fog:false,order:-20});sky.position.set(cx,45,-75);scene.add(sky);
-  const moon=S(TX.moon,34,100,100,{fog:false});moon.position.set(cx+16,27,-70);scene.add(moon);
+  const sky=plane(TX.sky,280,130,{fog:false,order:-20});sky.position.set(cx,45,-75);scene.add(sky);W.skies.push(sky);
+  const moon=S(TX.moon,34,100,100,{fog:false});moon.position.set(cx+16,27,-70);scene.add(moon);W.moons.push(moon);
   const sk=S(TX.skyline,38,1024,700);sk.position.set(cx,0,-30);scene.add(sk);
   const road=plane(TX.road,w,7.6,{order:-10});road.rotation.x=-Math.PI/2;road.position.set(cx,0,1.2);scene.add(road);
   const walk=plane(TX.walk,w,2.4,{order:-10});walk.rotation.x=-Math.PI/2;walk.position.set(cx,0.004,-3.8);scene.add(walk);
@@ -1108,7 +1424,8 @@ function buildStreet(a){const cx=(a.x0+a.x1)/2,w=a.x1-a.x0,F=190;// F: the museu
   put(TX.nbr[0],80,0,1000,F-1050/80,0,-5.0);put(TX.nbr[1],80,0,900,F-1050/80-1000/80,0,-5.02);put(TX.nbr[2],80,0,900,218,0,-5.02);
   put(TX.fence,80,0,150,F+1100/80,0,-4.75);put(TX.shed,80,250,360,212,0,-13);
   // telegraph poles at the curb, as in the photo, and their wires (sagging between the poles)
-  const POLES=[188.4,206.2],PZ=-2.4,TOP=14;// at the road edge of the curb, so the sidewalk is clearfor(const x of POLES){put(TX.pole,100,100,1400,x,0,PZ);solid(x,PZ,0.14,0.14);}
+  const POLES=[188.4,206.2],PZ=-2.4,TOP=14;// at the road edge of the curb, so the sidewalk is clear
+  for(const x of POLES){put(TX.pole,100,100,1400,x,0,PZ);solid(x,PZ,0.14,0.14);}
   const wm=new THREE.LineBasicMaterial({color:col(mix(P.ink,P.skyBot,0.3))});
   for(const[dx,y] of [[-0.63,TOP-1.28],[-0.21,TOP-1.28],[0.21,TOP-1.28],[0.63,TOP-1.28],[-0.21,TOP-2.18],[0.21,TOP-2.18]]){
     const xs=[a.x0-2,...POLES,a.x1+2],pts=[];for(let k=0;k<xs.length-1;k++){const x0=xs[k]+dx,x1=xs[k+1]+dx,sag=0.02*(x1-x0);for(let u=0;u<=1;u+=0.05)pts.push(new THREE.Vector3(lerp(x0,x1,u),y-sag*4*u*(1-u),PZ-0.02));}
@@ -1196,8 +1513,8 @@ const ui={room:document.getElementById('room'),prompt:document.getElementById('p
 let cardOpen=null,near=null;const seen=new Set();
 function esc(s){return s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
 function openCard(ex){MuseumAudio.play('whoosh',0.22);cardOpen=ex;ME.target=[];ME.pending=null;for(const k in keys)keys[k]=false;
-  ui.no.textContent='Cat. '+ex.no;ui.croom.textContent=ROOMS[ex.room].name;ui.title.textContent=ex.name;
-  ui.label.firstElementChild.textContent=ex.talk?'Says the attendant':'The museum’s label, 1910';ui.labelText.textContent=ex.label;
+  ui.no.textContent='Cat. '+ex.no;ui.croom.textContent=ex.place||ROOMS[ex.room].name;ui.title.textContent=ex.name;
+  ui.label.firstElementChild.textContent=ex.head||(ex.talk?'Says the attendant':'The museum’s label, 1910');ui.labelText.textContent=ex.label;
   ui.body.innerHTML=ex.body.map(p=>`<p>${esc(p)}</p>`).join('')+(ex.now?`<p class="now"><b>What we know now</b>${esc(ex.now)}</p>`:'');
   ui.wrap.hidden=false;ui.close.focus();seen.add(ex.id);renderCat();
   faceFront();}
@@ -1213,7 +1530,7 @@ let G=(()=>{try{return Object.assign(newGame(),JSON.parse(localStorage.getItem(S
 function persist(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(G));}catch(e){}}
 const STAGE=()=>window.STORY.stages[G.stage]||{};
 const busy=()=>!!(cardOpen||DLG.open||FADE.on||document.body.dataset.overlay||CUT.on);
-function setStage(s){G.stage=s;persist();placeHarrow();renderObj();}
+function setStage(s){G.stage=s;persist();placeHarrow();placeCast();applyTime();renderObj();}
 const ACT=()=>window.Activities;
 function boxName(id){const b=ACT()?.BOXES[id];return b?`${b.maker.split(',')[0]} ${b.year}`:id;}
 function renderObj(){
@@ -1229,20 +1546,20 @@ const CAM0={h:4.8,back:10.6,look:2.3,ahead:1.9,m:3.8},CAMV=()=>AREA.cam||CAM0;
 const camX=x=>clamp(x,AREA.x0+CAMV().m,AREA.x1-CAMV().m);
 function snapCamera(){const c=CAMV();camPos.set(camX(ME.x),c.h,ME.z+c.back);camLook.set(camX(ME.x),c.look,ME.z-c.ahead);}
 function enterArea(id){AREA=AREAS[id];GRID=null;near=null;ME.target=[];ME.pending=null;
-  const f=AREA.fog||[16,42,P.fog];scene.fog.near=f[0];scene.fog.far=f[1];scene.fog.color.copy(col(f[2]));renderObj();}
+  applyTime();renderObj();}
 const FADE={on:false};
 function fade(mid,done){FADE.on=true;ui.fade.classList.add('on');setTimeout(()=>{mid&&mid();setTimeout(()=>{ui.fade.classList.remove('on');setTimeout(()=>{FADE.on=false;done&&done();},160);},80);},170);}
 function useDoor(d){MuseumAudio.play('creak',0.35);stopWalking();fade(()=>{enterArea(d.to[0]);ME.x=d.to[1];ME.z=d.to[2];ME.view={mode:d.face==='back'?'back':'front',facing:1};ME.flip=null;snapCamera();const s=window.STORY.onEnter?.(G.stage,d.to[0]);if(s)setStage(s);});}
 function stopWalking(){ME.target=[];ME.pending=null;for(const k in keys)keys[k]=false;}
 
 /* Mr. Harrow stands in his office, or beside your desk while you work through your first stack */
-const HARROW_AT={home:[67.6,-2.7],desk:[86.6,-2.3],stacks:[129.3,-2.5]};
-function placeHarrow(){if(!W.har)return;const where=STAGE().harrow||'home',[x,z]=HARROW_AT[where];W.har.position.set(x,0,z);const h=thing('harrow');h.at=[x,z+1.25];h.area=where==='stacks'?'basement':'office';Object.assign(W.harSolid,{x,z});GRID=null;}
+const HARROW_AT={home:[67.6,-2.7],desk:[86.6,-2.3],stacks:[129.3,-2.5],square:[320.6,-0.6]};
+function placeHarrow(){if(!W.har)return;const where=STAGE().harrow||'home',[x,z]=HARROW_AT[where];W.har.position.set(x,0,z);const h=thing('harrow');h.at=[x,z+1.25];h.area=where==='stacks'?'basement':where==='square'?'square':'office';Object.assign(W.harSolid,{x,z});GRID=null;}
 // a speaker's face as an image, for the coaching bubbles inside the desk and the stacks
 const FACES={};function faceURL(who){if(FACES[who])return FACES[who];const sp=SPEAKERS[who],src=TX[sp.face]?.image;if(!src)return'';const c=document.createElement('canvas');c.width=c.height=96;const x=c.getContext('2d');x.fillStyle='#2a2c33';x.fillRect(0,0,96,96);const[a,b,w,h]=sp.crop;x.drawImage(src,a,b,w,h,0,0,96,96);return FACES[who]=c.toDataURL();}
 
 /* dialogue */
-const SPEAKERS={narrator:{name:'',face:null},conductor:{name:'The conductor',face:null},harrow:{name:'Mr. Harrow · the Curator',face:'harHead',crop:[22,40,156,156]},attendant:{name:'The attendant',face:'attHead',crop:[34,22,132,132]},you:{name:'You',face:'headF',crop:[40,36,170,170]}};
+const SPEAKERS={narrator:{name:'',face:null},conductor:{name:'The conductor',face:null},harrow:{name:'Mr. Harrow · the Curator',face:'harHead',crop:[22,40,156,156]},attendant:{name:'Miss Doucet · the attendant',face:'attHead',crop:[34,22,132,132]},gage:{name:'Percy Gage · travelling salesman',face:'head_gage',crop:[22,8,156,156]},hanlon:{name:'Mrs. Hanlon · your landlady',face:'head_hanlon',crop:[22,18,156,156]},cabman:{name:'The cabman',face:'cabmanH',crop:[0,0,70,75]},newsboy:{name:'A newsboy',face:'head_newsboy',crop:[24,20,152,152]},folk:{name:'Somebody in the crowd',face:null},you:{name:'You',face:'headF',crop:[40,36,170,170]}};
 const DLG={open:false,lines:[],i:0,reply:null,end:null,who:null};
 function say(lines,end){if(!lines||!lines.length){end&&end();return;}stopWalking();if(cardOpen)closeCard();DLG.open=true;DLG.lines=lines;DLG.i=0;DLG.reply=null;DLG.end=end;if(!CUT.lockView)faceFront();showLine();}
 function showLine(){const L=DLG.lines[DLG.i];if(!L)return endDlg();
@@ -1250,16 +1567,17 @@ function showLine(){const L=DLG.lines[DLG.i];if(!L)return endDlg();
 function card(L){
   if(L.card==='duties')return`<div class="dlg-card"><div class="rq-tag">Your job, in four parts</div><ol><li><b>Read</b> the letter. Find the <b>research question</b>.</li><li><b>Fetch</b> the papers from the stacks, in the basement.</li><li>At your desk, <b>sort</b> the papers and find <b>proof</b>.</li><li><b>File</b> every paper back in its box.</li></ol></div>`;
   if(L.card==='rule')return`<div class="dlg-card rule"><div class="p"><b>PRIMARY</b><p>Made by someone who was there, at the time.</p></div><div class="s"><b>SECONDARY</b><p>Made later, by someone who learned about it from other sources.</p></div></div>`;
+  if(L.card==='note'&&L.note)return`<div class="dlg-card note"><div class="rq-tag">${esc(L.note.tag)}</div>${L.note.lines.map(l=>`<p>${esc(l)}</p>`).join('')}</div>`;
   if(L.card==='rq'){const c=ACT()?.caseById(L.case);return c?`<div class="dlg-card rq"><div class="rq-tag">Your research question</div><p>${esc(c.rq.text)}</p></div>`:'';}
   if(L.card==='slip'){const c=ACT()?.caseById(L.case);return c?`<div class="dlg-card"><div class="rq-tag">Request slip · fetch these boxes from the stacks</div><ol>${c.fetch.map(b=>`<li>${esc(ACT().BOXES[b].maker)} · ${esc(ACT().BOXES[b].year)}</li>`).join('')}</ol></div>`:'';}
   return'';}
-function renderLine(L){const sp=SPEAKERS[L.who]||SPEAKERS.you;DLG.who=L.who;ui.dlg.classList.toggle('noface',!sp.face);ui.dlg.classList.toggle('narr',L.who==='narrator');
+function renderLine(L){const who=DLG.reply?.who||L.who,sp=SPEAKERS[who]||SPEAKERS.you;DLG.who=who;ui.dlg.classList.toggle('noface',!sp.face);ui.dlg.classList.toggle('narr',who==='narrator');
   const fc=ui.dlgFace.getContext('2d'),src=TX[sp.face]?.image;fc.fillStyle='#2a2c33';fc.fillRect(0,0,96,96);if(src){const[x,y,w,h]=sp.crop;fc.drawImage(src,x,y,w,h,0,0,96,96);}
   ui.dlgWho.textContent=sp.name;ui.dlgText.textContent=DLG.reply?DLG.reply.text:L.text;
   MuseumAudio.speak(L.who,ui.dlgText.textContent);
   ui.dlgCard.innerHTML=DLG.reply?'':card(L);ui.dlgCard.hidden=!ui.dlgCard.innerHTML;
   ui.dlgChoices.replaceChildren();const ch=!DLG.reply&&L.choices;
-  if(ch)for(const c of L.choices){const b=document.createElement('button');b.type='button';b.textContent=c.label;b.onclick=e=>{e.stopPropagation();DLG.reply={text:c.reply,again:!c.ok};renderLine(L);};ui.dlgChoices.append(b);}
+  if(ch)for(const c of L.choices){const b=document.createElement('button');b.type='button';b.textContent=c.label;b.onclick=e=>{e.stopPropagation();DLG.reply={text:c.reply,again:!c.ok,who:c.who};renderLine(L);};ui.dlgChoices.append(b);}
   ui.dlgMore.textContent=ch?'Choose an answer.':(matchMedia('(pointer: coarse)').matches?'':'E or → next · ← back');
   ui.dlgBack.disabled=!(DLG.reply||prevLine()>=0);ui.dlgNextBtn.hidden=!!ch;
   ui.dlg.hidden=false;(ch?ui.dlgChoices.querySelector('button'):ui.dlg).focus({preventScroll:true});}
@@ -1283,6 +1601,18 @@ const DO={
     onFile:d=>{G.carrying=G.carrying.filter(x=>x!==d);persist();renderObj();},onClose:()=>{vp.focus({preventScroll:true});next();}});},
   // and sends you back up to your own stack
   toDesk:(L,next)=>fade(()=>{setStage(L.stage);enterArea('office');ME.x=84.6;ME.z=0.2;ME.view={mode:'front',facing:1};ME.flip=null;snapCamera();},next),
+  // your index cards spill out on the train
+  cards:(L,next)=>{burstCards();MuseumAudio.play('whoosh',0.5);setTimeout(next,800);},
+  // Percy Gage goes off down the aisle, selling
+  gageGo:(L,next)=>{if(W.gage)W.gage.walk={to:W.gage.g.position.x+9,v:2.2};next();},
+  // the morning paper opens; the story goes on when it is folded up
+  paper:(L,next)=>{if(!ACT())return next();MuseumAudio.play('whoosh',0.3);ACT().paper({onClose:()=>{vp.focus({preventScroll:true});G.readPaper=true;persist();placeCast();next();}});},
+  // the night passes: you wake in your room, and it is morning
+  sleep:(L,next)=>fade(()=>{setStage(L.stage);ME.x=414.4;ME.z=-1.4;ME.view={mode:'front',facing:1};ME.flip=null;snapCamera();},next),
+  // out to King Square for the comet
+  toSquare:(L,next)=>fade(()=>{setStage(L.stage);enterArea('square');ME.x=317.6;ME.z=2.2;ME.view={mode:'front',facing:1};ME.flip=null;snapCamera();},next),
+  // the next morning, in Mr. Harrow's office
+  toHarrowOffice:(L,next)=>fade(()=>{setStage(L.stage);enterArea('office');ME.x=67.6;ME.z=0.8;ME.view={mode:'back',facing:1};ME.flip=null;snapCamera();},next),
 };
 function talk(who){const lines=window.STORY.talk[who]?.(G.stage);say(lines);}
 /* The evening train (area 'train', x 258..282): one coach, three bays long. The back wall has its windows cut out; behind
@@ -1330,19 +1660,19 @@ function buildCab(){
 // the walk: each leg spends about 60% of a stride on the ground, sweeping back, then lifts, folds at the knee or hock and
 // swings forward. Four beats: near hind, near fore, far hind, far fore. The head nods twice a stride; the tail swings.
 const STRIDE=1.9;
-function cabTick(dt){const C=W.cabS;if(!C||!C.g.visible)return;
+function cabTick(dt){const C=W.cabS;if(!C||!C.g.visible){MuseumAudio.drive('cab_roll',0);return;}
   if(C.goal!=null){const rem=C.goal-C.x,want=Math.min(3.4,Math.sqrt(2*0.9*Math.max(0,rem)));C.v=Math.min(want,C.v+1.1*dt);if(rem<0.03){C.x=C.goal;C.v=0;C.goal=null;}}
   else if(C.leave){C.v=Math.min(3.4,C.v+0.9*dt);if(C.x>242)C.g.visible=false;}
-  const halfStride=Math.floor(2*C.d/STRIDE);
   C.x+=C.v*dt;C.d+=C.v*dt;
-  const hoof=Math.floor(2*C.d/STRIDE);
-  if(!CUT.skip && hoof!==halfStride){
-    const distance=CUT.hideMe?0:Math.abs(C.x-ME.x);
-    MuseumAudio.play('hoof',0.58/(1+distance*0.18),hoof%2?1.08:0.89);
-  }
+  // sound: each hoof sounds as it touches down (below), and the wheels and harness roll with the speed
+  const near=CUT.skip?0:1/(1+(CUT.hideMe?0:Math.abs(C.x-ME.x))*0.18);
+  MuseumAudio.drive('cab_roll',near*0.55*Math.min(1,C.v/2.4));
   C.g.position.set(C.x,0,C.z);
   for(const w of C.wheels)w.s.rotation.z=-C.d/w.r;
   C.amp=lerp(C.amp||0,Math.min(1,C.v/1.0),1-Math.exp(-6*dt));const amp=C.amp,cyc=C.d/STRIDE;
+  C.legs.forEach((l,i)=>{const ph=((cyc+l.o/TAU)%1+1)%1;
+    if(near&&C.v>0.05&&l.ph!=null&&l.ph>0.8&&ph<0.2)MuseumAudio.play('hoof_'+i%4,near*(l.fore?0.62:0.52)*(i<2?0.5:1),0.95+Math.random()*0.1);// legs 0,1 are the far side, behind the horse
+    l.ph=ph;});
   for(const l of C.legs){const ph=((cyc+l.o/TAU)%1+1)%1,A=l.fore?0.3:0.26;let up,fold=0;
     if(ph<0.6)up=lerp(A,-A,ph/0.6);else{const u=(ph-0.6)/0.4,e=u*u*(3-2*u);up=lerp(-A,A,e);fold=Math.sin(Math.PI*u);}
     l.up.rotation.z=up*amp;l.lo.rotation.z=(l.fore?-1.0:0.7)*fold*amp-(l.fore?0:0.12*up*amp);}
@@ -1354,30 +1684,165 @@ function cabTick(dt){const C=W.cabS;if(!C||!C.g.visible)return;
   const n=C.neck,bx=3.44-2.97,by=2.7-3.4,cs=Math.cos(n.rotation.z),sn=Math.sin(n.rotation.z),hy=C.horse.position.y,pa=C.reins.geometry.attributes.position;
   pa.setXYZ(0,2.56,3.04+C.man.position.y,0.05);pa.setXYZ(1,HX+1.75,2.84+hy,0.05);pa.setXYZ(2,HX+2.97+bx*cs-by*sn,3.4+hy+bx*sn+by*cs,0.05);pa.needsUpdate=true;}
 
+/* ================= THE TOWN: building King Square, the boarding house, and the train from outside =================
+   (The drawings are with Union Street, above. These put them in the world.) */
+function buildSquare(a){
+  TX.sqGround=T(2048,600,drawSquareGround,{border:0,seed:1400});TX.sideGround=T(1024,300,drawSidewalkGround,{border:0,seed:1401,repeat:[2,1]});
+  TX.grassG=T(256,256,(ctx,W,H)=>{ctx.fillStyle=GRASS();ctx.fillRect(0,0,W,H);for(let i=0;i<500;i++){ctx.strokeStyle=R()<0.5?hexA(P.ink,0.3):hexA('#9ab07a',0.1);ctx.lineWidth=1.4;const x=rr(0,W),y=rr(0,H);ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+rr(-2,2),y-rr(4,9));ctx.stroke();}},{border:0,grain:false,repeat:[6,3],seed:1409});
+  TX.elm=T(600,760,drawElm,{border:6,seed:1402});TX.elm2=T(600,760,drawElm,{border:6,seed:1403});TX.lampPost=T(120,460,drawLampPost,{border:4,seed:1404});TX.parkBench=T(300,150,drawParkBench,{border:4,seed:1405});
+  TX.bandstand=T(1000,1000,drawBandstand,{border:7,seed:1406});TX.boarding=T(900,1150,drawBoardingHouse,{border:7,seed:1407});TX.bhDoor=T(200,330,drawBHDoor,{border:5,seed:1408});
+  TX.graves=[0,1,2,3].map(v=>T(480,260,drawGraves(v),{border:5,seed:1410+v}));TX.railing=T(512,120,drawRailing,{border:0,grain:false,repeat:[22/4.5,1]});
+  TX.postSquare=T(300,430,drawFingerpost([['UNION ST.',1],['MUSEUM',1]]),{border:5,seed:1415});TX.postMarket=T(300,430,drawFingerpost([['CHARLOTTE ST.',-1],['MARKET',-1]]),{border:5,seed:1416});
+  TX.postStreet=T(300,430,drawFingerpost([['KING SQUARE',-1],['SYDNEY ST.',-1]]),{border:5,seed:1417});TX.skyDay=T(512,1024,drawSkyDay,{border:0,grain:false});
+  // the sky, the moon and the town beyond the square
+  const sky=plane(TX.sky,320,130,{fog:false,order:-20});sky.position.set(336,45,-75);scene.add(sky);W.skies.push(sky);
+  const moon=S(TX.moon,34,100,100,{fog:false});moon.position.set(350,27,-70);scene.add(moon);W.moons.push(moon);
+  const sk=S(TX.skyline,38,1024,700);sk.position.set(336,0,-34);scene.add(sk);
+  for(const[x,v] of [[296,0],[311,1],[325,2],[352,1],[365,0]])put(TX.nbr[v],80,0,v?900:1000,x,0,-17);
+  // the ground: the square (x 300..335), then Sydney Street and the burial ground's side (x 335..372), and the grass
+  // of the burial ground behind its railing
+  const g1=plane(TX.sqGround,35,10,{order:-10});g1.rotation.x=-Math.PI/2;g1.position.set(317.5,0,0);scene.add(g1);
+  const g2=plane(TX.sideGround,37,10,{order:-10});g2.rotation.x=-Math.PI/2;g2.position.set(353.5,0,0);scene.add(g2);
+  const g3=plane(TX.grassG,23,13,{order:-9});g3.rotation.x=-Math.PI/2;g3.position.set(360.5,0.006,-9.2);scene.add(g3);
+  const g4=plane(TX.grassG,40,14,{order:-11});g4.rotation.x=-Math.PI/2;g4.position.set(317.5,-0.01,-12);scene.add(g4);
+  const cut=plane(TX.cut,72.4,0.7,{});cut.position.set(336,-0.35,5);scene.add(cut);
+  // the square: elms behind, the bandstand in the middle, gas lamps along the cross path, benches
+  for(const[x,z,t] of [[301.5,-8,TX.elm],[309,-9.5,TX.elm2],[326,-9,TX.elm],[333.5,-7.5,TX.elm2],[356,-8.5,TX.elm2],[368,-10.5,TX.elm]])put(t,70,300,760,x,0,z);
+  put(TX.bandstand,80,500,1000,317,0,-3.7,thing('bandstand'));solid(317,-3.7,4.4,1.3);
+  const glow=(x,y,z,s,o)=>{const g=S(TX.glow,256/s,128,128,{add:true,fog:false,opacity:o});g.position.set(x,y,z);scene.add(g);W.gas.push(g);return g;};
+  for(const x of [304.5,312.5,322.5,330.5]){put(TX.lampPost,105,60,460,x,0,-1.4);solid(x,-1.4,0.18,0.18);glow(x,(460-100)/105,-1.36,2.2,0.7);
+    const pool=plane(TX.glow,4,2.4,{add:true,opacity:0.18,order:-5});pool.rotation.x=-Math.PI/2;pool.position.set(x,0.012,-0.9);scene.add(pool);}
+  for(const[x,z] of [[307.6,-2.6],[326.6,-2.6]]){put(TX.parkBench,110,150,150,x,0,z);solid(x,z,1.3,0.3);}
+  // Sydney Street: Mrs. Hanlon's boarding house (its door is its own cut-out), a lamp at the corner
+  put(TX.boarding,80,0,1150,337,0,-5.0);put(TX.bhDoor,80,100,330,BH_DOOR,0.5,-4.96,thing('to-lodgings'));
+  put(TX.lampPost,105,60,460,349.2,0,-2.4);solid(349.2,-2.4,0.18,0.18);glow(349.2,(460-100)/105,-2.36,2.2,0.7);
+  // the old burial ground: a low iron railing, and the stones behind it, row on row into the dark
+  const rail=plane(TX.railing,22,1.0,{alpha:true});rail.position.set(361,0.5,-2.7);scene.add(rail);solid(361,-2.9,11,0.22);
+  [[351.4,-3.8,0],[359.6,-4.4,1],[366.2,-3.7,2],[354.6,-6.6,3],[363.4,-7.4,1],[369.4,-6.2,0],[352.2,-10.2,2],[360.2,-11.4,3],[367.4,-10.4,1]].forEach(([x,z,v])=>put(TX.graves[v],140,0,260,x,0,z));
+  // signposts at both ends, and one on Union Street pointing here
+  put(TX.postSquare,100,150,430,370.6,0,-2.3,thing('to-union'));solid(370.6,-2.3,0.12,0.12);
+  put(TX.postMarket,100,150,430,301.4,0,-2.3,thing('closed'));solid(301.4,-2.3,0.12,0.12);
+  put(TX.postStreet,100,150,430,171.4,0,-2.3,thing('to-square'));}
+function buildLodgings(){
+  TX.stove=T(300,330,drawStove,{border:5,seed:1420});TX.ktable=T(420,230,drawKitchenTable,{border:5,seed:1421});TX.dresser=T(300,430,drawDresser,{border:5,seed:1422});
+  TX.bedTex=T(520,300,drawBed,{border:5,seed:1423});TX.wash=T(200,300,drawWashstand,{border:5,seed:1424});TX.trunk=T(230,150,drawTrunk,{border:5,seed:1425});TX.ntable=T(200,230,drawNightTable,{border:5,seed:1426});
+  // the kitchen
+  put(TX.stove,110,150,330,401.8,0,-4.5);solid(401.8,-4.5,1.4,0.5);
+  put(TX.dresser,110,150,430,408.2,0,-4.55);solid(408.2,-4.6,1.4,0.45);
+  put(TX.ktable,110,210,230,405.6,0,-2.7);solid(405.6,-2.8,1.9,0.5);
+  const mat=plane(TX.mat,2.6,0.95,{order:-8,alpha:true});mat.rotation.x=-Math.PI/2;mat.position.set(405,0.014,4.25);mat.userData.ex=thing('to-sydney');PICK.push(mat);scene.add(mat);
+  // your room (Mr. Tull's old room)
+  put(TX.wash,100,100,300,411.6,0,-4.5);solid(411.6,-4.5,0.8,0.4);
+  put(TX.ntable,100,100,230,413.6,0,-3.6,thing('paper'));solid(413.6,-3.6,0.8,0.35);
+  put(TX.bedTex,100,260,300,416.8,0,-3.9);solid(416.8,-4.0,2.5,0.7);
+  put(TX.trunk,100,115,150,418.6,0,-0.9,thing('trunk'));solid(418.6,-0.9,1.1,0.4);}
+// the townspeople: a body, a head (pinned at the neck, swapped for a looking-up head on the comet night), maybe an arm
+function makePerson(sp,id){
+  const tb=T(240,480,drawPerson(sp.body),{seed:1500+id.length*7}),th=T(200,220,drawPersonHead(sp.head),{cut:{b:192},seed:1530+id.length*7}),tu=T(200,220,drawPersonHead({...sp.head,up:true,grin:false}),{cut:{b:192},seed:1560+id.length*7});
+  TX['head_'+id]=th;const ta=sp.arm?T(96,220,drawPersonArm(sp.arm),{border:4,seed:1590+id.length}):null;
+  const g=new THREE.Group();g.scale.setScalar(0.95*(sp.scale||1));scene.add(g);const ex=thing(id);
+  const b=S(tb,215,120,470);g.add(b);if(ex){b.art.userData.ex=ex;PICK.push(b.art);}
+  const hg=new THREE.Group();hg.position.set(0,(470-92)/215,-0.004);hg.scale.setScalar(1.12);g.add(hg);const h=S(th,215,100,212);hg.add(h);if(ex){h.art.userData.ex=ex;PICK.push(h.art);}
+  let arm=null;if(ta){arm=S(ta,215,40,10);arm.position.set((176-120)/215,(470-92)/215,0.01);g.add(arm);}
+  const shadow=plane(TX.blob,1.1,0.4,{alpha:true,order:-4});shadow.rotation.x=-Math.PI/2;scene.add(shadow);
+  const sol={x:-1e4,z:0,hx:0.3,hz:0.26};BOXES.push(sol);g.visible=false;shadow.visible=false;
+  return{g,head:hg,headS:h,headTex:th,upTex:tu,arm,shadow,solid:sol,id,seed:rr(0,TAU),talk:0};}
+// where the townspeople stand, by stage. The folk: the newsboy first, then the passers-by.
+const CAST_AT={gage:{towork:[326.4,-0.6],comet:[310.6,0.6]},hanlon:[402.4,-1.7],
+  folk:{towork:[[321.6,-1.5],[306.2,-1.9],[332.2,-1.2]],comet:[[314.6,-0.4],[309.4,-1.6],[323.6,-1.0],[327.8,0.0],[305.2,0.2],[319.6,1.8]]}};
+function placeCast(){if(!W.gage)return;const st=G.stage;
+  const at=(p,xz,area)=>{const on=!!xz,t=thing(p.id);p.g.visible=on;p.shadow.visible=on;if(t)t.off=!on;if(!on){p.solid.x=-1e4;return;}
+    p.g.position.set(xz[0],0,xz[1]);p.shadow.position.set(xz[0]+0.05,0.015,xz[1]+0.05);Object.assign(p.solid,{x:xz[0],z:xz[1]});if(t){t.at=[xz[0]+(p.id==='hanlon'?1.5:0),xz[1]+1.2];t.area=area;}};
+  if(!W.gage.inTrain&&!W.gage.walk)at(W.gage,CAST_AT.gage[st],'square');
+  at(W.hanlon,CAST_AT.hanlon,'lodgings');
+  W.folk.forEach((f,i)=>{at(f,(CAST_AT.folk[st]||[])[i],'square');f.headS.mat.map=st==='comet'?f.upTex:f.headTex;});
+  const pp=thing('paper');if(pp)pp.off=!G.readPaper;
+  GRID=null;}
+// night or a foggy day: the stage says which. Outdoors, the sky, the moon, the fog and the gas lamps follow it.
+const isNight=()=>(CUT.on&&!G.opening)||!!(window.STORY.stages[G.stage]||{}).night;
+function applyTime(){const night=isNight();
+  for(const s of W.skies||[])s.material.map=night?TX.sky:TX.skyDay;for(const m of W.moons||[])m.visible=night;
+  for(const g of W.gas)if(g.outdoor)g.dayK=night?1:0.25;
+  const f=(!night&&AREA.fogDay)||AREA.fog||[16,42,P.fog];scene.fog.near=f[0];scene.fog.far=f[1];scene.fog.color.copy(col(f[2]));}
+// the door that leads toward an area: the first step of the shortest way there, through the doors
+function doorToward(from,to){if(from===to)return null;const q=[[from,null]],seen=new Set([from]);
+  while(q.length){const[a,first]=q.shift();for(const[id,d] of Object.entries(DOORS)){if(d.from!==a)continue;const b=d.to[0];if(seen.has(b))continue;const f=first||id;if(b===to)return f;seen.add(b);q.push([b,f]);}}return null;}
+/* your index cards, spilling out of the case on the train: they fly up, flutter down, and lie on the floor */
+function drawCardFx(ctx,W,H){const c=box(3,3,W-6,H-6,0.6);fill(ctx,c,mix(P.paper,'#ffffff',0.2));line(ctx,[[6,11],[W-6,11]],1.6,P.red||'#a8432f');for(let k=1;k<4;k++)line(ctx,[[6,11+k*7],[W-6,11+k*7]],1,'#6a8aaa',0.6);ink(ctx,c,1.4);}
+function burstCards(){if(!W.cards)return;W.cards.forEach((c,i)=>{c.visible=true;c.p=[ME.x+0.25,1.25,ME.z+0.3];c.v=[rr(-1.6,2.6),rr(2.2,4.4),rr(-0.6,1.4)];c.spin=rr(-6,6);c.down=false;c.rotation.set(0,0,rr(0,TAU));});}
+function hideCards(){for(const c of W.cards||[])c.visible=false;}
+function cardsTick(dt){for(const c of W.cards||[]){if(!c.visible||c.down)continue;c.v[1]-=5.2*dt;c.v[0]*=1-1.6*dt;c.v[2]*=1-1.6*dt;if(c.v[1]<-0.9)c.v[1]=-0.9;// paper falls slowly
+  c.p[0]+=c.v[0]*dt;c.p[1]+=c.v[1]*dt;c.p[2]+=c.v[2]*dt;c.p[0]+=Math.sin(TM*7+c.spin)*0.6*dt;c.rotation.z+=c.spin*dt;
+  if(c.p[1]<0.03){c.p[1]=0.03;c.down=true;c.rotation.set(-Math.PI/2,0,c.rotation.z);}c.position.set(...c.p);}}
+/* the train from outside (area 'line'): locomotive, tender, two coaches, turning wheels, side rods, smoke */
+function buildLine(a){const cx=(a.x0+a.x1)/2,w=a.x1-a.x0;
+  TX.lineCountry=T(2048,512,drawCountry,{border:0,grain:false,repeat:[3,1],seed:1340});TX.spruce=T(2048,300,drawSpruceBand,{border:0,grain:false,repeat:[3,1],seed:1341});
+  TX.track=T(1024,128,drawTrack,{border:0,repeat:[w/8,1],seed:1347});TX.loco=T(760,420,drawLoco,{border:6,seed:1342});TX.tender=T(400,280,drawTender,{border:6,seed:1343});TX.coachOut=T(1000,340,drawCoachOut,{border:6,seed:1344});
+  TX.puff=T(128,128,drawPuff,{border:0,grain:false});TX.drv=T(170,170,drawCabWheel(16),{border:0,seed:1345});TX.lead=T(90,90,drawCabWheel(10),{border:0,seed:1346});
+  TX.field=T(256,256,(ctx,W,H)=>{ctx.fillStyle=mix(P.far,P.ink,0.5);ctx.fillRect(0,0,W,H);for(let i=0;i<400;i++){ctx.strokeStyle=hexA(P.paper,rr(0.03,0.08));ctx.lineWidth=1.2;const x=rr(0,W),y=rr(0,H);ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+rr(-2,2),y-rr(4,8));ctx.stroke();}},{border:0,grain:false,repeat:[w/6,3],seed:1348});
+  const sky=plane(TX.sky,420,150,{fog:false,order:-22});sky.position.set(cx,50,-95);scene.add(sky);
+  const moon=S(TX.moon,30,100,100,{fog:false});moon.position.set(cx+28,26,-85);scene.add(moon);
+  const country=plane(TX.lineCountry,180,30,{fog:false,order:-21});country.position.set(cx,7,-45);scene.add(country);
+  const spr=plane(TX.spruce,150,8,{alpha:true,order:-20});spr.position.set(cx,3.6,-16);scene.add(spr);
+  const field=plane(TX.field,w+60,30,{order:-12});field.rotation.x=-Math.PI/2;field.position.set(cx,-0.02,-4);scene.add(field);
+  const track=plane(TX.track,w+60,1.8,{order:-10});track.rotation.x=-Math.PI/2;track.position.set(cx,0.01,0);scene.add(track);
+  for(let x=a.x0-20;x<a.x1+20;x+=15){put(TX.pole,100,100,1400,x,0,-4.5);}
+  const wm=new THREE.LineBasicMaterial({color:col(mix(P.ink,P.skyBot,0.3))});
+  for(const y of [12.6,12.2]){const pts=[];for(let x=a.x0-20;x<a.x1+20;x+=15){for(let u=0;u<=1;u+=0.1)pts.push(new THREE.Vector3(x+15*u,y-0.4*4*u*(1-u),-4.52));}scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),wm));}
+  // the train, built facing right; its origin at the back of the last coach, on the rail
+  const g=new THREE.Group();g.visible=false;scene.add(g);const C={g,x:a.x0,v:0,d:0,wheels:[],puffs:[],emit:0};W.trainOut=C;
+  const add=(tex,ax,ay,x,y,z,o)=>{const s=S(tex,100,ax,ay,o);s.position.set(x,y,z);g.add(s);return s;};
+  add(TX.coachOut,0,340,0,0.18,0);add(TX.coachOut,0,340,10.2,0.18,0);add(TX.tender,0,280,20.4,0.18,0);add(TX.loco,0,420,24.5,0.18,0);
+  const wheel=(tex,px,x,r)=>{const s=S(tex,100,px/2,px/2);s.position.set(x,0.18+r,0.05);s.scale.setScalar(r/(px/200));s.mat.color.setScalar(0.55);g.add(s);C.wheels.push({s,r,x});};
+  for(const x of [1.4,2.4,7.6,8.6,11.6,12.6,17.8,18.8,21.2,22.2,23.4])wheel(TX.lead,90,x,0.42);
+  for(const x of [29.6,30.5])wheel(TX.lead,90,x,0.45);for(const x of [26.6,28.2])wheel(TX.drv,170,x,0.8);
+  C.rod=new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(),new THREE.Vector3()]),new THREE.LineBasicMaterial({color:col(mix(P.brass,P.ink,0.4))}));g.add(C.rod);
+  const lamp=S(TX.glow,256/5,128,128,{add:true,fog:false,opacity:0.95});lamp.position.set(24.5+6.7,0.18+3.06,0.1);g.add(lamp);W.gas.push(lamp);
+  for(let x=1;x<20;x+=2.4){const wg=S(TX.glow,256/2.2,128,128,{add:true,fog:false,opacity:0.3});wg.position.set(x,2.3,0.08);g.add(wg);}
+  for(let i=0;i<28;i++){const p=S(TX.puff,90,64,64);p.visible=false;scene.add(p);C.puffs.push({s:p,age:9});}}
+function lineTick(dt){const C=W.trainOut;if(!C||!C.g.visible)return;C.x+=C.v*dt;C.d+=C.v*dt;C.g.position.set(C.x,0,0);
+  for(const w of C.wheels)w.s.rotation.z=-C.d/w.r;
+  const a=-C.d/0.8,pin=x=>new THREE.Vector3(x+0.42*Math.cos(a),0.98+0.42*Math.sin(a),0.12),pa=C.rod.geometry.attributes.position,p0=pin(26.6),p1=pin(28.2);pa.setXYZ(0,p0.x,p0.y,p0.z);pa.setXYZ(1,p1.x,p1.y,p1.z);pa.needsUpdate=true;
+  C.emit-=dt;if(C.emit<=0){C.emit=0.11;const p=C.puffs.reduce((o,q)=>q.age>o.age?q:o);p.age=0;p.s.visible=true;p.s.position.set(C.x+24.5+6.1,4.2,0.02);p.v=[rr(-0.4,0.3),rr(1.6,2.3)];}
+  for(const p of C.puffs){if(!p.s.visible)continue;p.age+=dt;if(p.age>3.6){p.s.visible=false;continue;}const u=p.age/3.6;p.v[1]*=1-0.9*dt;p.s.position.x+=p.v[0]*dt;p.s.position.y+=p.v[1]*dt;
+    p.s.scale.setScalar(0.7+u*2.8);p.s.mat.opacity=0.85*(1-u);p.s.quaternion.copy(camera.quaternion);}}
+
 /* ================= THE OPENING =================
    Played once, at the start of a new game (stage 'arrive', until G.opening is set). The train (narration from
    STORY.opening.train), a fade, the cab to Union Street, the walk to the door, the camera rising up the building with the
    title, one line at the door. Then the game. Skip ends it at the door. Waits run on CUT.t, which only moves while the
    game is not paused, so pausing holds the opening. */
-const CUT={on:false,t:0,waits:[],cam:null,skip:false,lockView:false,hideMe:false,train:false,say:null,fadeRej:null};
+const CUT={on:false,t:0,waits:[],cam:null,skip:false,lockView:false,hideMe:false,train:false,line:false,follow:false,say:null,fadeRej:null};
 function cutWait(s){return new Promise((res,rej)=>CUT.waits.push({at:CUT.t+s,res,rej}));}
 function cutUntil(fn,max=30){const t0=CUT.t;return new Promise((res,rej)=>CUT.waits.push({fn:()=>fn()||CUT.t-t0>max,res,rej}));}
 function cutSay(lines){return new Promise((res,rej)=>{CUT.say=rej;say(lines,()=>{CUT.say=null;res();});});}
 function cutFade(mid){return new Promise((res,rej)=>{CUT.fadeRej=rej;fade(()=>{if(!CUT.skip)mid();},()=>{CUT.fadeRej=null;res();});});}
-function cutTick(dt){CUT.t+=dt;if(CUT.train){TX.country.offset.x+=dt*0.012;TX.trackPoles.offset.x+=dt*0.34;}cabTick(dt);
+function cutTick(dt){CUT.t+=dt;if(CUT.train){TX.country.offset.x+=dt*0.012;TX.trackPoles.offset.x+=dt*0.34;}cabTick(dt);lineTick(dt);
+  if(CUT.follow&&CUT.cam){const x=W.trainOut.x+26;CUT.cam.pos[0]=x;CUT.cam.look[0]=x;}
   for(const w of CUT.waits.slice())if(w.fn?w.fn():CUT.t>=w.at){CUT.waits.splice(CUT.waits.indexOf(w),1);w.res();}}
 async function runOpening(){
-  CUT.on=true;CUT.train=true;CUT.skip=false;CUT.t=0;CUT.waits=[];CUT.lockView=true;document.body.classList.add('cutscene');document.getElementById('skipbtn').hidden=false;
-  const C=W.cabS,O=window.STORY.opening;
+  CUT.on=true;CUT.train=false;CUT.skip=false;CUT.t=0;CUT.waits=[];CUT.lockView=true;document.body.classList.add('cutscene');document.getElementById('skipbtn').hidden=false;
+  const C=W.cabS,O=window.STORY.opening,TR=W.trainOut;
   try{
-    await cutFade(()=>{enterArea('train');ME.x=SEAT_X;ME.z=-0.75;ME.sink=0.52;ME.view={mode:'side',facing:1};ME.flip=null;ME.target=[];CUT.train=true;snapCamera();});
-    await cutWait(2.4);
+    // outside: the evening train crosses the dark country. The camera rides alongside, then lets it go by.
+    await cutFade(()=>{enterArea('line');CUT.hideMe=true;Object.assign(TR,{x:438,v:6.4,d:0,emit:0});TR.g.visible=true;CUT.line=true;CUT.follow=true;
+      const x=TR.x+26;ME.x=x;ME.z=0;CUT.cam={pos:[x,3.3,15.5],look:[x,2.1,-2],k:40};camPos.set(...CUT.cam.pos);camLook.set(...CUT.cam.look);applyTime();});
+    await cutWait(1.2);
+    await cutSay(O.line);
+    CUT.follow=false;const cx=CUT.cam.pos[0]+12;CUT.cam={pos:[cx,3.0,15.5],look:[cx,2.3,-2],k:0.7};
+    await cutUntil(()=>TR.x>cx+4,9);await cutWait(0.8);
+    // inside: your seat, Mr. Gage, the cards, the letter, the conductor
+    await cutFade(()=>{CUT.line=false;TR.g.visible=false;for(const p of TR.puffs)p.s.visible=false;CUT.cam=null;enterArea('train');ME.x=SEAT_X;ME.z=-0.75;ME.sink=0.52;ME.view={mode:'side',facing:1};ME.flip=null;ME.target=[];CUT.hideMe=false;CUT.train=true;
+      const g=W.gage;g.inTrain=true;g.walk=null;g.g.visible=true;g.shadow.visible=true;g.g.position.set(SEAT_X+1.9,0,0.5);g.shadow.position.set(SEAT_X+1.95,0.015,0.55);snapCamera();});
+    await cutWait(1.6);
     await cutSay(O.train);
     await cutWait(0.5);
-    // Union Street: a cab from the depot. You ride inside (hidden); the camera follows the cab.
-    await cutFade(()=>{CUT.train=false;ME.sink=0;CUT.hideMe=true;enterArea('street');Object.assign(C,{x:158,v:0,d:0,goal:F72_DOOR,leave:false});C.g.visible=true;ME.x=C.x;ME.z=1.2;snapCamera();});// (the rider's z sets the camera back far enough to see the wheels)
-    await cutUntil(()=>{ME.x=C.x;return C.goal==null;},25);
-    await cutWait(1.1);
+    // Union Street: a cab from the depot. You ride inside (hidden); the cabman talks over his shoulder.
+    await cutFade(()=>{CUT.train=false;ME.sink=0;CUT.hideMe=true;hideCards();W.gage.inTrain=false;W.gage.walk=null;placeCast();enterArea('street');Object.assign(C,{x:158,v:0,d:0,goal:F72_DOOR,leave:false});C.g.visible=true;ME.x=C.x;ME.z=1.2;snapCamera();});
+    const ride=cutUntil(()=>{ME.x=C.x;return C.goal==null;},60);
+    await cutSay(O.cab);
+    await ride;
+    await cutWait(0.8);
     // you step down on the curb side, behind the cab, and it drives off
     ME.x=F72_DOOR+0.4;ME.z=-2.2;ME.view={mode:'front',facing:1};CUT.hideMe=false;MuseumAudio.play('stone_1',0.52,0.85);
     await cutWait(0.6);C.leave=true;
@@ -1396,17 +1861,17 @@ function skipOpening(){if(!CUT.on||CUT.skip)return;CUT.skip=true;for(const w of 
   if(CUT.say){const r=CUT.say;CUT.say=null;DLG.end=null;endDlg();r('skip');}
   if(CUT.fadeRej){const r=CUT.fadeRej;CUT.fadeRej=null;r('skip');}}
 function finishOpening(){const skipped=CUT.skip;
-  const done=()=>{Object.assign(CUT,{on:false,train:false,cam:null,lockView:false,hideMe:false,waits:[],say:null,fadeRej:null});ME.sink=0;W.cabS.g.visible=false;W.cabS.goal=null;W.cabS.leave=false;
+  const done=()=>{MuseumAudio.drive('cab_roll',0);Object.assign(CUT,{on:false,train:false,cam:null,lockView:false,hideMe:false,waits:[],say:null,fadeRej:null});ME.sink=0;W.cabS.g.visible=false;W.cabS.goal=null;W.cabS.leave=false;Object.assign(CUT,{line:false,follow:false});W.trainOut.g.visible=false;for(const p of W.trainOut.puffs)p.s.visible=false;hideCards();W.gage.inTrain=false;W.gage.walk=null;
     document.getElementById('optitle').hidden=true;document.getElementById('skipbtn').hidden=true;document.body.classList.remove('cutscene');
     if(skipped||AREA.id!=='street'){enterArea('street');ME.x=F72_DOOR;ME.z=-3.5;ME.view={mode:'front',facing:1};ME.flip=null;ME.target=[];snapCamera();}
-    G.opening=true;persist();renderObj();vp.focus({preventScroll:true});};
+    G.opening=true;persist();placeCast();applyTime();renderObj();vp.focus({preventScroll:true});};
   if(skipped)fade(done);else done();}
 
 
 
 /* the desk and the shelves open the paper activities (js/desk/) over the museum */
 function useDesk(){const st=STAGE();
-  if(!st.case||!ACT())return say([{who:'you',text:window.STORY.deskIdle(G.stage)}]);
+  if(!st.case||!ACT()){const ev=window.STORY.deskEvent?.(G.stage);return say(ev||[{who:'you',text:window.STORY.deskIdle(G.stage)}]);}
   stopWalking();const cid=st.case,save=G.desk[cid]||(G.desk[cid]={});
   ACT().desk({caseId:cid,save,persist,face:faceURL('harrow'),onLeave:()=>vp.focus({preventScroll:true}),
     onComplete:()=>{G.carrying=ACT().docsOf(ACT().caseById(cid));G.have=[];persist();vp.focus({preventScroll:true});say(window.STORY.afterCase(cid),()=>{if(STAGE().case===cid)setStage(st.next);});}});}
@@ -1426,7 +1891,7 @@ const DOOR_TOWARD={museum:{office:'to-offices',basement:'to-offices',street:'to-
   basement:{office:'to-upstairs',museum:'to-upstairs',street:'to-upstairs'},street:{museum:'to-museum',office:'to-museum',basement:'to-museum'}};
 function questGoal(){const st=STAGE(),A=ACT();let id=st.goal;if(!id)return null;
   if(id==='shelf'){if(!A)return null;let box=null;if(st.fetch)box=A.caseById(st.fetch).fetch.find(b=>!G.have.includes(b));else if(st.file&&G.carrying.length)box=A.SOURCES[G.carrying[0]].box;if(!box)return null;id='shelf-'+A.shelfOf(box).id;}
-  const t=EXHIBITS.concat(THINGS).find(e=>e.id===id);if(!t)return null;return t.area===AREA.id?t:thing(DOOR_TOWARD[AREA.id][t.area]);}
+  const t=EXHIBITS.concat(THINGS).find(e=>e.id===id);if(!t||t.off)return null;return t.area===AREA.id?t:thing(doorToward(AREA.id,t.area));}
 function questMarker(){const m=ui.marker;if(!m)return;const q=busy()?null:questGoal();if(!q||near===q)return m.hide();
   v3.set(q.at[0],q.labelY+0.25,q.at[1]-0.8);v3.project(camera);const W_=vp.clientWidth,H_=vp.clientHeight;let x=(v3.x*0.5+0.5)*W_,y=(-v3.y*0.5+0.5)*H_;
   if(v3.z>1||x<24||x>W_-24){const right=v3.z>1?q.at[0]>ME.x:x>W_/2;return m.at(right?W_-18:18,clamp(y,120,H_-120),right?'right':'left');}
@@ -1435,6 +1900,9 @@ function interact(x){if(!x||busy())return;
   if(x.kind==='door')return useDoor(x.door);
   if(x.kind==='desk')return useDesk();
   if(x.kind==='shelf')return useShelf(x.shelf);
+  if(x.folk!=null)return say(window.STORY.talk.folk(G.stage,x.folk));
+  if(x.kind==='bed')return say(G.stage==='sleep'?window.STORY.sleep:window.STORY.look('bed',G.stage));
+  if(x.kind==='look'){const l=window.STORY.look(x.id,G.stage);return l?say(l):undefined;}
   if(x.kind==='talk'||x.id==='attendant'){if(x.id==='attendant'){seen.add('attendant');renderCat();}return talk(x.id);}
   openCard(x);}
 
@@ -1467,14 +1935,14 @@ function step(dt){
     if(!ME.flip&&moved>sp*0.35){const want=wantView(ME.x-ox,ME.z-oz);if(want.mode!==ME.view.mode||want.facing!==ME.view.facing)ME.flip={from:ME.view,to:want,u:0};}}
   const stride=Math.floor(ME.dist/0.55);
   if(moved && stride!==Math.floor((ME.dist-moved)/0.55) && !ME.sink && !CUT.hideMe){
-    const floor=AREA.id==='street'||AREA.id==='basement'?'stone':'wood';
-    MuseumAudio.play(floor+'_'+(stride%2),0.20,0.84+Math.random()*0.12);
+    const floor=['street','basement','square'].includes(AREA.id)?'stone':'wood';
+    MuseumAudio.play(floor+'_'+(stride%2*2+(Math.random()<0.5?0:1)),0.20,0.92+Math.random()*0.1);// left foot 0|1, right 2|3
   }
   ME.amp=lerp(ME.amp,moved>0.0005?1:0,1-Math.exp(-12*dt));
   ME.idle=moved>0.0005?0:(ME.idle||0)+dt;if(ME.idle>2.6&&!cardOpen&&!CUT.lockView)faceFront();
   if(ME.flip){ME.flip.u+=dt/0.18;if(ME.flip.u>=1){ME.view=ME.flip.to;ME.flip=null;}}
   // nearest exhibit
-  near=null;let best=2.0;for(const e of EXHIBITS.concat(THINGS)){if(e.area!==AREA.id)continue;const d=Math.hypot(e.at[0]-ME.x,e.at[1]-ME.z);if(d<best){best=d;near=e;}}
+  near=null;let best=2.0;for(const e of EXHIBITS.concat(THINGS)){if(e.area!==AREA.id||e.off)continue;const d=Math.hypot(e.at[0]-ME.x,e.at[1]-ME.z);if(d<best){best=d;near=e;}}
 }
 function pose(){
   const a=ME.amp,ph=ME.dist/0.55*Math.PI,sw=Math.sin(ph)*a;
@@ -1515,7 +1983,13 @@ function world(){
   {const tk=DLG.open&&DLG.who==='harrow'?1:0;W.harTalk=lerp(W.harTalk||0,tk,0.08);const hx=ME.x-W.har.position.x;
   W.harArm.rotation.z=0.06+0.02*Math.sin(TM*1.1)+W.harTalk*(0.32+0.16*Math.sin(TM*2.6));W.harHead.rotation.z=0.02*Math.sin(TM*0.8)+W.harTalk*0.035*Math.sin(TM*3.3);
   W.harEyes.position.x=clamp(hx*0.01,-0.02,0.02);W.harEyes.scale.y=((TM+1.3)%4.1)<0.13?0.15:1;}
-  for(const g of W.gas)g.mat.opacity=0.55+0.06*Math.sin(TM*9+g.position.x)*Math.sin(TM*3.7);
+  for(const g of W.gas)g.mat.opacity=(0.55+0.06*Math.sin(TM*9+g.position.x)*Math.sin(TM*3.7))*(g.dayK??1);
+  // the townspeople breathe and sway; whoever is talking gestures (Gage waves his pills about)
+  for(const p of [W.gage,W.hanlon,...W.folk]){if(!p.g.visible)continue;const tk=DLG.open&&DLG.who===p.id?1:0;p.talk=lerp(p.talk,tk,0.08);
+    p.head.rotation.z=0.03*Math.sin(TM*0.8+p.seed)+p.talk*0.04*Math.sin(TM*3.1);p.g.position.y=0.008*Math.sin(TM*1.6+p.seed);
+    if(p.arm)p.arm.rotation.z=0.08+0.03*Math.sin(TM*1.2+p.seed)+p.talk*(0.36+0.18*Math.sin(TM*2.8));}
+  {const g=W.gage;if(g.walk){const x=g.g.position.x+g.walk.v*(1/60);g.g.position.x=x;g.shadow.position.x=x+0.05;g.g.position.y=0.04*Math.abs(Math.sin(TM*6));if(x>=g.walk.to){g.walk=null;g.g.visible=false;g.shadow.visible=false;}}}
+  cardsTick(1/60);
   W.lampGlow.mat.opacity=0.7+0.1*Math.sin(TM*11)*Math.sin(TM*4.1);W.pend.rotation.z=Math.sin(TM*Math.PI)*0.12;
   W.moths.forEach((m,i)=>{m.quaternion.copy(camera.quaternion);const flap=0.25+0.75*Math.abs(Math.sin(TM*26+i*1.7));
     if(i<4){const a=TM*(0.9+i*0.25)+i*1.6;m.position.set(18.1+Math.cos(a)*(0.9+i*0.15),3.2+Math.sin(a*1.6)*1.1,-3.6+Math.sin(a)*0.5);}
@@ -1526,7 +2000,7 @@ function world(){
 function placeCamera(dt){
   const cx=camX(ME.x),cv_=CAMV();const tp=new THREE.Vector3(cx,cv_.h,ME.z+cv_.back),tl=new THREE.Vector3(cx,cv_.look,ME.z-cv_.ahead);
   if(CUT.cam){tp.set(...CUT.cam.pos);tl.set(...CUT.cam.look);}// the opening can take the camera (a slow glide)
-  const k=1-Math.exp(-(CUT.cam?1.1:4)*dt);camPos.lerp(tp,k);camLook.lerp(tl,k);
+  const k=1-Math.exp(-(CUT.cam?(CUT.cam.k??1.1):4)*dt);camPos.lerp(tp,k);camLook.lerp(tl,k);
   drag.yaw+=(drag.ty-drag.yaw)*0.12;drag.pitch+=(drag.tp-drag.pitch)*0.12;if(!drag.on){drag.ty*=0.93;drag.tp*=0.93;}
   const dx=camPos.x-camLook.x,dz=camPos.z-camLook.z,c=Math.cos(drag.yaw),s=Math.sin(drag.yaw);
   camera.position.set(camLook.x+dx*c-dz*s,camPos.y+drag.pitch*Math.hypot(dx,dz)+(CUT.train?Math.sin(TM*8.3)*0.01+Math.sin(TM*1.7)*0.02:0),camLook.z+dx*s+dz*c);camera.lookAt(camLook);
@@ -1542,7 +2016,9 @@ function hud(){
 function audioScene(){
   if(paused())return '';
   if(document.body.dataset.overlay==='desk')return 'desk';
-  if(CUT.train && !CUT.skip)return 'train';
+  if((CUT.train||CUT.line) && !CUT.skip)return 'train';
+  if(AREA.id==='square')return 'street';
+  if(AREA.id==='lodgings')return 'office';
   if(AREA.id==='museum')return roomAt(ME.x).score;
   return AREA.id==='basement'?'stacks':AREA.id;
 }
@@ -1587,13 +2063,16 @@ function setupMenus(){
   pauseMenu.addEventListener('close',()=>{last=performance.now();if(titleScreen.hidden)vp.focus({preventScroll:true});});}
 async function boot(){
   try{await Promise.race([Promise.all(['40px "IM Fell English SC"','40px "IM Fell English"','20px "Special Elite"'].map(f=>document.fonts.load(f))),new Promise(r=>setTimeout(r,2500))]);}catch(e){}
-  build();for(const e of TEXS){compose(e);e.t.needsUpdate=true;}renderCat();resize();placeHarrow();renderObj();
+  build();for(const e of TEXS){compose(e);e.t.needsUpdate=true;}renderCat();resize();placeHarrow();placeCast();renderObj();
   window.addEventListener('activities-ready',renderObj);
   ui.prompt.addEventListener('click',()=>interact(near));ui.dlg.addEventListener('click',e=>{if(!e.target.closest('button,.dlg-cardslot'))dlgNext();});ui.dlgBack.onclick=e=>{e.stopPropagation();dlgBack();};ui.dlgNextBtn.onclick=e=>{e.stopPropagation();dlgNext();};
   ui.marker=window.HAND.make(vp,'quest',130);
   setupMenus();
   document.getElementById('loading').hidden=true;
   if(G.stage==='arrive'){enterArea('street');ME.x=183.5;ME.z=-3.4;ME.view={mode:'side',facing:1};}// a new game starts outside
+  const START={home1:['street',F72_DOOR,-3.2],hanlon1:['lodgings',405,2.6],sleep:['lodgings',405,2.6],breakfast:['lodgings',414.4,-1.4],comet:['square',317.6,2.2]};
+  if(START[G.stage]){const[a,x,z]=START[G.stage];enterArea(a);ME.x=x;ME.z=z;ME.view={mode:'front',facing:1};}
+  applyTime();
   snapCamera();pose();world();placeCamera(1);renderer.render(scene,camera);
   showTitle();
   if(sessionStorage.getItem(BEGIN_KEY)){
@@ -1602,7 +2081,7 @@ async function boot(){
     const board=document.getElementById('newgame');
     board.textContent='Board the train';board.focus();
   }
-  window.museum={tick:(n=60,dt=1/60)=>{for(let i=0;i<n;i++){step(dt);if(CUT.on)cutTick(dt);pose();}return[ME.x,ME.z];},opening:runOpening,skip:skipOpening,cut:CUT,cab:()=>W.cabS,keys,go:(x,z,area)=>{if(area)enterArea(area);ME.x=x;ME.z=z;snapCamera();},area:()=>AREA.id,say:l=>say(l),stage:st=>{if(st)setStage(st);return G.stage;},game:()=>G,open:id=>interact(EXHIBITS.concat(THINGS).find(e=>e.id===id)),close:closeCard,walk:routeTo,me:ME,
+  window.museum={tick:(n=60,dt=1/60)=>{for(let i=0;i<n;i++){step(dt);if(CUT.on)cutTick(dt);pose();}return[ME.x,ME.z];},opening:runOpening,skip:skipOpening,cut:CUT,cab:()=>W.cabS,train:()=>W.trainOut,cast:()=>({gage:W.gage,hanlon:W.hanlon,folk:W.folk}),night:()=>isNight(),keys,go:(x,z,area)=>{if(area)enterArea(area);ME.x=x;ME.z=z;snapCamera();},area:()=>AREA.id,say:l=>say(l),stage:st=>{if(st)setStage(st);return G.stage;},game:()=>G,open:id=>interact(EXHIBITS.concat(THINGS).find(e=>e.id===id)),close:closeCard,walk:routeTo,me:ME,
     frame:(w=960,h=540,cam)=>{renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();pose();world();placeCamera(1);if(cam){camera.position.set(cam[0],cam[1],cam[2]);camera.lookAt(cam[3],cam[4],cam[5]);}renderer.render(scene,camera);const d=canvas.toDataURL('image/jpeg',0.85);resize();return d;}};
   requestAnimationFrame(frame);
 }

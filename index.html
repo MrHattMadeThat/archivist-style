@@ -3,7 +3,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IM+Fell+English+SC&family=IM+Fell+English:ital@0;1&family=Special+Elite&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IM+Fell+English+SC&family=IM+Fell+English:ital@0;1&family=UnifrakturMaguntia&family=Oswald:wght@500;700&family=Special+Elite&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
 <link rel="stylesheet" href="css/desk.css">
 <style>
 /* Layout: the game fills the whole screen; a small HUD sits in the corners, cards open over the play. */
@@ -48,6 +48,10 @@ body{font-family:var(--f-body);font-size:17px;line-height:1.5;overscroll-behavio
 .audio-levels{margin:12px 0;border:1px solid currentColor;text-align:left}
 .audio-levels label{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .audio-levels input{width:45%;accent-color:var(--red)}
+.audio-levels input:disabled{opacity:.35}
+.audio-levels label.switch{justify-content:flex-start;margin:2px 0 6px;font-weight:700}
+.audio-levels label.switch input,.title-voice input{width:20px;height:20px;margin:0;accent-color:var(--red);cursor:pointer}
+.title-voice{display:flex;align-items:center;justify-content:center;gap:8px;margin:14px 0 0;font-size:16px;cursor:pointer}
 </style>
 
 <div class="viewport" id="vp" tabindex="-1" aria-label="A walkable museum. Use the arrow keys or W A S D to walk, E to examine. Or tap the floor to walk and tap an exhibit to examine it.">
@@ -95,6 +99,7 @@ body{font-family:var(--f-body);font-size:17px;line-height:1.5;overscroll-behavio
       <button type="button" class="danger" id="newgame-yes">Erase it and start a new game</button>
       <button type="button" id="newgame-no">Go back</button>
     </div>
+    <label class="title-voice"><input type="checkbox" data-audio-on="voices"> Read the lines aloud</label>
     <p class="title-keys">WASD or arrows to walk &middot; E to examine &middot; Esc to pause</p>
   </div>
 </section>
@@ -105,6 +110,7 @@ body{font-family:var(--f-body);font-size:17px;line-height:1.5;overscroll-behavio
     <legend>Sound</legend>
     <label>Master volume <input type="range" min="0" max="100" data-audio-bus="master"></label>
     <label>Music <input type="range" min="0" max="100" data-audio-bus="music"></label>
+    <label class="switch"><input type="checkbox" data-audio-on="voices"> Read the lines aloud</label>
     <label>Voices <input type="range" min="0" max="100" data-audio-bus="voices"></label>
     <label>Sound effects <input type="range" min="0" max="100" data-audio-bus="effects"></label>
   </fieldset>

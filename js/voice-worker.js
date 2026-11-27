@@ -31,6 +31,32 @@ const cast = {
   you:       { pitch: 156, rate: 1.09, female: 0.49, breath: 0.14, tension: 0.50 }
 };
 const sr = 32000;
+
+// What the dictionary would get wrong, said the way a person reads it aloud. The engine reads 1984 as "one
+// thousand nine hundred eighty-four", "St. John" as "street John" (and stops at the full stop), and runs
+// "Chapter 2 · Two" together. Only the voice hears this; the words on screen stay as written.
+const ONES = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve',
+  'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen'];
+const TENS = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety'];
+const TENS_PLURAL = ['', 'tens', 'twenties', 'thirties', 'forties', 'fifties', 'sixties', 'seventies', 'eighties', 'nineties'];
+const twoDigits = n => n < 20 ? ONES[n] : TENS[Math.floor(n / 10)] + (n % 10 ? ' ' + ONES[n % 10] : '');
+function yearWords(n) {
+  if (n >= 2000 && n < 2010) return 'two thousand' + (n % 10 ? ' ' + ONES[n % 10] : '');
+  const hi = twoDigits(Math.floor(n / 100)), lo = n % 100;
+  return lo === 0 ? hi + ' hundred' : lo < 10 ? hi + ' oh ' + ONES[lo] : hi + ' ' + twoDigits(lo);
+}
+function spoken(text) {
+  return text
+    .replace(/[’‘]/g, "'")
+    .replace(/\s*[·•]\s*/g, ', ')
+    .replace(/\bSt\.\s+(?=[A-Z])/g, 'Saint ')
+    .replace(/\bMrs\.\s/g, 'Missus ').replace(/\bMr\.\s/g, 'Mister ').replace(/\bDr\.\s/g, 'Doctor ')
+    .replace(/\bNo\.\s*(?=\d)/g, 'Number ')
+    .replace(/\b(?:c|ca)\.\s*(?=\d{4})/g, 'about ')
+    .replace(/\b(1\d{3}|20\d\d)\s*[-–—]\s*(1\d{3}|20\d\d)\b/g, '$1 to $2')
+    .replace(/\b(1\d|20)([0-9])0s\b/g, (_, hi, ten) => twoDigits(+hi) + ' ' + (ten === '0' ? 'hundreds' : TENS_PLURAL[+ten]))
+    .replace(/(^|[^\d,.$])\b(1\d{3}|20\d\d)\b(?![,.]\d)/g, (_, before, y) => before + yearWords(+y));
+}
 let engine, ready, latest;
 
 async function initialize() {
@@ -59,7 +85,7 @@ async function render({id, who, text}) {
   values[3] = voice.breath;
   values[4] = voice.tension;
   x.engine_set_source(engine);
-  const phrases = call('g2pPhrases', { text: text.replace(/[’‘]/g, "'") });
+  const phrases = call('g2pPhrases', { text: spoken(text) });
   if (!phrases.length) return;
   const plan = call('planPhrases', { phrases, options: { body, t0: 0, rate: voice.rate, f0: voice.pitch } });
   const clock = x.engine_clock(engine);
