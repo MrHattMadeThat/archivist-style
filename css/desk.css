@@ -77,15 +77,14 @@ button.pg:hover{border-color:var(--card)}
 .rqwrap.thunk>section{animation:thunk .22s ease-out .24s}
 @keyframes thunk{0%,100%{transform:none}40%{transform:translateY(3px) rotate(-.3deg)}}
 
-/* ...but first the question is BIG, in the middle, glowing until it has been read (user, 2026-11-28). The read-the-
+/* ...but first the question is BIG, in the middle, until it has been read (user, 2026-11-28). The read-the-
    question task happens on it; then it flies up to the slip and the pin goes in. */
 .rqstage{position:absolute;inset:0;z-index:4;display:grid;grid-template-columns:minmax(0,1fr);place-items:center;padding:20px;background:rgba(5,6,9,.66)}
 .rqstage[hidden],.drawer[hidden]{display:none}
 .desk.modal-open .rqstage{visibility:hidden}
 .desk.coached .rqstage{align-items:start;padding-top:clamp(70px,14cqh,130px)}
 .rqbig{position:relative;width:min(940px,100%);text-align:center;background:var(--pale) var(--grain);padding:clamp(16px,3.4cqh,34px) clamp(20px,4cqw,52px);border-top:8px solid var(--red);
-  animation:bigglow 1.2s ease-in-out infinite}
-@keyframes bigglow{0%,100%{box-shadow:6px 7px 0 rgba(0,0,0,.6),0 0 0 0 rgba(255,179,75,.95),0 0 24px rgba(255,179,75,.3)}50%{box-shadow:6px 7px 0 rgba(0,0,0,.6),0 0 0 16px rgba(255,179,75,0),0 0 70px rgba(255,179,75,.65)}}
+  box-shadow:6px 7px 0 rgba(0,0,0,.6)} /* no glow round the card (user, 2026-11-28) */
 .rqbig-label{margin:0;font-weight:400;font-family:var(--f-title);font-size:clamp(34px,min(6.6cqw,10cqh),76px);line-height:1;color:var(--red);
   background:linear-gradient(100deg,var(--red) 38%,#ffc35e 50%,var(--red) 62%) 0 0/260% 100%;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:gleam 1.8s linear infinite}
 @keyframes gleam{from{background-position:100% 0}to{background-position:0 0}}

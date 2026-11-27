@@ -109,8 +109,8 @@ Read `README.md` first. This file is for agents working in the repo.
   or an answer stays open while its proof step is current). `step(..., 'later')` returns nothing now: later steps are
   hidden, not greyed (kids read greyed steps as things to do). With no current step the Now line uses `.ask`.
 - **The research question opens BIG** (user, 2026-11-28): while a `readq` task is under way, `.rqstage` covers the desk
-  with the question in the middle, "Your Research Question" larger still, a pulsing lamp glow and a gleam across the
-  title. The words are clicked there. Done: a green ✓, then (900 ms) it flies onto its slip under the top bar
+  with the question in the middle, "Your Research Question" larger still, with a gleam across the title (the pulsing
+  glow round the card was removed at the user's request, 2026-11-28). The words are clicked there. Done: a green ✓, then (900 ms) it flies onto its slip under the top bar
   (`flyUp()`, Web Animations) and a brass pin drops in (`.pin.drop`, the `box` sound). `rqPhase` is
   'big' → 'leaving' → 'pinned'; `updatePhase()` lands it at once if the task moves on mid-flight. A second `readq` with a
   new `rq` (case c3) does it again, marked "A new question". The case letter no longer repeats the question; its
