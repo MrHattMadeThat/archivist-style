@@ -35,22 +35,24 @@ export function startCoach(root, steps, { face, name = 'Mr. Harrow', onEnd, star
   const nav = el('div', 'coach-nav');
   nav.append(back, turn, next);
   const col = el('div');
-  col.append(who, text, tell, nav);
+  col.append(who, text, el('small', 'hear-help', window.ReadAloud.help), tell, nav);
   box.append(img, col);
   root.append(box);
   root.classList.add('coached');
   const hand = window.HAND.make(root, 'coach-hand');
 
   const pick = (p) => (typeof p === 'function' ? p() : p);
-  let shownStep = -1;
+  let shownStep = -1, shownLine;
   const waiting = (s) => !!(s?.until && !s.until());
   function render() {
     const s = steps[i];
     if (!s) return end();
     const w = waiting(s);
     const line = s.wrong && s.wrong() ? s.wrongSay : s.say;
-    if (text.textContent !== line) {
+    if (shownLine !== line) {
+      shownLine = line;
       text.textContent = line;
+      window.ReadAloud.attach(text, 'harrow');
       window.MuseumAudio.speak('harrow', line);
     }
     back.disabled = i === 0;
@@ -103,6 +105,7 @@ export function startCoach(root, steps, { face, name = 'Mr. Harrow', onEnd, star
   // keys: left and right arrows step through his words
   const onKey = (e) => {
     if (!alive || /INPUT|TEXTAREA/.test(document.activeElement?.tagName || '')) return;
+    if (e.target.closest?.('.hear-word,.hear-sentence')) return;
     if (e.key === 'ArrowLeft' && !back.disabled) { e.preventDefault(); go(-1); }
     if (e.key === 'ArrowRight' && !next.hidden) { e.preventDefault(); go(1); }
   };

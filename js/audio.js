@@ -11,7 +11,7 @@
     for (const bus of Object.keys(muted)) muted[bus] = saved?.muted?.[bus] === true;
   } catch {}
   const save = () => { try { localStorage.setItem(key, JSON.stringify({ ...levels, muted })); } catch {} };
-  const busLevel = bus => muted[bus] ? 0 : levels[bus] ** 2;
+  const busLevel = bus => levels[bus] ** 2;
 
   let context, scene = '', revision = 0;
   const buses = {}, buffers = new Map(), loops = new Map();
@@ -78,8 +78,8 @@
     dialogue?.stop();
   }
 
-  function speak(who, text) {
-    if (!context || !levels.voices || muted.voices || !text || document.hidden) {
+  function speak(who, text, { requested = false } = {}) {
+    if (!context || !levels.voices || (muted.voices && !requested) || !text || document.hidden) {
       stopVoice();
       return;
     }
@@ -137,12 +137,11 @@
       save();
     };
   }
-  // "Voices" boxes (start menu and pause menu): unticked, nobody reads the lines aloud
+  // The switch controls automatic narration. Students can still request speech at the chosen volume.
   const switches = [...document.querySelectorAll('[data-audio-on]')];
   function setOn(bus, on) {
     muted[bus] = !on;
     for (const box of switches) if (box.dataset.audioOn === bus) box.checked = on;
-    for (const slider of document.querySelectorAll('[data-audio-bus="' + bus + '"]')) slider.disabled = !on;
     if (bus === 'voices' && !on) stopVoice();
     if (context) buses[bus].gain.setTargetAtTime(busLevel(bus), context.currentTime, 0.015);
     save();

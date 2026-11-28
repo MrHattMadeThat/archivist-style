@@ -570,3 +570,12 @@ body.at-title .hud,body.at-title .obj,body.at-title .prompt,body.at-title .menub
 #options form button{min-width:12rem}
 #pausemenu .hand.menu{z-index:5}
 @media (max-width:640px){.opt-cols{grid-template-columns:1fr}}
+
+/* Keep spoken words in the flow of the printed line. */
+:is(.dlg,.coach,.icard) button.hear-word,:is(.dlg,.coach,.icard) button.hear-sentence{font:inherit;color:inherit;letter-spacing:inherit;text-transform:inherit;padding:0;border:0;background:transparent;box-shadow:none;cursor:pointer}
+:is(.dlg,.coach,.icard) .hear-word:is(:hover,:focus-visible){background:#fff0b0;text-decoration:underline}
+:is(.dlg,.coach,.icard) button.hear-sentence{display:inline-block;min-width:26px;min-height:26px;margin-inline-start:3px;border:1px solid currentColor;border-radius:50%;color:#60451f;background:#fff5da;font:12px/1 sans-serif;vertical-align:middle}
+:is(.dlg,.coach,.icard) .hear-sentence:is(:hover,:focus-visible){background:#ffe3a0}
+.hear-help{display:block;margin-block:4px;font:13px/1.4 var(--f-read);color:var(--soft)}
+.spoken-choice{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#f6f0df;border:1px solid var(--ink);padding:4px 6px}
+.dlg-choices .hear-word,.dlg-choices .hear-sentence{font-family:inherit}

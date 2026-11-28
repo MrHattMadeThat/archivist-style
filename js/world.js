@@ -1502,6 +1502,7 @@ const paused=()=>pauseMenu.open||!titleScreen.hidden||document.getElementById('o
 window.addEventListener('keydown',e=>{const k=e.key.toLowerCase();if(paused()||document.body.dataset.overlay||FADE.on)return;
   if(k==='escape'&&!cardOpen){e.preventDefault();openPause();return;}
   if(e.target.id==='menubtn')return;
+  if(e.target.closest?.('.hear-word,.hear-sentence') && ['enter',' ','e','arrowleft','arrowright'].includes(k))return;
   if(DLG.open){if(k==='arrowleft'){e.preventDefault();dlgBack();return;}if(k==='arrowright'){e.preventDefault();dlgNext();return;}
     if((k==='e'||k==='enter'||k===' ')&&!(document.activeElement&&document.activeElement.closest('.dlg-choices,.dlg-nav'))){e.preventDefault();dlgNext();}return;}
   if(CUT.on)return;
@@ -1520,9 +1521,16 @@ function openCard(ex){MuseumAudio.play('whoosh',0.22);cardOpen=ex;ME.target=[];M
   ui.no.textContent='Cat. '+ex.no;ui.croom.textContent=ex.place||ROOMS[ex.room].name;ui.title.textContent=ex.name;
   ui.label.firstElementChild.textContent=ex.head||(ex.talk?'Says the attendant':'The museum’s label, 1910');ui.labelText.textContent=ex.label;
   ui.body.innerHTML=ex.body.map(p=>`<p>${esc(p)}</p>`).join('')+(ex.now?`<p class="now"><b>What we know now</b>${esc(ex.now)}</p>`:'');
+  ReadAloud.attach(ui.labelText,ex.talk ? 'attendant' : 'narrator');
+  for(const paragraph of ui.body.querySelectorAll('p')) {
+    const heading=paragraph.querySelector('b');
+    if(heading)heading.remove();
+    ReadAloud.attach(paragraph,'narrator');
+    if(heading)paragraph.prepend(heading);
+  }
   ui.wrap.hidden=false;ui.close.focus();seen.add(ex.id);renderCat();
   faceFront();}
-function closeCard(){cardOpen=null;ui.wrap.hidden=true;vp.focus({preventScroll:true});}
+function closeCard(){MuseumAudio.stopVoice();cardOpen=null;ui.wrap.hidden=true;vp.focus({preventScroll:true});}
 ui.close.onclick=closeCard;ui.wrap.addEventListener('click',e=>{if(e.target===ui.wrap)closeCard();});
 function renderCat(){ui.count.textContent=`${seen.size}/${EXHIBITS.length} examined`;}
 /* ================= STORY: the first evening at work =================
@@ -1578,10 +1586,17 @@ function card(L){
 function renderLine(L){const who=DLG.reply?.who||L.who,sp=SPEAKERS[who]||SPEAKERS.you;DLG.who=who;ui.dlg.classList.toggle('noface',!sp.face);ui.dlg.classList.toggle('narr',who==='narrator');
   const fc=ui.dlgFace.getContext('2d'),src=TX[sp.face]?.image;fc.fillStyle='#2a2c33';fc.fillRect(0,0,96,96);if(src){const[x,y,w,h]=sp.crop;fc.drawImage(src,x,y,w,h,0,0,96,96);}
   ui.dlgWho.textContent=sp.name;ui.dlgText.textContent=DLG.reply?DLG.reply.text:L.text;
-  MuseumAudio.speak(L.who,ui.dlgText.textContent);
+  MuseumAudio.speak(who,ui.dlgText.textContent);
+  ReadAloud.attach(ui.dlgText,who);
   ui.dlgCard.innerHTML=DLG.reply?'':card(L);ui.dlgCard.hidden=!ui.dlgCard.innerHTML;
+  for(const block of ui.dlgCard.querySelectorAll('p,li'))ReadAloud.attach(block,who);
   ui.dlgChoices.replaceChildren();const ch=!DLG.reply&&L.choices;
-  if(ch)for(const c of L.choices){const b=document.createElement('button');b.type='button';b.textContent=c.label;b.onclick=e=>{e.stopPropagation();DLG.reply={text:c.reply,again:!c.ok,who:c.who};renderLine(L);};ui.dlgChoices.append(b);}
+  if(ch)for(const c of L.choices){
+    const option=document.createElement('div'),label=document.createElement('span'),choose=document.createElement('button');
+    option.className='spoken-choice';label.textContent=c.label;ReadAloud.attach(label,'you');
+    choose.type='button';choose.textContent='Choose';choose.setAttribute('aria-label','Choose: '+c.label);
+    choose.onclick=e=>{e.stopPropagation();DLG.reply={text:c.reply,again:!c.ok,who:c.who};renderLine(L);};
+    option.append(label,choose);ui.dlgChoices.append(option);}
   ui.dlgMore.textContent=ch?'Choose an answer.':(matchMedia('(pointer: coarse)').matches?'':'E or → next · ← back');
   ui.dlgBack.disabled=!(DLG.reply||prevLine()>=0);ui.dlgNextBtn.hidden=!!ch;
   ui.dlg.hidden=false;(ch?ui.dlgChoices.querySelector('button'):ui.dlg).focus({preventScroll:true});}

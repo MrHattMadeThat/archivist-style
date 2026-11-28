@@ -58,7 +58,7 @@ body{font-family:var(--f-body);font-size:17px;line-height:1.5;overscroll-behavio
   <button class="menubtn" id="menubtn" type="button" aria-haspopup="dialog" aria-keyshortcuts="Escape" hidden>&#10074;&#10074; Pause <kbd>Esc</kbd></button>
   <div class="dlg" id="dlg" role="dialog" aria-live="polite" tabindex="-1" hidden>
     <canvas class="dlg-face" id="dlgface" width="96" height="96" aria-hidden="true"></canvas>
-    <div><div class="dlg-who" id="dlgwho"></div><p class="dlg-text" id="dlgtext"></p><div class="dlg-choices" id="dlgchoices"></div><div class="dlg-nav"><button type="button" id="dlgback">&#9664; Back</button><span class="dlg-more" id="dlgmore"></span><button type="button" id="dlgnext">Next &#9654;</button></div></div>
+    <div><div class="dlg-who" id="dlgwho"></div><p class="dlg-text" id="dlgtext"></p><small class="hear-help">Select a word to hear it. Use ▶ to hear its sentence.</small><div class="dlg-choices" id="dlgchoices"></div><div class="dlg-nav"><button type="button" id="dlgback">&#9664; Back</button><span class="dlg-more" id="dlgmore"></span><button type="button" id="dlgnext">Next &#9654;</button></div></div>
     <div class="dlg-cardslot" id="dlgcard" hidden></div>
   </div>
   <div class="cardwrap" id="cardwrap" hidden>
@@ -67,7 +67,7 @@ body{font-family:var(--f-body);font-size:17px;line-height:1.5;overscroll-behavio
       <div class="no"><span id="cno"></span><span id="croom"></span></div>
       <h3 id="ctitle"></h3>
       <div class="label" id="clabel"><span>The museum&rsquo;s label</span><div id="clabeltext"></div></div>
-      <div id="cbody"></div>
+      <div id="cbody"></div><small class="hear-help">Select a word to hear it. Use ▶ to hear its sentence.</small>
     </article>
   </div>
   <div class="loading" id="loading">Unlocking the doors&hellip;</div>
@@ -131,7 +131,7 @@ body{font-family:var(--f-body);font-size:17px;line-height:1.5;overscroll-behavio
     </fieldset>
     <fieldset class="opt-group">
       <legend>Voices</legend>
-      <label class="switch"><input type="checkbox" data-audio-on="voices"> Read the lines aloud</label>
+      <label class="switch"><input type="checkbox" data-audio-on="voices"> Automatically read dialogue aloud</label>
       <label>Voice volume <input type="range" min="0" max="100" data-audio-bus="voices"></label>
     </fieldset>
     <fieldset class="opt-group keys">
@@ -152,5 +152,6 @@ body{font-family:var(--f-body);font-size:17px;line-height:1.5;overscroll-behavio
 <script src="js/story.js"></script>
 <script src="audio/voice/dialogue.js"></script>
 <script src="js/audio.js"></script>
+<script src="js/read-aloud.js"></script>
 <script src="js/world.js"></script>
 <script type="module" src="js/desk/main.js"></script>
